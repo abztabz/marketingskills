@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SocialScout">
+<meta name="theme-color" content="#0B1F2A">
+<title>SocialScout</title>
+<style>
+:root{--teal:#0F766E;--emerald:#10B981;--amber:#D97706;--ink:#0B1F2A;--slate:#3F5560;--ash:#6B8290;--mist:#9DB0BA;--line:#E5EDF0;--red:#DC2626;
+  --safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{overscroll-behavior-y:none}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:var(--slate);line-height:1.5;
+  background:linear-gradient(180deg,#F0F7F6,#F7FBFB 35%,#fff);-webkit-font-smoothing:antialiased;padding-bottom:calc(96px + var(--safe-b))}
+/* header */
+header{position:sticky;top:0;z-index:20;background:rgba(247,251,251,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+  padding:calc(10px + var(--safe-t)) 16px 10px}
+.htop{display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.12rem;color:var(--ink)}
+.brand .m{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--emerald));display:grid;place-items:center;color:#fff;font-size:1rem}
+.brand small{display:block;font-size:.68rem;font-weight:600;color:var(--ash)}
+.reset{font:inherit;font-size:.78rem;font-weight:600;color:var(--ash);background:none;border:none;padding:6px}
+/* pipeline pills */
+.pipe{display:flex;gap:7px;margin-top:11px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.pipe::-webkit-scrollbar{display:none}
+.st{flex:none;background:#fff;border:1px solid var(--line);border-radius:11px;padding:8px 12px;min-width:74px}
+.st.on{border-color:var(--teal)}
+.st .l{font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--ash)}
+.st .n{font-size:1.25rem;font-weight:800;color:var(--ink);line-height:1.1}
+/* toolbar */
+.tools{display:flex;gap:8px;padding:12px 16px 4px;overflow-x:auto;scrollbar-width:none}
+.tools::-webkit-scrollbar{display:none}
+.tbtn{flex:none;font:inherit;font-weight:600;font-size:.82rem;border-radius:10px;padding:10px 14px;border:1px solid var(--line);background:#fff;color:var(--slate);min-height:40px}
+.tbtn.go{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tbtn:active{transform:scale(.97)}
+/* filters */
+.filters{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex:none;font-size:.78rem;font-weight:600;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--slate)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* list */
+.list{padding:0 16px;display:flex;flex-direction:column;gap:12px}
+.op{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:0 1px 3px rgba(11,31,42,.04)}
+.op.hide{display:none}
+.row1{display:flex;align-items:flex-start;gap:11px}
+.score{flex:none;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-weight:800;font-size:1.1rem;color:#fff;background:linear-gradient(135deg,var(--teal),var(--emerald))}
+.score.low{background:linear-gradient(135deg,#0891B2,#22D3EE)}
+.meta{flex:1;min-width:0}
+.tagrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sub-r{font-size:.72rem;font-weight:700;color:var(--teal);background:#E7F4F2;padding:3px 9px;border-radius:999px}
+.sub-r.q{color:#B45309;background:#FEF3E2}
+.np{font-size:.66rem;font-weight:700;color:#B45309;background:#FEF3E2;padding:2px 7px;border-radius:6px}
+.badge{margin-left:auto;font-size:.68rem;font-weight:700;padding:4px 9px;border-radius:999px}
+.badge.new{background:#EEF2F4;color:#64748B}.badge.pending{background:#FEF6E7;color:#B45309}
+.badge.approved{background:#E7F6EE;color:#047857}.badge.rejected{background:#FBEAEA;color:#B91C1C}.badge.posted{background:#E7F0F6;color:#1D4ED8}
+.op h3{font-size:.97rem;color:var(--ink);margin:8px 0 4px;line-height:1.3}
+.op .q{font-size:.85rem;color:var(--ash)}
+.tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.tag{font-size:.7rem;font-weight:600;color:var(--amber);background:#FEF3E2;padding:3px 8px;border-radius:6px}
+.draft{margin-top:12px;background:#F8FBFB;border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:11px;padding:12px}
+.dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.dh span{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ash)}
+.eng{font-size:.64rem;font-weight:700;color:var(--teal);background:#E7F4F2;padding:2px 7px;border-radius:6px}
+.draft textarea{width:100%;border:none;background:transparent;font:inherit;font-size:.88rem;color:var(--slate);resize:none;min-height:96px;line-height:1.5}
+.draft textarea:focus{outline:none}
+.wc{font-size:.7rem;color:var(--mist);margin-top:6px;font-weight:600}
+.acts{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;font:inherit;font-weight:700;font-size:.86rem;border-radius:11px;padding:12px;border:1px solid var(--line);background:#fff;color:var(--slate);min-height:46px}
+.btn:active{transform:scale(.98)}
+.btn.approve{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn.reject{color:var(--red);border-color:#F3C9C9}
+.done{font-size:.82rem;font-weight:600;color:var(--ash);margin-top:11px}
+.src{font-size:.72rem;color:var(--mist);margin-top:9px;word-break:break-all}
+.empty{text-align:center;color:var(--mist);padding:48px 20px;font-weight:600;font-size:.9rem}
+/* publish bar */
+.pub{position:fixed;left:0;right:0;bottom:0;z-index:20;background:linear-gradient(135deg,var(--ink),#10403B);
+  padding:13px 16px calc(13px + var(--safe-b));box-shadow:0 -8px 26px -16px rgba(0,0,0,.6)}
+.pub .t{color:#fff;font-weight:700;font-size:.9rem}.pub .t small{display:block;font-weight:500;color:rgba(255,255,255,.7);font-size:.74rem}
+.pub .r{display:flex;gap:9px;margin-top:9px}
+.pub .btn{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}
+.pub .btn.go{background:linear-gradient(135deg,var(--amber),#B45309);border:none}
+/* toast */
+.toast{position:fixed;left:50%;top:calc(14px + var(--safe-t));transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:11px 18px;border-radius:12px;font-weight:600;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:40;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.demo-note{font-size:.72rem;color:var(--mist);text-align:center;padding:14px 24px 0}
+</style></head>
+<body>
+<div class="toast" id="toast"></div>
+<header>
+  <div class="htop">
+    <div class="brand"><span class="m">◑</span><div>SocialScout<small id="brandName">on-device demo</small></div></div>
+    <button class="reset" onclick="reset()">Reset</button>
+  </div>
+  <div class="pipe">
+    <div class="st"><div class="l">Found</div><div class="n" id="cFound">0</div></div>
+    <div class="st"><div class="l">Drafted</div><div class="n" id="cDrafted">0</div></div>
+    <div class="st on"><div class="l">Review</div><div class="n" id="cPending">0</div></div>
+    <div class="st"><div class="l">Approved</div><div class="n" id="cApproved">0</div></div>
+  </div>
+</header>
+
+<div class="tools">
+  <button class="tbtn" onclick="find('reddit')">Find Reddit</button>
+  <button class="tbtn" onclick="find('quora')">Find Quora</button>
+  <button class="tbtn go" onclick="draft()">Draft pending</button>
+</div>
+<div class="filters">
+  <span class="chip on" data-f="all">All</span><span class="chip" data-f="pending">Pending</span>
+  <span class="chip" data-f="approved">Approved</span><span class="chip" data-f="rejected">Rejected</span>
+</div>
+
+<div class="list" id="list"></div>
+<div class="demo-note">On-device demo. Decisions are saved on this phone only. The live version (real Reddit + AI drafts + posting) runs from the SocialScout server.</div>
+
+<div class="pub">
+  <div class="t">Ready to publish <small id="pubsub">nothing posts without this tap</small></div>
+  <div class="r">
+    <button class="btn" onclick="publish(false)">Preview dry-run</button>
+    <button class="btn go" onclick="publish(true)">Publish approved</button>
+  </div>
+</div>
+
+<script>
+// ---- inlined demo data (mirrors the bundled fixtures + drafts) ----
+const DEMO={reddit:[
+  {postId:'t3_aaa',platform:'reddit',sub:'NEMT',score:6,matched:['DOT audit','driver qualification file'],
+   title:'First DOT audit coming up — what driver files do I actually need?',
+   body:"Got a notice about a DOT audit and I'm panicking. What documents do they look for in driver qualification files?",
+   url:'reddit.com/r/NEMT/comments/aaa',
+   draft:"Been through a few of these — the audit is mostly about whether your driver qualification files are complete and dated, so build one checklist and work backward from it.\n\nFor each driver you'll generally want: the DOT application, a current medical certificate, the MVR (pulled annually), the road-test/CDL-equivalent, the annual review of driving record, and clearinghouse query results. Keep them in one folder per driver with dates visible.\n\nHappy to share a simple DQ-file checklist if that helps. (I work with Acme Compliance — sharing because it's relevant, not to pitch.)"},
+  {postId:'t3_bbb',platform:'reddit',sub:'Truckers',score:3,matched:['drug and alcohol clearinghouse'],
+   title:'How do small fleets keep up with FMCSA clearinghouse rules?',
+   body:'We run 6 trucks. The drug and alcohol clearinghouse annual queries keep tripping us up. Anyone have a simple system?',
+   url:'reddit.com/r/Truckers/comments/bbb',
+   draft:"At 6 trucks the trap is that clearinghouse work is annual and easy to forget until it's late. Set a fixed 'compliance day' each year, run every driver's limited query that day, and log the date + result in one shared sheet. Add a calendar reminder 11 months out.\n\nNew hires need a full query (not limited) plus consent on file before they drive — that's the one people miss. (I work with Acme Compliance — sharing because it's relevant, not a pitch.)"}
+],quora:[
+  {postId:'q_1',platform:'quora',sub:'quora',score:6,matched:['DOT audit','driver qualification file'],
+   title:'What documents are checked in a DOT compliance audit?',
+   body:'Starting a small fleet and want to prepare. What driver qualification file documents do auditors actually review?',
+   url:'quora.com/What-documents-are-checked-in-a-DOT-compliance-audit',
+   draft:"Auditors focus on the driver qualification file being complete and current: the employment application, MVR pulled at hire and annually, the medical examiner's certificate, the road test or CDL equivalency, and the annual review of the driving record. Keep one dated folder per driver so nothing reads as missing."},
+  {postId:'q_2',platform:'quora',sub:'quora',score:6,matched:['diagnostic testing','wellness plan'],
+   title:'How can caregivers stay on top of their own health screenings?',
+   body:'I care for a parent full time and keep skipping my own diagnostic testing. Any realistic wellness plan advice?',
+   url:'quora.com/How-can-caregivers-stay-on-top-of-their-own-health-screenings',
+   draft:"The realistic version isn't 'do everything' — pick the 2-3 screenings that matter for your age and batch them into a single visit so it's one block of time, not five errands. Tie each to a recurring calendar reminder so it survives a busy stretch."}
+]};
+
+const KEY='ss_mobile_queue_v1';
+let QUEUE=JSON.parse(localStorage.getItem(KEY)||'[]'), FILTER='all';
+const $=(id)=>document.getElementById(id);
+const esc=(s)=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const words=(s)=>(s||'').trim().split(/\s+/).filter(Boolean).length;
+const save=()=>localStorage.setItem(KEY,JSON.stringify(QUEUE));
+const toast=(m)=>{const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1700)};
+
+function find(platform){
+  let added=0;
+  for(const d of DEMO[platform]){
+    if(QUEUE.find(q=>q.postId===d.postId))continue;
+    QUEUE.push({id:'op_'+d.postId,postId:d.postId,platform:d.platform,sub:d.sub,title:d.title,body:d.body,url:d.url,
+      score:d.score,matched:d.matched,_draft:d.draft,draft:null,draftEngine:null,status:'new'});
+    added++;
+  }
+  save();render();toast(added?`Found ${added} on ${platform}`:'No new threads');
+}
+function draft(){
+  let n=0;
+  for(const q of QUEUE){if(q.status==='new'){q.draft=q._draft;q.draftEngine='demo';q.status='pending';n++;}}
+  save();render();toast(n?`Drafted ${n}`:'Nothing to draft — Find first');
+}
+function review(id,status){
+  const q=QUEUE.find(x=>x.id===id);const ta=$('ta_'+id);if(ta)q.draft=ta.value;
+  q.status=status;save();render();toast(status==='approved'?'Approved':'Rejected');
+}
+function publish(live){
+  const ap=QUEUE.filter(q=>q.status==='approved');
+  if(!ap.length){toast('Nothing approved yet');return;}
+  if(live){toast('Demo: live posting is server-only');return;}
+  const r=ap.filter(q=>q.platform==='reddit').length, qn=ap.filter(q=>q.platform==='quora').length;
+  toast(`Dry-run: ${r} Reddit would post${qn?`, ${qn} Quora to export`:''}`);
+}
+function reset(){if(confirm('Clear all demo decisions on this device?')){QUEUE=[];save();render();toast('Reset');}}
+
+function counts(){
+  const by=s=>QUEUE.filter(q=>q.status===s).length;
+  $('cFound').textContent=QUEUE.length;$('cDrafted').textContent=QUEUE.filter(q=>q.draft).length;
+  $('cPending').textContent=by('pending');$('cApproved').textContent=by('approved');
+  const a=by('approved');$('pubsub').textContent=a?`${a} approved · Reddit via API, Quora to file · this tap only`:'nothing posts without this tap';
+}
+function card(q){
+  const isQ=q.platform==='quora';
+  const draftBlock=q.draft?`<div class="draft"><div class="dh"><span>Suggested reply</span><span class="eng">${q.draftEngine==='claude'?'✦ Claude':'demo'}</span></div>
+    <textarea ${q.status==='pending'?'':'readonly'} id="ta_${q.id}" oninput="const w=document.getElementById('wc_${q.id}');if(w)w.textContent=this.value.trim().split(/\\s+/).filter(Boolean).length">${esc(q.draft)}</textarea>
+    <div class="wc"><span id="wc_${q.id}">${words(q.draft)}</span> words · discloses affiliation</div></div>`:'';
+  let actions='';
+  if(q.status==='pending')actions=`<div class="acts"><button class="btn reject" onclick="review('${q.id}','rejected')">Reject</button><button class="btn approve" onclick="review('${q.id}','approved')">Approve</button></div>`;
+  else if(q.status==='new')actions=`<div class="done">Tap “Draft pending” to generate a reply.</div>`;
+  else actions=`<div class="done">${q.status==='approved'?'✓ Approved — queued':'✗ '+q.status}</div>`;
+  return `<div class="op" data-status="${q.status}">
+    <div class="row1"><span class="score ${q.score<5?'low':''}">${q.score}</span>
+      <div class="meta"><div class="tagrow"><span class="sub-r ${isQ?'q':''}">${isQ?'Quora':'r/'+esc(q.sub)}</span><span class="badge ${q.status}">${q.status}</span></div>
+        <h3>${esc(q.title)}</h3><div class="q">${esc(q.body)}</div>
+        <div class="tags">${(q.matched||[]).map(m=>`<span class="tag">${esc(m)}</span>`).join('')}</div></div></div>
+    ${draftBlock}${actions}<div class="src">${esc(q.url)}</div></div>`;
+}
+function render(){
+  counts();
+  const items=QUEUE.filter(q=>FILTER==='all'||q.status===FILTER);
+  $('list').innerHTML=items.length?items.map(card).join(''):'<div class="empty">No items yet.<br>Tap “Find Reddit” or “Find Quora”, then “Draft pending”.</div>';
+}
+document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{
+  document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));ch.classList.add('on');FILTER=ch.dataset.f;render();
+}));
+render();
+</script>
+</body></html>
