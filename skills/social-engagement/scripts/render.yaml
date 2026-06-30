@@ -1,0 +1,21 @@
+# Render Blueprint — deploy SocialScout's review app.
+# In Render: New + → Blueprint → pick this repo. Then set the secret env vars
+# (REDDIT_* and ANTHROPIC_API_KEY) in the dashboard. SOCIALSCOUT_TOKEN is
+# auto-generated. Free plan sleeps when idle and has ephemeral disk (the review
+# queue resets on redeploy) — fine for review/testing.
+services:
+  - type: web
+    name: socialscout
+    runtime: node
+    plan: free
+    rootDir: skills/social-engagement/scripts
+    buildCommand: ""
+    startCommand: node server.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: SOCIALSCOUT_TOKEN
+        generateValue: true
+      # Set these as secrets in the Render dashboard (do NOT commit them):
+      # ANTHROPIC_API_KEY, REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET,
+      # REDDIT_USERNAME, REDDIT_PASSWORD

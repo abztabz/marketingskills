@@ -51,7 +51,12 @@ node socialscout.mjs serve                            # browser review app at ht
 Queue states: `new → pending → approved | rejected → posted`. State lives in `scripts/queue.json`.
 
 ### Web review app (`serve`)
-`node socialscout.mjs serve` starts a tiny local server (127.0.0.1 only, zero dependencies) at `http://127.0.0.1:7821`. The dashboard runs the whole loop in the browser: **Find (demo) / Find Quora (demo) / Draft pending** buttons, per-card **Approve / Reject** with inline draft editing, and a **Publish** bar (dry-run or live). It drives the same queue as the CLI. Nothing posts without clicking **Publish approved** and confirming. Best surface for a non-technical reviewer.
+`node socialscout.mjs serve` starts a tiny local server (127.0.0.1 only, zero dependencies) at `http://127.0.0.1:7821`. The dashboard runs the whole loop in the browser: **Find / Find Quora / Draft pending** buttons, per-card **Approve / Reject** with inline draft editing, and a **Publish** bar (dry-run or live). It drives the same queue as the CLI. The UI is mobile-first, so it works on a phone too. Nothing posts without clicking **Publish approved** and confirming. Best surface for a non-technical reviewer.
+
+### Use it on iOS / host it
+Two options:
+- **No deploy:** open `scripts/socialscout-mobile.html` in Safari — self-contained demo (inline data, on-device storage), good for trying the UX.
+- **Live data:** host `scripts/server.mjs` (Render/Railway; `render.yaml`, `package.json`, `Procfile` included). When `PORT` is set the server binds `0.0.0.0` and **requires `SOCIALSCOUT_TOKEN`** (it refuses to expose the publish endpoint unauthenticated). The dashboard prompts for the token once and stores it on-device. Set brand/targets without committing via the `SOCIALSCOUT_CONFIG_JSON` env var. Full walkthrough in `references/deploy.md`.
 
 ### Scoring (opportunity quality)
 The finder scores each thread on keyword match (×2 each), question signals, low existing-answer count, and freshness. Threads below `rules.minOpportunityScore` are dropped, so off-topic noise never reaches the draft step.

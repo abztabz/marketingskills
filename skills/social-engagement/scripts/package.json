@@ -1,0 +1,11 @@
+{
+  "name": "socialscout",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Compliant, human-in-the-loop Reddit/Quora outreach review app",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}

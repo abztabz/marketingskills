@@ -19,11 +19,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
-// Precedence: the user's config.json wins; otherwise the working demo config;
-// otherwise the blank template. Demo config makes the CLI and web app run out of the box.
+// Config precedence: SOCIALSCOUT_CONFIG_JSON env (for hosted deploys, no commit) >
+// the user's config.json > the working demo config > the blank template.
 const pick = (...names) => names.map((n) => path.join(DIR, n)).find((p) => fs.existsSync(p));
 const CONFIG_PATH = pick('config.json', 'config.demo.json', 'config.example.json');
-export const CONFIG = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+export const CONFIG = process.env.SOCIALSCOUT_CONFIG_JSON
+  ? JSON.parse(process.env.SOCIALSCOUT_CONFIG_JSON)
+  : JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
 const QUEUE_PATH = path.join(DIR, 'queue.json');
 const POLICY_CACHE = path.join(DIR, '.subreddit-policy.json');
 const UA = 'web:socialscout:0.2 (compliant content-assist; human-reviewed)';
