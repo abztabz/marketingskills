@@ -1,0 +1,28 @@
+{
+  "brand": {
+    "name": "Acme Compliance Co",
+    "oneLiner": "Health, safety, and transportation-compliance support for small businesses and fleets.",
+    "site": "https://example.com",
+    "expertise": [
+      "FMCSA & DOT compliance for fleets",
+      "driver qualification files and audits",
+      "workplace wellness and screening"
+    ],
+    "voice": "professional, warm, plain-spoken, genuinely helpful, never salesy",
+    "disclosure": "I work with Acme Compliance Co — sharing this because it's relevant, not to pitch."
+  },
+  "targets": {
+    "subreddits": ["Truckers", "NEMT", "smallbusiness", "Caregivers"],
+    "keywords": [
+      "DOT audit", "FMCSA compliance", "driver qualification file",
+      "drug and alcohol clearinghouse", "diagnostic testing", "wellness plan"
+    ]
+  },
+  "rules": {
+    "minOpportunityScore": 3,
+    "maxDraftWords": 220,
+    "requireDisclosure": true,
+    "neverHardLinkUnlessAsked": true,
+    "skipSubredditsThatBanSelfPromo": true
+  }
+}
