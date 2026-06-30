@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SocialScout — Review</title>
+<style>
+:root{--teal:#0F766E;--emerald:#10B981;--amber:#D97706;--ink:#0B1F2A;--slate:#3F5560;--ash:#6B8290;--mist:#9DB0BA;--line:#E5EDF0;--red:#DC2626}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--slate);background:linear-gradient(180deg,#F0F7F6,#F7FBFB 40%,#fff);line-height:1.55;-webkit-font-smoothing:antialiased}
+.app{max-width:1040px;margin:0 auto;padding:22px 24px 120px}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:10px 0 18px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.15rem;color:var(--ink)}
+.brand .m{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--emerald));display:grid;place-items:center;color:#fff}
+.brand small{display:block;font-size:.72rem;font-weight:600;color:var(--ash)}
+.tools{display:flex;gap:8px}
+.tbtn{font-family:inherit;font-weight:600;font-size:.84rem;border-radius:9px;padding:9px 14px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--slate)}
+.tbtn:hover{border-color:var(--teal);color:var(--teal)}
+.tbtn.go{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stage{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.stage.active{border-color:var(--teal);box-shadow:0 8px 22px -12px rgba(15,118,110,.5)}
+.stage .lab{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:var(--ash)}
+.stage .num{font-size:1.8rem;font-weight:800;color:var(--ink);margin-top:6px;line-height:1}
+.tb{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tb h2{font-size:1rem;color:var(--ink)}
+.filters{display:flex;gap:6px}
+.chip{font-size:.78rem;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--slate);cursor:pointer}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.list{display:flex;flex-direction:column;gap:12px}
+.op{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px 20px}
+.op.hide{display:none}
+.head{display:flex;align-items:flex-start;gap:13px}
+.score{flex:none;width:46px;height:46px;border-radius:11px;display:grid;place-items:center;font-weight:800;font-size:1.15rem;color:#fff;background:linear-gradient(135deg,var(--teal),var(--emerald))}
+.score.low{background:linear-gradient(135deg,#0891B2,#22D3EE)}
+.meta{flex:1;min-width:0}
+.sub-r{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;font-weight:700;color:var(--teal);background:#E7F4F2;padding:3px 9px;border-radius:999px}
+.sub-r.q{color:#B45309;background:#FEF3E2}
+.np{font-size:.7rem;font-weight:700;color:#B45309;background:#FEF3E2;padding:2px 8px;border-radius:6px;margin-left:6px}
+.op h3{font-size:1rem;color:var(--ink);margin:7px 0 3px}
+.op .q{font-size:.86rem;color:var(--ash)}
+.tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.tag{font-size:.71rem;font-weight:600;color:var(--amber);background:#FEF3E2;padding:3px 8px;border-radius:6px}
+.badge{flex:none;font-size:.73rem;font-weight:700;padding:5px 11px;border-radius:999px}
+.badge.new{background:#EEF2F4;color:#64748B}.badge.pending{background:#FEF6E7;color:#B45309}
+.badge.approved{background:#E7F6EE;color:#047857}.badge.rejected{background:#FBEAEA;color:#B91C1C}.badge.posted{background:#E7F0F6;color:#1D4ED8}
+.draft{margin-top:13px;background:#F8FBFB;border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:10px;padding:13px 15px}
+.draft .dh{display:flex;justify-content:space-between;margin-bottom:7px}.draft .dh span{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ash)}
+.eng{font-size:.68rem;font-weight:700;color:var(--teal);background:#E7F4F2;padding:2px 7px;border-radius:6px}
+.draft textarea{width:100%;border:none;background:transparent;font:inherit;font-size:.88rem;color:var(--slate);resize:vertical;min-height:84px}
+.draft textarea:focus{outline:none}
+.wc{font-size:.72rem;color:var(--mist);margin-top:6px;font-weight:600}
+.acts{display:flex;gap:8px;margin-top:12px;align-items:center}
+.btn{font-family:inherit;font-weight:600;font-size:.84rem;border-radius:9px;padding:8px 15px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--slate)}
+.btn:hover{transform:translateY(-1px)}
+.btn.approve{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn.reject{color:var(--red);border-color:#F3C9C9}
+.spacer{flex:1}.src{font-size:.76rem;color:var(--mist);font-weight:600}
+.done-note{font-size:.82rem;font-weight:600;color:var(--ash);margin-top:11px}
+.empty{text-align:center;color:var(--mist);padding:50px 0;font-weight:600}
+.pubbar{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(135deg,var(--ink),#10403B);padding:15px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -10px 30px -16px rgba(11,31,42,.7)}
+.pubbar .t{color:#fff;font-weight:700;font-size:.95rem}.pubbar .t small{display:block;font-weight:500;color:rgba(255,255,255,.7);font-size:.78rem}
+.pubbar .right{display:flex;gap:10px}
+.btn.pub{background:linear-gradient(135deg,var(--amber),#B45309);color:#fff;border:none;padding:11px 20px;font-weight:700}
+.btn.ghost{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.25)}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-weight:600;font-size:.85rem;opacity:0;transition:opacity .25s;z-index:9}
+.toast.show{opacity:1}
+</style></head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="app">
+  <div class="bar">
+    <div class="brand"><span class="m">◑</span><div>SocialScout<small id="brandName">review queue</small></div></div>
+    <div class="tools">
+      <button class="tbtn" onclick="run('find',{mock:true})">Find (demo)</button>
+      <button class="tbtn" onclick="run('find',{mock:true,platform:'quora'})">Find Quora (demo)</button>
+      <button class="tbtn go" onclick="run('draft')">Draft pending</button>
+    </div>
+  </div>
+
+  <div class="pipe">
+    <div class="stage"><div class="lab">Found</div><div class="num" id="cFound">0</div></div>
+    <div class="stage"><div class="lab">Drafted</div><div class="num" id="cDrafted">0</div></div>
+    <div class="stage active"><div class="lab">In review</div><div class="num" id="cPending">0</div></div>
+    <div class="stage"><div class="lab">Approved</div><div class="num" id="cApproved">0</div></div>
+  </div>
+
+  <div class="tb"><h2>Opportunities</h2>
+    <div class="filters">
+      <span class="chip on" data-f="all">All</span><span class="chip" data-f="pending">Pending</span>
+      <span class="chip" data-f="approved">Approved</span><span class="chip" data-f="rejected">Rejected</span>
+    </div>
+  </div>
+  <div class="list" id="list"></div>
+</div>
+
+<div class="pubbar">
+  <div class="t">Ready to publish <small id="pubsub">nothing posts without this click</small></div>
+  <div class="right">
+    <button class="btn ghost" onclick="doPublish(false)">Preview dry-run</button>
+    <button class="btn pub" onclick="doPublish(true)">Publish approved →</button>
+  </div>
+</div>
+
+<script>
+let QUEUE=[], FILTER='all';
+const $=(id)=>document.getElementById(id);
+const esc=(s)=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const toast=(m)=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)};
+const words=(s)=>(s||'').trim().split(/\s+/).filter(Boolean).length;
+
+async function load(){
+  const r=await (await fetch('/api/queue')).json();
+  QUEUE=r.queue||[]; $('brandName').textContent=(r.brand||'')+' · review queue'; render();
+}
+function counts(){
+  const by=(s)=>QUEUE.filter(q=>q.status===s).length;
+  $('cFound').textContent=QUEUE.length;
+  $('cDrafted').textContent=QUEUE.filter(q=>q.draft).length;
+  $('cPending').textContent=by('pending');
+  $('cApproved').textContent=by('approved');
+  const a=by('approved');
+  $('pubsub').textContent=a?`${a} approved · Reddit via API (5s apart) · Quora exported to file · this click only`:'nothing approved yet';
+}
+function render(){
+  counts();
+  const items=QUEUE.filter(q=>FILTER==='all'?true:q.status===FILTER);
+  $('list').innerHTML=items.length?items.map(card).join(''):'<div class="empty">No items. Click “Find (demo)” then “Draft pending”.</div>';
+}
+function card(q){
+  const isQ=q.platform==='quora';
+  const draftBlock=q.draft?`<div class="draft"><div class="dh"><span>Suggested reply</span><span class="eng">${q.draftEngine==='claude'?'✦ Claude':'template'}</span></div>
+    <textarea ${q.status==='pending'?'':'readonly'} id="ta_${q.id}">${esc(q.draft)}</textarea>
+    <div class="wc"><span id="wc_${q.id}">${words(q.draft)}</span> words${q.noPromo?' · brand-free (no-promo sub)':' · discloses affiliation'}</div></div>`:'';
+  let actions='';
+  if(q.status==='pending') actions=`<div class="acts">
+      <button class="btn approve" onclick="review('${q.id}','approved')">✓ Approve</button>
+      <button class="btn reject" onclick="review('${q.id}','rejected')">✗ Reject</button>
+      <span class="spacer"></span><span class="src">${esc(q.url)}</span></div>`;
+  else if(q.status==='new') actions=`<div class="done-note">Drafted on next “Draft pending”.</div>`;
+  else actions=`<div class="done-note">${q.status==='approved'?'✓ Approved — queued':q.status==='posted'?'↑ Posted':'✗ '+q.status}</div>`;
+  return `<div class="op" data-status="${q.status}">
+    <div class="head"><span class="score ${q.score<5?'low':''}">${q.score}</span>
+      <div class="meta"><span class="sub-r ${isQ?'q':''}">${isQ?'Quora':'r/'+esc(q.subreddit)}</span>${q.noPromo?'<span class="np">no-promo</span>':''}
+        <h3>${esc(q.title)}</h3><div class="q">${esc(q.body||'')}</div>
+        <div class="tags">${(q.matched||[]).map(m=>`<span class="tag">${esc(m)}</span>`).join('')}</div>
+      </div><span class="badge ${q.status}">${q.status}</span></div>
+    ${draftBlock}${actions}</div>`;
+}
+async function run(kind,body={}){
+  toast(kind==='find'?'Finding…':'Drafting…');
+  await fetch('/api/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  await load(); toast('Done');
+}
+async function review(id,status){
+  const ta=$('ta_'+id); const edit=ta?ta.value:undefined;
+  await fetch('/api/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status,edit})});
+  await load(); toast(status==='approved'?'Approved':'Rejected');
+}
+async function doPublish(live){
+  if(live&&!confirm('Publish all approved replies for real? Reddit posts go live.'))return;
+  const r=await (await fetch('/api/publish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({live})})).json();
+  if(!r.ok){toast(r.error||'error');return;}
+  toast(r.dry?`Dry-run: ${r.results.length} would post`:`Published ${r.results.filter(x=>x.action==='posted').length}`);
+  await load();
+}
+document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{
+  document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));ch.classList.add('on');FILTER=ch.dataset.f;render();
+}));
+document.addEventListener('input',e=>{if(e.target.tagName==='TEXTAREA'){const id=e.target.id.replace('ta_','');const w=$('wc_'+id);if(w)w.textContent=words(e.target.value);}});
+load();
+</script>
+</body></html>

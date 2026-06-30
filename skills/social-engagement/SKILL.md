@@ -4,7 +4,7 @@ description: "Find relevant questions on Reddit and Quora and draft genuinely he
 license: MIT
 metadata:
   author: Corey Haines
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # Social Engagement
@@ -36,20 +36,35 @@ Persist these into `scripts/config.json` (copy `scripts/config.example.json`). T
 
 ```bash
 cd scripts
-node socialscout.mjs find --mock     # demo with bundled fixtures (no credentials)
-node socialscout.mjs find            # live Reddit (public JSON; no creds needed)
-node socialscout.mjs draft           # AI drafts (ANTHROPIC_API_KEY) or template fallback
+node socialscout.mjs find --mock                      # demo with bundled fixtures (no credentials)
+node socialscout.mjs find                             # live Reddit (public JSON; no creds needed)
+node socialscout.mjs find --platform quora --urls "https://www.quora.com/<question>"
+node socialscout.mjs draft                            # AI drafts (ANTHROPIC_API_KEY) or template fallback
 node socialscout.mjs review --list
 node socialscout.mjs review --approve <id> [--edit "your edited text"]
 node socialscout.mjs review --reject  <id>
-node socialscout.mjs publish --dry-run   # shows exactly what WOULD post
-node socialscout.mjs publish --live      # posts approved Reddit replies, 5s apart
+node socialscout.mjs publish --dry-run                # shows exactly what WOULD post
+node socialscout.mjs publish --live                   # posts approved Reddit replies, 5s apart
+node socialscout.mjs serve                            # browser review app at http://127.0.0.1:7821
 ```
 
 Queue states: `new → pending → approved | rejected → posted`. State lives in `scripts/queue.json`.
 
+### Web review app (`serve`)
+`node socialscout.mjs serve` starts a tiny local server (127.0.0.1 only, zero dependencies) at `http://127.0.0.1:7821`. The dashboard runs the whole loop in the browser: **Find (demo) / Find Quora (demo) / Draft pending** buttons, per-card **Approve / Reject** with inline draft editing, and a **Publish** bar (dry-run or live). It drives the same queue as the CLI. Nothing posts without clicking **Publish approved** and confirming. Best surface for a non-technical reviewer.
+
 ### Scoring (opportunity quality)
 The finder scores each thread on keyword match (×2 each), question signals, low existing-answer count, and freshness. Threads below `rules.minOpportunityScore` are dropped, so off-topic noise never reaches the draft step.
+
+### Subreddit self-promo guard
+Before drafting, each Reddit opportunity is checked against subreddits that ban self-promotion: first your `rules.noPromoSubreddits` list, then (when online) the subreddit's own `about/rules.json`, scanned for no-promo language and cached in `.subreddit-policy.json`. Behavior is set by `rules.noPromoMode`:
+- `"no-brand"` (default) — still draft a genuinely helpful answer, but with **zero brand mention or link**.
+- `"skip"` — drop the opportunity entirely.
+
+This keeps you from ever pitching in a subreddit that forbids it.
+
+### Quora (discovery only)
+Quora has no posting API, so SocialScout never posts there. `find --platform quora --mock` uses fixtures; `find --platform quora --urls "u1,u2"` fetches public Quora question pages you paste and reads their titles for drafting. Approved Quora drafts export to `quora-drafts.md` for manual pasting.
 
 ### Drafting (the system prompt does the compliance work)
 With `ANTHROPIC_API_KEY` set, drafts come from Claude with hard rules baked in: answer the question first, disclose affiliation when the brand is named, no link unless the thread asks, brand mention only when relevant, word cap. Without a key, a safe template is used so the pipeline still runs.

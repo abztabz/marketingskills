@@ -19,6 +19,7 @@
     "maxDraftWords": 220,
     "requireDisclosure": true,
     "neverHardLinkUnlessAsked": true,
-    "skipSubredditsThatBanSelfPromo": true
+    "noPromoSubreddits": ["<subreddit that bans self-promo>"],
+    "noPromoMode": "no-brand"
   }
 }
