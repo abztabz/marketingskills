@@ -39,7 +39,7 @@ export function startServer({ port = Number(process.env.PORT) || 7821, host = pr
       if (p === '/api/health') return send(res, 200, { ok: true, auth: !!TOKEN });
       if (p.startsWith('/api/') && !authed(req, url)) return send(res, 401, { error: 'unauthorized' });
       if (req.method === 'GET' && p === '/api/queue') return send(res, 200, { brand: CONFIG.brand.name, queue: loadQueue() });
-      if (req.method === 'POST' && p === '/api/find') { const b = await readBody(req); return send(res, 200, await findOpportunities({ mock: !!b.mock, platform: b.platform || 'reddit', urls: b.urls || [], log: () => {} })); }
+      if (req.method === 'POST' && p === '/api/find') { const b = await readBody(req); return send(res, 200, await findOpportunities({ mock: !!b.mock, platform: b.platform || 'reddit', urls: b.urls || [], log: console.error })); }
       if (req.method === 'POST' && p === '/api/draft') return send(res, 200, await draftPending({ log: () => {} }));
       if (req.method === 'POST' && p === '/api/review') { const b = await readBody(req); return send(res, 200, setReview(b.id, b.status, b.edit)); }
       if (req.method === 'POST' && p === '/api/publish') { const b = await readBody(req); return send(res, 200, await publish({ live: !!b.live, log: () => {} })); }

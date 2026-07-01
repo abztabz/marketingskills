@@ -70,6 +70,26 @@ export async function subredditBansPromo(sub, { online = true } = {}) {
 }
 
 // ---------- Reddit fetch ----------
+// Optional discovery path: when FIRECRAWL_API_KEY is set, Reddit's public
+// search.json is fetched through Firecrawl's scrape API instead of directly.
+// Firecrawl renders with a real browser, which gets past Reddit's anonymous-
+// request blocking (HTTP 403) without needing Reddit OAuth credentials.
+// Read-only discovery only — SocialScout never posts through Firecrawl.
+async function firecrawlJson(url, log) {
+  const key = process.env.FIRECRAWL_API_KEY;
+  const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, formats: ['rawHtml'] }),
+  });
+  if (!res.ok) throw new Error(`Firecrawl HTTP ${res.status}`);
+  const json = await res.json();
+  const raw = json?.data?.rawHtml ?? json?.rawHtml ?? '';
+  const start = raw.indexOf('{'); const end = raw.lastIndexOf('}');
+  if (start === -1 || end === -1) throw new Error('Firecrawl: no JSON in response');
+  return JSON.parse(raw.slice(start, end + 1));
+}
+
 async function redditToken() {
   const { REDDIT_CLIENT_ID: id, REDDIT_CLIENT_SECRET: secret, REDDIT_USERNAME: user, REDDIT_PASSWORD: pass } = process.env;
   if (!id || !secret || !user || !pass) return null;
@@ -83,16 +103,20 @@ async function redditToken() {
 }
 
 async function fetchReddit(log = console.error) {
-  const token = await redditToken().catch(() => null);
+  const useFirecrawl = !!process.env.FIRECRAWL_API_KEY;
+  const token = useFirecrawl ? null : await redditToken().catch(() => null);
   const base = token ? 'https://oauth.reddit.com' : 'https://www.reddit.com';
   const headers = { 'User-Agent': UA, ...(token ? { Authorization: `Bearer ${token}` } : {}) };
   const out = [];
   for (const sub of CONFIG.targets.subreddits) {
     const q = encodeURIComponent(CONFIG.targets.keywords.join(' OR '));
+    const url = `${base}/r/${sub}/search.json?q=${q}&restrict_sr=1&sort=new&limit=15`;
     try {
-      const res = await fetch(`${base}/r/${sub}/search.json?q=${q}&restrict_sr=1&sort=new&limit=15`, { headers });
-      if (!res.ok) { log(`  ! r/${sub}: HTTP ${res.status} (skipping)`); continue; }
-      const json = await res.json();
+      const json = useFirecrawl ? await firecrawlJson(url, log) : await (async () => {
+        const res = await fetch(url, { headers });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })();
       for (const ch of json?.data?.children ?? []) {
         const d = ch.data;
         out.push({ id: d.name, platform: 'reddit', subreddit: d.subreddit, title: d.title, selftext: d.selftext, url: `https://www.reddit.com${d.permalink}`, num_comments: d.num_comments, ups: d.ups, created_utc: d.created_utc });
