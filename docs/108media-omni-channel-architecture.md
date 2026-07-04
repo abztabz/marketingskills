@@ -88,7 +88,9 @@ A self-sustained agency acquires its own clients. Repo assets do the work:
 
 - **Prospecting agent** (daily): builds UAE/GCC target lists via `apollo`,
   `clay`, `clearbit`, `hunter`, `similarweb` CLIs + `prospecting` skill;
-  scores fit against the ideal client profile
+  enriches each prospect with scraped intelligence (Firecrawl for their site,
+  Exa for semantic discovery of lookalikes) and scores fit against the ideal
+  client profile
 - **Outbound agent**: personalized sequences via `instantly`/`lemlist` CLIs +
   `cold-email` skill; replies classified by the small model; positive intent
   auto-books via `calendly`/`savvycal` CLIs
@@ -107,10 +109,24 @@ capital — flip to AI-led when transcripts prove parity on close rate).
 
 Signature event fires the ingestion agent, no kickoff meeting required:
 
-1. Crawl the client's site, socials, ad libraries, competitors
-   (`competitor-profiling`, `customer-research`, `product-marketing` skills)
+1. **Scrape everything public** with a layered stack:
+   - **Firecrawl** — client site + competitor sites → clean LLM-ready
+     markdown (handles JS rendering and anti-bot; see
+     `tools/integrations/firecrawl.md`)
+   - **ScrapeGraphAI** — LLM-guided structured extraction on top of the raw
+     scrape: turn pages into typed brand facts (offers, pricing, claims,
+     tone samples, AR/EN copy pairs) instead of prose blobs
+   - **Browserbase** — headless sessions for dynamic/login-walled surfaces:
+     Meta Ad Library, TikTok Creative Center, social feeds
+     (`tools/integrations/browserbase.md`)
+   - **Exa** — semantic web search to discover competitors, press mentions,
+     and review sites worth scraping (`tools/integrations/exa.md`)
+   Analysis via `competitor-profiling`, `customer-research`,
+   `product-marketing` skills. Scraping obeys robots.txt and platform ToS —
+   the Policy Engine treats scrape targets like any other external action.
 2. Draft `brand-dna.md`, `style-guide.md`, `compliance.md`, and a proposed
-   `policy.yaml` (caps derived from contract value)
+   `policy.yaml` (caps derived from contract value) — grounded in the
+   structured scrape output, not model guesses about the client
 3. Client confirms via a one-time portal review — a contractual boundary
    (spend authority, brand truth), not a workflow gate; it happens once per
    client, not per campaign
