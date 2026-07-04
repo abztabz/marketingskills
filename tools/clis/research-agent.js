@@ -20,6 +20,7 @@
 
 const fs = require('fs')
 const path = require('path')
+const readline = require('readline')
 const { spawn } = require('child_process')
 
 // ----------------------------------------------------------------------------
@@ -52,6 +53,77 @@ function bareDomain(s) {
   return String(s).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '')
 }
 function nowISO() { return new Date().toISOString() }
+
+// ----------------------------------------------------------------------------
+// requirements intake — ASK THE USER FIRST.
+// Runs before any research so the pipeline matches what the operator actually
+// wants. Prompts go to stderr so stdout stays pure JSON; answers pre-fill from
+// flags already supplied; in automation (non-TTY / --yes) it is skipped and
+// flags are used instead, so unattended runs never hang.
+// ----------------------------------------------------------------------------
+const REQUIREMENTS = [
+  { key: 'engagement', q: 'Engagement — (1) qualify a NEW prospect  (2) onboard a SIGNED client', def: '1', map: (v) => (String(v).trim() === '2' ? 'onboard' : 'prospect') },
+  { key: 'domain', q: 'Target website domain (e.g. acme.ae)', required: true, map: bareDomain },
+  { key: 'market', q: 'Market / category (blank skips market research)', def: '' },
+  { key: 'geo', q: 'Primary geo country code', def: 'AE', map: (v) => String(v).toUpperCase() },
+  { key: 'lang', q: 'Languages to analyze (comma-separated)', def: 'en,ar' },
+  { key: 'goal', q: 'Primary objective (lead gen, awareness, e-commerce sales, ...)', def: '' },
+  { key: 'budget', q: 'Monthly marketing budget range in USD (e.g. 5k-15k)', def: '' },
+  { key: 'competitors', q: 'Known competitors to focus on (comma; blank = auto-discover)', def: '' },
+  { key: 'notes', q: 'Constraints / must-knows (compliance, brand no-gos)', def: '' },
+]
+
+// A single persistent line reader with a queue. Using rl.question in a loop
+// drops lines when stdin is piped (each question re-subscribes and can miss an
+// already-buffered line); one 'line' listener + a queue avoids that and works
+// identically for interactive TTYs and piped answers.
+function makeLineReader() {
+  const rl = readline.createInterface({ input: process.stdin })
+  const queue = []
+  let waiting = null
+  let closed = false
+  rl.on('line', (l) => { if (waiting) { const w = waiting; waiting = null; w(l) } else queue.push(l) })
+  rl.on('close', () => { closed = true; if (waiting) { const w = waiting; waiting = null; w(null) } })
+  return {
+    next() { return new Promise((res) => { if (queue.length) res(queue.shift()); else if (closed) res(null); else waiting = res }) },
+    close() { rl.close() },
+  }
+}
+
+async function ask(reader, question, def) {
+  const suffix = def !== undefined && def !== '' ? ` [${def}]` : ''
+  process.stderr.write(`${question}${suffix}: `)
+  const line = await reader.next()
+  return line == null ? '' : line
+}
+
+function prefillFromFlags(a, rest) {
+  const p = {}
+  const set = (k, v) => { if (v !== undefined && v !== true && v !== '') p[k] = v }
+  set('domain', a.domain || rest[0]); set('market', a.market); set('geo', a.geo)
+  set('lang', a.lang); set('goal', a.goal); set('budget', a.budget); set('notes', a.notes)
+  set('engagement', a.engagement)
+  set('competitors', a.competitors && a.competitors !== 'auto' ? a.competitors : undefined)
+  return p
+}
+
+async function runIntake(prefill) {
+  const reader = makeLineReader()
+  const req = {}
+  process.stderr.write('\n108 Media — Research intake. A few questions so research matches your requirements.\n(press enter to accept the [default])\n\n')
+  for (const f of REQUIREMENTS) {
+    if (prefill[f.key] !== undefined && prefill[f.key] !== '') { req[f.key] = f.map ? f.map(prefill[f.key]) : prefill[f.key]; continue }
+    let val = (await ask(reader, f.q, f.def)).trim()
+    if (!val && f.def !== undefined) val = f.def
+    if (f.required && !val) val = (await ask(reader, `${f.q} (required)`)).trim()
+    req[f.key] = f.map ? f.map(val) : val
+  }
+  process.stderr.write('\nRequirements collected:\n' + REQUIREMENTS.map((f) => `  ${f.key}: ${req[f.key] || '(none)'}`).join('\n') + '\n')
+  const ok = (await ask(reader, '\nProceed with research? (Y/n)')).trim().toLowerCase()
+  reader.close()
+  req._confirmed = !(ok === 'n' || ok === 'no')
+  return req
+}
 
 // ----------------------------------------------------------------------------
 // collector plan — maps the three research tracks to concrete probes.
@@ -255,6 +327,12 @@ function analysisPrompt(distilled, cfg) {
     `You are the Lead Research Analyst for 108 Media, an AI-native marketing agency in the UAE.`,
     `Analyze the structured research below for the prospect "${cfg.domain}" (market: ${cfg.market || 'unspecified'}, geo: ${cfg.geo}, languages: ${cfg.lang.join('+')}).`,
     ``,
+    `OPERATOR REQUIREMENTS (tailor every gap and the fit score to these):`,
+    `- engagement: ${cfg.engagement}`,
+    `- primary goal: ${cfg.goal || 'unspecified'}`,
+    `- monthly budget: ${cfg.budget || 'unspecified'}`,
+    `- constraints/notes: ${cfg.notes || 'none'}`,
+    ``,
     `Produce ONE JSON object, no prose, with this exact shape:`,
     `{`,
     `  "fit_score": <0-100 how good a fit for 108 Media>,`,
@@ -364,6 +442,7 @@ function writeStore(outRoot, cfg, payload) {
     languages: cfg.lang,
     market: cfg.market || null,
     depth: cfg.depth,
+    requirements: { engagement: cfg.engagement, goal: cfg.goal || null, budget: cfg.budget || null, notes: cfg.notes || null },
     status: payload.brief ? 'analyzed' : 'collected_pending_analysis',
     fitScore: payload.brief?.fit_score ?? null,
     estimatedMonthlyValueUsd: payload.brief?.estimated_monthly_value_usd ?? null,
@@ -388,18 +467,29 @@ function writeStore(outRoot, cfg, payload) {
 // ----------------------------------------------------------------------------
 // commands
 // ----------------------------------------------------------------------------
-function makeConfig() {
-  const domain = bareDomain(args.domain || rest[0] || '')
-  const competitors = args.competitors && args.competitors !== 'auto'
-    ? String(args.competitors).split(',').map(bareDomain).filter(Boolean) : []
+// Intake answers (`over`) take precedence over flags, which take precedence
+// over defaults. Fields the user isn't asked (model, out, concurrency) stay
+// flag-only.
+function makeConfig(over) {
+  over = over || {}
+  const g = (k, flag, def) => (over[k] !== undefined && over[k] !== '' ? over[k] : (flag !== undefined && flag !== true && flag !== '' ? flag : def))
+  const domain = bareDomain(over.domain || args.domain || rest[0] || '')
+  const compRaw = over.competitors !== undefined ? over.competitors : (args.competitors && args.competitors !== 'auto' ? args.competitors : '')
+  const competitors = compRaw && compRaw !== 'auto' ? String(compRaw).split(',').map(bareDomain).filter(Boolean) : []
+  const engagement = g('engagement', args.engagement, 'prospect')
+  const depthReq = over.depth || args.depth
   return {
     domain,
     competitors,
     numCompetitors: Number(args['num-competitors']) || 5,
-    market: args.market && args.market !== true ? String(args.market) : '',
-    geo: (args.geo && args.geo !== true ? String(args.geo) : 'AE').toUpperCase(),
-    lang: String(args.lang && args.lang !== true ? args.lang : 'en,ar').split(',').map((s) => s.trim()),
-    depth: args.depth === 'deepdive' ? 'deepdive' : 'prospect',
+    market: g('market', args.market, ''),
+    geo: String(g('geo', args.geo, 'AE')).toUpperCase(),
+    lang: String(g('lang', args.lang, 'en,ar')).split(',').map((s) => s.trim()).filter(Boolean),
+    depth: depthReq === 'deepdive' || engagement === 'onboard' ? 'deepdive' : 'prospect',
+    engagement,
+    goal: g('goal', args.goal, ''),
+    budget: g('budget', args.budget, ''),
+    notes: g('notes', args.notes, ''),
     model: args.model && args.model !== true ? String(args.model) : 'claude-sonnet-5',
     out: args.out && args.out !== true ? String(args.out) : 'research-store',
     noLlm: !!args['no-llm'],
@@ -408,8 +498,22 @@ function makeConfig() {
 }
 
 async function cmdRun(dry) {
-  const cfg = makeConfig()
-  if (!cfg.domain) return { error: '--domain required (e.g. --domain acme.ae)' }
+  // ASK THE USER FIRST. Interactive intake runs before any research unless the
+  // caller opted out (--yes / --non-interactive), supplied a saved requirements
+  // file, or isn't on a TTY (automation). Skipped for dry-run previews.
+  let intake = null
+  if (args['from-requirements']) {
+    try { intake = JSON.parse(fs.readFileSync(String(args['from-requirements']), 'utf-8')) }
+    catch (e) { return { error: `could not read --from-requirements: ${e.message}` } }
+  }
+  const wantInteractive = !dry && !intake && (!!args.interactive || (!args.yes && !args['non-interactive'] && process.stdin.isTTY))
+  if (wantInteractive) {
+    intake = await runIntake(prefillFromFlags(args, rest))
+    if (!intake._confirmed) return { aborted: true, reason: 'requirements not confirmed — no research run' }
+  }
+
+  const cfg = makeConfig(intake || {})
+  if (!cfg.domain) return { error: '--domain required — run interactively, pass --domain, or --from-requirements <file>' }
   const probes = buildPlan(cfg)
 
   if (dry || args['dry-run']) {
@@ -470,6 +574,21 @@ async function cmdRun(dry) {
   }
 }
 
+async function cmdIntake() {
+  const intake = await runIntake(prefillFromFlags(args, rest))
+  const cfg = makeConfig(intake)
+  const out = args.save && args.save !== true
+    ? String(args.save)
+    : path.join(cfg.out, slugify(cfg.domain || 'requirements'), 'requirements.json')
+  fs.mkdirSync(path.dirname(out), { recursive: true })
+  fs.writeFileSync(out, JSON.stringify({ ...intake, savedAt: nowISO() }, null, 2))
+  return {
+    command: 'intake', confirmed: intake._confirmed, saved: out,
+    requirements: { domain: cfg.domain, engagement: cfg.engagement, market: cfg.market || null, geo: cfg.geo, goal: cfg.goal || null, budget: cfg.budget || null },
+    next: `node tools/clis/research-agent.js run --from-requirements ${out}`,
+  }
+}
+
 function cmdStatus() {
   const cfg = makeConfig()
   const root = cfg.out
@@ -491,10 +610,12 @@ function cmdStatus() {
 const USAGE = {
   tool: 'research-agent — Layer 1 Research orchestrator (Step 1 of the 108 Media Agency OS)',
   commands: {
-    run: 'run --domain <d> [--market "<category>"] [--geo AE] [--lang en,ar] [--competitors auto|c1,c2] [--num-competitors 5] [--depth prospect|deepdive] [--model claude-sonnet-5] [--out research-store] [--no-llm] [--dry-run]',
+    intake: 'intake [--save <file>]   (ASK FIRST: interview the operator for requirements, save requirements.json)',
+    run: 'run [--domain <d>] [--market "<category>"] [--geo AE] [--lang en,ar] [--goal <g>] [--budget <b>] [--engagement prospect|onboard] [--competitors auto|c1,c2] [--depth prospect|deepdive] [--model claude-sonnet-5] [--out research-store] [--from-requirements <file>] [--interactive|--yes] [--no-llm] [--dry-run]',
     plan: 'plan --domain <d> ...   (alias for run --dry-run: shows probes + readiness without calling anything)',
     status: 'status [--domain <d>] [--out research-store]   (list Research Store prospects, ranked by fit — what Step 2 polls)',
   },
+  intakeNote: 'By default `run` on a terminal ASKS the operator for requirements first (engagement, target, market, goal, budget, competitors, constraints), then confirms before spending any API calls. Use --yes / --non-interactive (or --from-requirements) for unattended automation; flags pre-fill answers so you are only asked what is missing.',
   pipeline: 'collect (customer+competitor+market via ahrefs/semrush/similarweb/dataforseo/exa/firecrawl) -> filter -> distill -> analyze (Claude or prompt pack) -> Research Store',
   output: 'research-store/<domain>/{RESEARCH_STORE.json, brief.json, brief.md, gap-matrix.md, distilled.json, raw.json}',
   envKeys: 'FIRECRAWL_API_KEY, AHREFS_API_KEY, SEMRUSH_API_KEY, SIMILARWEB_API_KEY, DATAFORSEO_LOGIN+DATAFORSEO_PASSWORD, EXA_API_KEY, ANTHROPIC_API_KEY. Missing keys skip that probe; the run still produces a store.',
@@ -504,6 +625,7 @@ const USAGE = {
 async function main() {
   let result
   switch (cmd) {
+    case 'intake': result = await cmdIntake(); break
     case 'run': result = await cmdRun(false); break
     case 'plan': result = await cmdRun(true); break
     case 'status': result = cmdStatus(); break

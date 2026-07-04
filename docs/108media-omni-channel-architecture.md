@@ -92,6 +92,17 @@ dive on contract signature, refresh when optimization detects drift). All
 scraping in the system lives in this layer, behind the Policy Engine's
 scraping rails.
 
+**Requirements intake first.** Before any scraping, the research runner asks
+the operator what this engagement needs — new prospect vs signed client,
+target, market, geo, languages, primary goal, budget, known competitors,
+constraints — and confirms before spending an API call. Those requirements
+steer collection depth and tailor the Opportunity Brief (gaps and fit score
+are scored against the stated goal and budget, not in the abstract). In
+scheduled/unattended runs the intake is supplied as saved requirements rather
+than asked live. This is the operator's steering input, not a per-asset
+approval gate. Implemented by `tools/clis/research-agent.js`
+(`intake` / `run`).
+
 **Collection stack** (shared by all three tracks):
 
 - **Firecrawl** — any site → clean LLM-ready markdown; handles JS rendering

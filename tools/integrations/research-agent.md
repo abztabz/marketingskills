@@ -26,12 +26,39 @@ Every collector degrades gracefully: a missing API key or a failed probe is
 recorded in `collection.droppedDetail` and skipped. The run always produces a
 Research Store, even with zero keys (status `collected_pending_analysis`).
 
+## Requirements intake — it asks you first
+
+On a terminal, `run` **interviews the operator before any research** so the
+pipeline matches what you actually want, then confirms before spending a single
+API call. Questions: engagement (new prospect vs signed client), target domain,
+market, geo, languages, primary goal, budget, competitors, constraints. Answers
+flow into the config, the Opportunity Brief analysis (so gaps and fit score are
+tailored to the stated goal/budget), and the Research Store manifest.
+
+- Prompts print to **stderr**; stdout stays pure JSON (safe to pipe).
+- Flags **pre-fill** answers — you're only asked what's missing.
+- Automation never hangs: with `--yes` / `--non-interactive`, or when stdin
+  isn't a TTY, it skips the interview and uses flags.
+- `--engagement onboard` (or answering "2") implies `--depth deepdive`.
+
+```bash
+# Interview only, save reusable requirements.json
+node tools/clis/research-agent.js intake --save reqs.json
+
+# Run from a saved intake (no questions asked)
+node tools/clis/research-agent.js run --from-requirements reqs.json
+```
+
 ## Commands
 
 ```bash
-# Full run for one prospect
-node tools/clis/research-agent.js run \
-  --domain acme.ae --market "specialty coffee" --geo AE --lang en,ar
+# Interactive on a terminal: asks requirements first, then runs
+node tools/clis/research-agent.js run
+
+# Unattended: pass everything as flags, skip the interview
+node tools/clis/research-agent.js run --yes \
+  --domain acme.ae --market "specialty coffee" --geo AE --lang en,ar \
+  --goal "lead gen" --budget "5k-15k"
 
 # Preview the probe plan + key readiness without calling anything
 node tools/clis/research-agent.js plan --domain acme.ae --market "coffee"
