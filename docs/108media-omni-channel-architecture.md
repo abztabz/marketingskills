@@ -94,14 +94,19 @@ scraping rails.
 
 **Requirements intake first.** Before any scraping, the research runner asks
 the operator what this engagement needs — new prospect vs signed client,
-target, market, geo, languages, primary goal, budget, known competitors,
+target, industry, market, geo, languages, primary goal, budget, known
+competitors, **what to explicitly skip** ("do not waste time researching"),
 constraints — and confirms before spending an API call. Those requirements
-steer collection depth and tailor the Opportunity Brief (gaps and fit score
-are scored against the stated goal and budget, not in the abstract). In
-scheduled/unattended runs the intake is supplied as saved requirements rather
-than asked live. This is the operator's steering input, not a per-asset
-approval gate. Implemented by `tools/clis/research-agent.js`
-(`intake` / `run`).
+steer collection depth and scope (excluded tracks, domains, or topics are cut
+from the plan before a single call fires) and tailor the Opportunity Brief
+(gaps and fit score are scored against the stated goal and budget, not in the
+abstract). In scheduled/unattended runs the intake is supplied as saved
+requirements rather than asked live. Every confirmed answer set is logged,
+append-only, to the client's own memory folder (`clients/<domain>/` —
+`client-info.md`, `intake-log.jsonl`), separate from that run's research
+output, so nothing an operator has said about a client is ever lost across
+sessions. This is the operator's steering input, not a per-asset approval
+gate. Implemented by `tools/clis/research-agent.js` (`intake` / `run`).
 
 **Collection stack** (shared by all three tracks):
 

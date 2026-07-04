@@ -64,12 +64,14 @@ function nowISO() { return new Date().toISOString() }
 const REQUIREMENTS = [
   { key: 'engagement', q: 'Engagement — (1) qualify a NEW prospect  (2) onboard a SIGNED client', def: '1', map: (v) => (String(v).trim() === '2' ? 'onboard' : 'prospect') },
   { key: 'domain', q: 'Target website domain (e.g. acme.ae)', required: true, map: bareDomain },
-  { key: 'market', q: 'Market / category (blank skips market research)', def: '' },
+  { key: 'industry', q: 'Industry (e.g. hospitality, real estate, F&B, healthcare)', def: '' },
+  { key: 'market', q: 'Market / category — more specific than industry (blank = use industry)', def: '' },
   { key: 'geo', q: 'Primary geo country code', def: 'AE', map: (v) => String(v).toUpperCase() },
   { key: 'lang', q: 'Languages to analyze (comma-separated)', def: 'en,ar' },
   { key: 'goal', q: 'Primary objective (lead gen, awareness, e-commerce sales, ...)', def: '' },
   { key: 'budget', q: 'Monthly marketing budget range in USD (e.g. 5k-15k)', def: '' },
   { key: 'competitors', q: 'Known competitors to focus on (comma; blank = auto-discover)', def: '' },
+  { key: 'exclusions', q: 'Do NOT waste time researching (track names like "competitor"/"market", specific domains, or topics — comma-separated; blank = research everything)', def: '' },
   { key: 'notes', q: 'Constraints / must-knows (compliance, brand no-gos)', def: '' },
 ]
 
@@ -100,11 +102,26 @@ async function ask(reader, question, def) {
 function prefillFromFlags(a, rest) {
   const p = {}
   const set = (k, v) => { if (v !== undefined && v !== true && v !== '') p[k] = v }
-  set('domain', a.domain || rest[0]); set('market', a.market); set('geo', a.geo)
+  set('domain', a.domain || rest[0]); set('industry', a.industry); set('market', a.market); set('geo', a.geo)
   set('lang', a.lang); set('goal', a.goal); set('budget', a.budget); set('notes', a.notes)
   set('engagement', a.engagement)
   set('competitors', a.competitors && a.competitors !== 'auto' ? a.competitors : undefined)
+  set('exclusions', a.exclude || a.exclusions)
   return p
+}
+
+// "Do not waste time researching" — parsed into: track/probe keywords to skip
+// entirely, and specific competitor domains to never probe. A token that looks
+// like a domain (contains a dot, no spaces) is treated as a domain; everything
+// else is a keyword matched against "<track> <label>" substrings in the plan.
+function parseExclusions(raw, targetDomain) {
+  const tokens = String(raw || '').split(',').map((t) => t.trim()).filter(Boolean)
+  const domains = [], keywords = []
+  for (const t of tokens) {
+    if (/\./.test(t) && !/\s/.test(t)) domains.push(bareDomain(t))
+    else keywords.push(t.toLowerCase())
+  }
+  return { raw: tokens, domains: domains.filter((d) => d !== targetDomain), keywords }
 }
 
 async function runIntake(prefill) {
@@ -131,6 +148,11 @@ async function runIntake(prefill) {
 // kind 'cli'      -> spawn a sibling CLI (process.execPath sibling.js ...argv)
 // kind 'firecrawl'-> inline Firecrawl map+scrape
 // kind 'exa'      -> spawn exa.js (competitor discovery / market trends)
+//
+// Returns { probes, excluded }: probes the plan will actually run, and the
+// ones the operator's "do not waste time researching" exclusions cut before a
+// single API call — so excluded tracks/domains/topics cost nothing, not just
+// get discarded after the fact.
 // ----------------------------------------------------------------------------
 function buildPlan(cfg) {
   const D = cfg.domain
@@ -157,13 +179,25 @@ function buildPlan(cfg) {
     }
   }
 
-  // --- Track C: Market research ---
-  if (cfg.market) {
-    probes.push({ track: 'market', label: 'demand-volume', kind: 'cli', tool: 'dataforseo', argv: ['keywords', 'volume', 'for-keywords', '--keywords', cfg.market, '--location', geo], needs: ['DATAFORSEO_LOGIN', 'DATAFORSEO_PASSWORD'] })
-    probes.push({ track: 'market', label: 'trends-press', kind: 'cli', tool: 'exa', argv: ['search', '--query', `${cfg.market} marketing trends ${geo} ${new Date().getFullYear()}`, '--num', '6', '--summary'], needs: ['EXA_API_KEY'] })
+  // --- Track C: Market research (runs on market, falling back to industry) ---
+  if (cfg.marketQuery) {
+    probes.push({ track: 'market', label: 'demand-volume', kind: 'cli', tool: 'dataforseo', argv: ['keywords', 'volume', 'for-keywords', '--keywords', cfg.marketQuery, '--location', geo], needs: ['DATAFORSEO_LOGIN', 'DATAFORSEO_PASSWORD'] })
+    probes.push({ track: 'market', label: 'trends-press', kind: 'cli', tool: 'exa', argv: ['search', '--query', `${cfg.marketQuery} marketing trends ${geo} ${new Date().getFullYear()}`, '--num', '6', '--summary'], needs: ['EXA_API_KEY'] })
   }
 
-  return probes
+  // --- apply "do not waste time researching" exclusions before anything runs ---
+  const excl = cfg.exclusions || { domains: [], keywords: [] }
+  const isExcluded = (p) => {
+    if (p.rival) return excl.domains.includes(p.rival)
+    const hay = `${p.track} ${p.label}`.toLowerCase()
+    return excl.keywords.some((k) => hay.includes(k))
+  }
+  const kept = [], excluded = []
+  for (const p of probes) {
+    if (isExcluded(p)) excluded.push({ track: p.track, label: p.label, tool: p.tool || p.kind, reason: 'operator exclusion' })
+    else kept.push(p)
+  }
+  return { probes: kept, excluded }
 }
 
 // ----------------------------------------------------------------------------
@@ -323,15 +357,20 @@ function distill(kept, cfg) {
 // analyze -> Opportunity Brief (frontier model, or emit a prompt pack)
 // ----------------------------------------------------------------------------
 function analysisPrompt(distilled, cfg) {
+  const requirementLines = [
+    `OPERATOR REQUIREMENTS (tailor every gap and the fit score to these):`,
+    `- engagement: ${cfg.engagement}`,
+    `- industry: ${cfg.industry || 'unspecified'}`,
+    `- primary goal: ${cfg.goal || 'unspecified'}`,
+    `- monthly budget: ${cfg.budget || 'unspecified'}`,
+    `- constraints/notes: ${cfg.notes || 'none'}`,
+  ]
+  if (cfg.exclusions.raw.length) requirementLines.push(`- DO NOT spend analysis on (operator marked as a waste of time): ${cfg.exclusions.raw.join(', ')}`)
   return [
     `You are the Lead Research Analyst for 108 Media, an AI-native marketing agency in the UAE.`,
     `Analyze the structured research below for the prospect "${cfg.domain}" (market: ${cfg.market || 'unspecified'}, geo: ${cfg.geo}, languages: ${cfg.lang.join('+')}).`,
     ``,
-    `OPERATOR REQUIREMENTS (tailor every gap and the fit score to these):`,
-    `- engagement: ${cfg.engagement}`,
-    `- primary goal: ${cfg.goal || 'unspecified'}`,
-    `- monthly budget: ${cfg.budget || 'unspecified'}`,
-    `- constraints/notes: ${cfg.notes || 'none'}`,
+    ...requirementLines,
     ``,
     `Produce ONE JSON object, no prose, with this exact shape:`,
     `{`,
@@ -422,7 +461,7 @@ function renderGapMatrix(distilled) {
   return `# Gap Matrix — ${distilled.domain}\n\n${rows.join('\n')}\n`
 }
 
-function writeStore(outRoot, cfg, payload) {
+function writeStore(outRoot, cfg, payload, clientInfoPath) {
   const slug = slugify(cfg.domain)
   const dir = path.join(outRoot, slug)
   fs.mkdirSync(dir, { recursive: true })
@@ -441,8 +480,13 @@ function writeStore(outRoot, cfg, payload) {
     geo: cfg.geo,
     languages: cfg.lang,
     market: cfg.market || null,
+    industry: cfg.industry || null,
     depth: cfg.depth,
-    requirements: { engagement: cfg.engagement, goal: cfg.goal || null, budget: cfg.budget || null, notes: cfg.notes || null },
+    requirements: {
+      engagement: cfg.engagement, industry: cfg.industry || null, goal: cfg.goal || null,
+      budget: cfg.budget || null, exclusions: cfg.exclusions.raw, notes: cfg.notes || null,
+    },
+    clientInfo: clientInfoPath,
     status: payload.brief ? 'analyzed' : 'collected_pending_analysis',
     fitScore: payload.brief?.fit_score ?? null,
     estimatedMonthlyValueUsd: payload.brief?.estimated_monthly_value_usd ?? null,
@@ -465,6 +509,56 @@ function writeStore(outRoot, cfg, payload) {
 }
 
 // ----------------------------------------------------------------------------
+// client info document — persists the intake answers in the client's own
+// memory folder (clients/<slug>/), matching the Layer 0 per-client memory
+// convention (brand-dna.md, learnings.jsonl, ...) described in
+// docs/108media-omni-channel-architecture.md. Distinct from research-store/:
+// that's this run's research output; this is durable client memory that
+// outlives any one run and that every layer downstream can read.
+// ----------------------------------------------------------------------------
+function renderClientInfoMd(entry, history) {
+  const lines = [
+    `# Client Info — ${entry.domain}`, '', `_Last updated ${entry.at}_`, '',
+    `| Field | Value |`, `|---|---|`,
+    `| Engagement | ${entry.engagement} |`,
+    `| Industry | ${entry.industry || '—'} |`,
+    `| Market / category | ${entry.market || '—'} |`,
+    `| Geo | ${entry.geo} |`,
+    `| Languages | ${entry.languages.join(', ')} |`,
+    `| Goal | ${entry.goal || '—'} |`,
+    `| Budget | ${entry.budget || '—'} |`,
+    `| Known competitors | ${entry.competitors.length ? entry.competitors.join(', ') : 'auto-discover'} |`,
+    `| Do-not-research | ${entry.exclusions.length ? entry.exclusions.join(', ') : '—'} |`,
+    `| Notes / constraints | ${entry.notes || '—'} |`,
+  ]
+  if (history.length > 1) {
+    lines.push('', `## Intake history (${history.length} logged)`, '', `| At | Engagement | Goal | Budget |`, `|---|---|---|---|`)
+    for (const h of history.slice(-10)) lines.push(`| ${h.at} | ${h.engagement} | ${h.goal || '—'} | ${h.budget || '—'} |`)
+  }
+  lines.push('', 'Machine-readable snapshot: `client-info.json`. Full append-only log: `intake-log.jsonl`.')
+  return lines.join('\n')
+}
+
+function logClientInfo(cfg) {
+  const dir = path.join(cfg.clientsDir, slugify(cfg.domain))
+  fs.mkdirSync(dir, { recursive: true })
+  const entry = {
+    at: nowISO(), domain: cfg.domain, engagement: cfg.engagement, industry: cfg.industry || null,
+    market: cfg.market || null, geo: cfg.geo, languages: cfg.lang, goal: cfg.goal || null,
+    budget: cfg.budget || null, competitors: cfg.competitors, exclusions: cfg.exclusions.raw,
+    notes: cfg.notes || null,
+  }
+  const logFile = path.join(dir, 'intake-log.jsonl')
+  fs.appendFileSync(logFile, JSON.stringify(entry) + '\n') // append-only, mirrors learnings.jsonl
+  fs.writeFileSync(path.join(dir, 'client-info.json'), JSON.stringify(entry, null, 2)) // latest snapshot
+  let history = [entry]
+  try { history = fs.readFileSync(logFile, 'utf-8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)) } catch { /* first entry */ }
+  const mdPath = path.join(dir, 'client-info.md')
+  fs.writeFileSync(mdPath, renderClientInfoMd(entry, history))
+  return mdPath
+}
+
+// ----------------------------------------------------------------------------
 // commands
 // ----------------------------------------------------------------------------
 // Intake answers (`over`) take precedence over flags, which take precedence
@@ -478,20 +572,28 @@ function makeConfig(over) {
   const competitors = compRaw && compRaw !== 'auto' ? String(compRaw).split(',').map(bareDomain).filter(Boolean) : []
   const engagement = g('engagement', args.engagement, 'prospect')
   const depthReq = over.depth || args.depth
+  const industry = g('industry', args.industry, '')
+  const market = g('market', args.market, '')
+  const exclusionsRaw = g('exclusions', args.exclude || args.exclusions, '')
   return {
     domain,
     competitors,
     numCompetitors: Number(args['num-competitors']) || 5,
-    market: g('market', args.market, ''),
+    industry,
+    market,
+    marketQuery: market || industry, // Track C runs on whichever is given; market wins if both are
     geo: String(g('geo', args.geo, 'AE')).toUpperCase(),
     lang: String(g('lang', args.lang, 'en,ar')).split(',').map((s) => s.trim()).filter(Boolean),
     depth: depthReq === 'deepdive' || engagement === 'onboard' ? 'deepdive' : 'prospect',
     engagement,
     goal: g('goal', args.goal, ''),
     budget: g('budget', args.budget, ''),
+    exclusionsRaw,
+    exclusions: parseExclusions(exclusionsRaw, domain),
     notes: g('notes', args.notes, ''),
     model: args.model && args.model !== true ? String(args.model) : 'claude-sonnet-5',
     out: args.out && args.out !== true ? String(args.out) : 'research-store',
+    clientsDir: args['clients-dir'] && args['clients-dir'] !== true ? String(args['clients-dir']) : 'clients',
     noLlm: !!args['no-llm'],
     concurrency: args.concurrency,
   }
@@ -514,16 +616,22 @@ async function cmdRun(dry) {
 
   const cfg = makeConfig(intake || {})
   if (!cfg.domain) return { error: '--domain required — run interactively, pass --domain, or --from-requirements <file>' }
-  const probes = buildPlan(cfg)
+  const { probes, excluded } = buildPlan(cfg)
 
   if (dry || args['dry-run']) {
     return {
-      command: 'run', mode: 'dry-run', target: cfg.domain, geo: cfg.geo, market: cfg.market || null,
+      command: 'run', mode: 'dry-run', target: cfg.domain, industry: cfg.industry || null, geo: cfg.geo, market: cfg.market || null,
       depth: cfg.depth, willAnalyzeWith: cfg.noLlm ? 'prompt-pack (no LLM)' : (process.env.ANTHROPIC_API_KEY ? cfg.model : 'prompt-pack (no ANTHROPIC_API_KEY)'),
       probes: probes.map((p) => ({ track: p.track, label: p.label, tool: p.tool || p.kind, needs: p.needs, ready: envReady(p.needs) })),
+      excludedByOperator: excluded,
       output: path.join(cfg.out, slugify(cfg.domain)) + '/',
     }
   }
+
+  // Log the operator's answers to the client's persistent info document —
+  // every real run, not just interactive ones, so client memory accumulates
+  // even from unattended/scheduled runs.
+  const clientInfoPath = logClientInfo(cfg)
 
   const raw = await collect(probes, { concurrency: cfg.concurrency })
   const { kept, dropped } = filterResults(raw)
@@ -531,8 +639,11 @@ async function cmdRun(dry) {
 
   // If competitors were auto-discovered and none were passed in, do a second
   // lite pass on the top discovered rivals so the gap matrix isn't empty.
+  // Operator-excluded domains never get this second pass either.
   if (!cfg.competitors.length && distilled.competitor.discovered.length) {
-    const top = distilled.competitor.discovered.slice(0, Math.min(3, cfg.numCompetitors))
+    const top = distilled.competitor.discovered
+      .filter((d) => !cfg.exclusions.domains.includes(d))
+      .slice(0, Math.min(3, cfg.numCompetitors))
     const extra = []
     for (const c of top) extra.push({ track: 'competitor', label: `rival-dr:${c}`, kind: 'cli', tool: 'ahrefs', argv: ['domain-rating', 'get', '--target', c], needs: ['AHREFS_API_KEY'], rival: c })
     const more = await collect(extra, { concurrency: cfg.concurrency })
@@ -554,7 +665,7 @@ async function cmdRun(dry) {
 
   const collectionSummary = {
     probes: probes.length, ok: kept.length, dropped: dropped.length,
-    droppedDetail: dropped,
+    droppedDetail: dropped, excludedByOperator: excluded,
   }
   const payload = {
     raw, distilled, brief, signal, promptPack,
@@ -562,9 +673,9 @@ async function cmdRun(dry) {
     gapMatrix: renderGapMatrix(distilled),
     collectionSummary,
   }
-  const { dir, manifest } = writeStore(cfg.out, cfg, payload)
+  const { dir, manifest } = writeStore(cfg.out, cfg, payload, clientInfoPath)
   return {
-    command: 'run', target: cfg.domain, store: dir + '/',
+    command: 'run', target: cfg.domain, store: dir + '/', clientInfo: clientInfoPath,
     status: manifest.status, readyForStep2: manifest.readyForStep2,
     fitScore: manifest.fitScore, topGaps: manifest.topGaps,
     collected: collectionSummary, signal,
@@ -582,9 +693,14 @@ async function cmdIntake() {
     : path.join(cfg.out, slugify(cfg.domain || 'requirements'), 'requirements.json')
   fs.mkdirSync(path.dirname(out), { recursive: true })
   fs.writeFileSync(out, JSON.stringify({ ...intake, savedAt: nowISO() }, null, 2))
+  const clientInfoPath = intake._confirmed && cfg.domain ? logClientInfo(cfg) : null
   return {
-    command: 'intake', confirmed: intake._confirmed, saved: out,
-    requirements: { domain: cfg.domain, engagement: cfg.engagement, market: cfg.market || null, geo: cfg.geo, goal: cfg.goal || null, budget: cfg.budget || null },
+    command: 'intake', confirmed: intake._confirmed, saved: out, clientInfo: clientInfoPath,
+    requirements: {
+      domain: cfg.domain, engagement: cfg.engagement, industry: cfg.industry || null,
+      market: cfg.market || null, geo: cfg.geo, goal: cfg.goal || null, budget: cfg.budget || null,
+      exclusions: cfg.exclusions.raw,
+    },
     next: `node tools/clis/research-agent.js run --from-requirements ${out}`,
   }
 }
@@ -610,12 +726,13 @@ function cmdStatus() {
 const USAGE = {
   tool: 'research-agent — Layer 1 Research orchestrator (Step 1 of the 108 Media Agency OS)',
   commands: {
-    intake: 'intake [--save <file>]   (ASK FIRST: interview the operator for requirements, save requirements.json)',
-    run: 'run [--domain <d>] [--market "<category>"] [--geo AE] [--lang en,ar] [--goal <g>] [--budget <b>] [--engagement prospect|onboard] [--competitors auto|c1,c2] [--depth prospect|deepdive] [--model claude-sonnet-5] [--out research-store] [--from-requirements <file>] [--interactive|--yes] [--no-llm] [--dry-run]',
-    plan: 'plan --domain <d> ...   (alias for run --dry-run: shows probes + readiness without calling anything)',
+    intake: 'intake [--save <file>]   (ASK FIRST: interview the operator for requirements, log to clients/<domain>/, save requirements.json)',
+    run: 'run [--domain <d>] [--industry "<industry>"] [--market "<category>"] [--geo AE] [--lang en,ar] [--goal <g>] [--budget <b>] [--engagement prospect|onboard] [--competitors auto|c1,c2] [--exclude "<tracks/domains/topics>"] [--depth prospect|deepdive] [--model claude-sonnet-5] [--out research-store] [--clients-dir clients] [--from-requirements <file>] [--interactive|--yes] [--no-llm] [--dry-run]',
+    plan: 'plan --domain <d> ...   (alias for run --dry-run: shows probes + readiness, INCLUDING what --exclude cut, without calling anything)',
     status: 'status [--domain <d>] [--out research-store]   (list Research Store prospects, ranked by fit — what Step 2 polls)',
   },
-  intakeNote: 'By default `run` on a terminal ASKS the operator for requirements first (engagement, target, market, goal, budget, competitors, constraints), then confirms before spending any API calls. Use --yes / --non-interactive (or --from-requirements) for unattended automation; flags pre-fill answers so you are only asked what is missing.',
+  intakeNote: 'By default `run` on a terminal ASKS the operator for requirements first (engagement, target, industry, market, goal, budget, competitors, exclusions, constraints), then confirms before spending any API calls. Use --yes / --non-interactive (or --from-requirements) for unattended automation; flags pre-fill answers so you are only asked what is missing. Every confirmed answer set is logged (append-only) to clients/<domain>/intake-log.jsonl and snapshotted to client-info.md/.json — durable client memory, separate from the per-run research-store output.',
+  exclusionsNote: '--exclude (or the "do not waste time researching" intake question) takes comma-separated track names ("competitor", "market"), specific competitor domains, or free-text topics. Matching probes are cut from the plan before any API call is made (see excludedByOperator in `plan`/`run` output) and excluded topics are also flagged to the analysis model so it does not spend brief slots on them.',
   pipeline: 'collect (customer+competitor+market via ahrefs/semrush/similarweb/dataforseo/exa/firecrawl) -> filter -> distill -> analyze (Claude or prompt pack) -> Research Store',
   output: 'research-store/<domain>/{RESEARCH_STORE.json, brief.json, brief.md, gap-matrix.md, distilled.json, raw.json}',
   envKeys: 'FIRECRAWL_API_KEY, AHREFS_API_KEY, SEMRUSH_API_KEY, SIMILARWEB_API_KEY, DATAFORSEO_LOGIN+DATAFORSEO_PASSWORD, EXA_API_KEY, ANTHROPIC_API_KEY. Missing keys skip that probe; the run still produces a store.',

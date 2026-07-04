@@ -31,15 +31,39 @@ Research Store, even with zero keys (status `collected_pending_analysis`).
 On a terminal, `run` **interviews the operator before any research** so the
 pipeline matches what you actually want, then confirms before spending a single
 API call. Questions: engagement (new prospect vs signed client), target domain,
-market, geo, languages, primary goal, budget, competitors, constraints. Answers
-flow into the config, the Opportunity Brief analysis (so gaps and fit score are
-tailored to the stated goal/budget), and the Research Store manifest.
+**industry**, market, geo, languages, primary goal, budget, competitors, **what
+NOT to waste time researching**, constraints. Answers flow into the config,
+the Opportunity Brief analysis (so gaps and fit score are tailored to the
+stated goal/budget), and the Research Store manifest.
 
 - Prompts print to **stderr**; stdout stays pure JSON (safe to pipe).
 - Flags **pre-fill** answers — you're only asked what's missing.
 - Automation never hangs: with `--yes` / `--non-interactive`, or when stdin
   isn't a TTY, it skips the interview and uses flags.
 - `--engagement onboard` (or answering "2") implies `--depth deepdive`.
+- **Every confirmed answer set is logged** — see "Client Info Document" below.
+
+### Industry vs Market
+
+`--industry` is the broad classification (hospitality, real estate, F&B).
+`--market` is a narrower category within it (boutique hotels in Dubai Marina).
+Leave `--market` blank and Track C (market research) runs on `--industry`
+instead — you don't have to fill in both.
+
+### "Do not waste time researching"
+
+`--exclude` (or the matching intake question) takes a comma-separated list of:
+
+- **track names** — `competitor`, `market` (or any word matching a probe's
+  track/label, e.g. `traffic`, `seo`) — cuts every matching probe from the
+  plan **before a single API call is made**
+- **specific competitor domains** — e.g. `rival.ae` — skips just that rival's
+  probes, whether passed via `--competitors` or auto-discovered
+- **free-text topics** — anything else is passed to the analysis model as an
+  explicit "don't spend brief slots on this"
+
+Run `plan` to see exactly what got cut, with reasons, in `excludedByOperator`
+— before any research spends a cent.
 
 ```bash
 # Interview only, save reusable requirements.json
@@ -72,14 +96,19 @@ node tools/clis/research-agent.js status
 | Flag | Default | Meaning |
 |------|---------|---------|
 | `--domain <d>` | required | Target domain (prospect or client) |
-| `--market "<category>"` | — | Enables Track C (market demand + trends) |
+| `--industry "<industry>"` | — | Broad category; used for Track C if `--market` is blank |
+| `--market "<category>"` | — | Narrower category; enables Track C (market demand + trends) |
 | `--geo <CC>` | `AE` | Geo for demand/benchmarks |
 | `--lang <en,ar>` | `en,ar` | Languages the analysis reasons about |
+| `--goal <g>` | — | Primary objective; tailors the Opportunity Brief |
+| `--budget <b>` | — | Monthly budget range; tailors the Opportunity Brief |
 | `--competitors auto\|c1,c2` | `auto` | Pass explicit rivals or auto-discover |
+| `--exclude "<...>"` | — | "Do not waste time researching" — see above |
 | `--num-competitors <n>` | `5` | How many lookalikes to discover |
 | `--depth prospect\|deepdive` | `prospect` | `deepdive` adds per-rival traffic probes |
 | `--model <id>` | `claude-sonnet-5` | Analyze model (use an Opus-class id for depth) |
-| `--out <dir>` | `research-store` | Store root |
+| `--out <dir>` | `research-store` | Research Store root (this run's output) |
+| `--clients-dir <dir>` | `clients` | Client Info Document root (durable client memory) |
 | `--no-llm` | off | Skip the LLM; emit `analysis-prompt.md` instead |
 | `--dry-run` | off | Same as `plan` |
 
@@ -127,6 +156,26 @@ node tools/clis/research-agent.js status --domain acme.ae
 When `readyForStep2` is `false` (no LLM key at run time), run the emitted
 `analysis-prompt.md` through a frontier model, write `brief.json`, and flip
 `readyForStep2` to `true`.
+
+## Client Info Document — durable memory, separate from the Research Store
+
+Every confirmed intake (interactive, `--from-requirements`, or the `intake`
+command) is logged to the client's own memory folder — this is durable, cross-run
+memory, distinct from `research-store/` which is this run's research output:
+
+```
+clients/<domain>/
+├── client-info.md      # human-readable latest snapshot
+├── client-info.json    # machine-readable latest snapshot
+└── intake-log.jsonl    # append-only: every confirmed intake, timestamped
+```
+
+This mirrors the Layer 0 per-client memory convention in
+`docs/108media-omni-channel-architecture.md` (`brand-dna.md`,
+`learnings.jsonl`, ...) — `intake-log.jsonl` never overwrites, only appends,
+so nothing an operator has ever said about a client is lost, even across
+scheduled/unattended runs. `RESEARCH_STORE.json.clientInfo` points back to
+the `client-info.md` for that domain.
 
 ## Related
 
