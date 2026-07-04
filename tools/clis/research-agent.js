@@ -45,14 +45,18 @@ function parseArgs(argv) {
 const args = parseArgs(process.argv.slice(2))
 const [cmd, ...rest] = args._
 
-function slugify(s) {
-  return String(s).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
-    .replace(/[^a-z0-9.-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
-}
-function bareDomain(s) {
-  return String(s).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '')
-}
+function hostOnly(s) { return String(s).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '') }
+function slugify(s) { return hostOnly(s).replace(/[^a-z0-9.-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') }
+function bareDomain(s) { return hostOnly(s).replace(/^www\./, '') }
 function nowISO() { return new Date().toISOString() }
+
+// A CLI flag counts as "set" only when it carries a real string value — a
+// bare `--flag` (no value) parses to `true`, and an explicit empty string
+// means "no override." Centralizing the check so every flag site (prefill,
+// config precedence, model/out/clients-dir/save) applies the same rule.
+function flagStr(v, def) {
+  return (v !== undefined && v !== true && v !== '') ? String(v) : def
+}
 
 // ----------------------------------------------------------------------------
 // requirements intake — ASK THE USER FIRST.
@@ -101,7 +105,7 @@ async function ask(reader, question, def) {
 
 function prefillFromFlags(a, rest) {
   const p = {}
-  const set = (k, v) => { if (v !== undefined && v !== true && v !== '') p[k] = v }
+  const set = (k, v) => { const s = flagStr(v, undefined); if (s !== undefined) p[k] = s }
   set('domain', a.domain || rest[0]); set('industry', a.industry); set('market', a.market); set('geo', a.geo)
   set('lang', a.lang); set('goal', a.goal); set('budget', a.budget); set('notes', a.notes)
   set('engagement', a.engagement)
@@ -154,6 +158,12 @@ async function runIntake(prefill) {
 // single API call — so excluded tracks/domains/topics cost nothing, not just
 // get discarded after the fact.
 // ----------------------------------------------------------------------------
+// The one probe shape used both in the initial plan (known competitors) and
+// the second-pass auto-discovery follow-up in cmdRun.
+function rivalDrProbe(c) {
+  return { track: 'competitor', label: `rival-dr:${c}`, kind: 'cli', tool: 'ahrefs', argv: ['domain-rating', 'get', '--target', c], needs: ['AHREFS_API_KEY'], rival: c }
+}
+
 function buildPlan(cfg) {
   const D = cfg.domain
   const geo = cfg.geo
@@ -173,7 +183,7 @@ function buildPlan(cfg) {
   probes.push({ track: 'competitor', label: 'competitors-semrush', kind: 'cli', tool: 'semrush', argv: ['domain', 'competitors', '--domain', D], needs: ['SEMRUSH_API_KEY'] })
   probes.push({ track: 'competitor', label: 'competitors-lookalike', kind: 'cli', tool: 'exa', argv: ['find-similar', '--url', 'https://' + D, '--num', String(cfg.numCompetitors)], needs: ['EXA_API_KEY'] })
   for (const c of cfg.competitors) {
-    probes.push({ track: 'competitor', label: `rival-dr:${c}`, kind: 'cli', tool: 'ahrefs', argv: ['domain-rating', 'get', '--target', c], needs: ['AHREFS_API_KEY'], rival: c })
+    probes.push(rivalDrProbe(c))
     if (cfg.depth === 'deepdive') {
       probes.push({ track: 'competitor', label: `rival-traffic:${c}`, kind: 'cli', tool: 'similarweb', argv: ['traffic', 'visits', '--domain', c], needs: ['SIMILARWEB_API_KEY'], rival: c })
     }
@@ -306,6 +316,8 @@ function firstNumber(obj, keys) {
   return null
 }
 
+const VISIT_KEYS = ['visits', 'value', 'data.visits']
+
 function distill(kept, cfg) {
   const d = {
     domain: cfg.domain,
@@ -314,6 +326,8 @@ function distill(kept, cfg) {
     market: { demand: null, trends: [] },
     provenance: [],
   }
+  const discoveredSet = new Set()
+  const ensureRival = (name) => (d.competitor.rivals[name] = d.competitor.rivals[name] || {})
   for (const r of kept) {
     d.provenance.push({ label: r.label, tool: r.tool, at: r.at })
     const x = r.data || {}
@@ -328,21 +342,19 @@ function distill(kept, cfg) {
     } else if (r.label === 'seo-top-pages') {
       d.customer.seo.topPages = Array.isArray(x.pages || x.data) ? (x.pages || x.data).length : undefined
     } else if (r.label === 'traffic-visits') {
-      d.customer.traffic.visits = firstNumber(x, ['visits', 'value', 'data.visits'])
+      d.customer.traffic.visits = firstNumber(x, VISIT_KEYS)
     } else if (r.label === 'traffic-sources') {
       d.customer.traffic.sources = x
     } else if (r.label === 'competitors-semrush' || r.label === 'competitors-lookalike') {
       const list = x.results || x.data || x.competitors || []
       for (const it of Array.isArray(list) ? list : []) {
         const dom = bareDomain(it.url || it.domain || it.target || '')
-        if (dom && !d.competitor.discovered.includes(dom) && dom !== cfg.domain) d.competitor.discovered.push(dom)
+        if (dom && !discoveredSet.has(dom) && dom !== cfg.domain) { discoveredSet.add(dom); d.competitor.discovered.push(dom) }
       }
     } else if (r.rival && r.label.startsWith('rival-dr')) {
-      d.competitor.rivals[r.rival] = d.competitor.rivals[r.rival] || {}
-      d.competitor.rivals[r.rival].domainRating = firstNumber(x, ['domain_rating', 'domainRating', 'data.domain_rating'])
+      ensureRival(r.rival).domainRating = firstNumber(x, ['domain_rating', 'domainRating', 'data.domain_rating'])
     } else if (r.rival && r.label.startsWith('rival-traffic')) {
-      d.competitor.rivals[r.rival] = d.competitor.rivals[r.rival] || {}
-      d.competitor.rivals[r.rival].visits = firstNumber(x, ['visits', 'value', 'data.visits'])
+      ensureRival(r.rival).visits = firstNumber(x, VISIT_KEYS)
     } else if (r.label === 'demand-volume') {
       d.market.demand = x
     } else if (r.label === 'trends-press') {
@@ -452,26 +464,31 @@ function renderBriefMd(brief, cfg, signal) {
   return lines.join('\n')
 }
 
+// Builds a "| a | b |" markdown table: a header row, an alignment row ('r'
+// for right-aligned numeric columns, 'l' — the default — otherwise), then
+// one row per data row. Shared by every hand-built table in this file.
+function mdTable(headers, dataRows, aligns) {
+  aligns = aligns || headers.map(() => 'l')
+  const sep = aligns.map((a) => (a === 'r' ? '---:' : '---')).join('|')
+  const row = (cells) => `| ${cells.join(' | ')} |`
+  return [row(headers), `|${sep}|`, ...dataRows.map(row)].join('\n')
+}
+
 function renderGapMatrix(distilled) {
   const dr = distilled.customer.seo.domainRating
   const v = distilled.customer.traffic.visits
-  const rows = [`| Domain | Domain Rating | Monthly Visits |`, `|---|---:|---:|`, `| **${distilled.domain}** (prospect) | ${dr ?? '?'} | ${v ?? '?'} |`]
-  for (const [c, m] of Object.entries(distilled.competitor.rivals)) rows.push(`| ${c} | ${m.domainRating ?? '?'} | ${m.visits ?? '?'} |`)
-  for (const c of distilled.competitor.discovered) if (!distilled.competitor.rivals[c]) rows.push(`| ${c} | — | — |`)
-  return `# Gap Matrix — ${distilled.domain}\n\n${rows.join('\n')}\n`
+  const rows = [[`**${distilled.domain}** (prospect)`, dr ?? '?', v ?? '?']]
+  for (const [c, m] of Object.entries(distilled.competitor.rivals)) rows.push([c, m.domainRating ?? '?', m.visits ?? '?'])
+  for (const c of distilled.competitor.discovered) if (!distilled.competitor.rivals[c]) rows.push([c, '—', '—'])
+  const table = mdTable(['Domain', 'Domain Rating', 'Monthly Visits'], rows, ['l', 'r', 'r'])
+  return `# Gap Matrix — ${distilled.domain}\n\n${table}\n`
 }
 
-function writeStore(outRoot, cfg, payload, clientInfoPath) {
+async function writeStore(outRoot, cfg, payload, clientInfoPath) {
   const slug = slugify(cfg.domain)
   const dir = path.join(outRoot, slug)
   fs.mkdirSync(dir, { recursive: true })
-  const w = (f, c) => fs.writeFileSync(path.join(dir, f), typeof c === 'string' ? c : JSON.stringify(c, null, 2))
-  w('raw.json', payload.raw)
-  w('distilled.json', payload.distilled)
-  w('brief.json', payload.brief || { status: 'pending_analysis' })
-  w('brief.md', payload.briefMd)
-  w('gap-matrix.md', payload.gapMatrix)
-  if (payload.promptPack) w('analysis-prompt.md', payload.promptPack)
+  const write = (f, c) => fs.promises.writeFile(path.join(dir, f), typeof c === 'string' ? c : JSON.stringify(c, null, 2))
   const manifest = {
     schema: 'research-store/v1',
     domain: cfg.domain,
@@ -504,7 +521,16 @@ function writeStore(outRoot, cfg, payload, clientInfoPath) {
     // fitScore, open outreach with outreachHook / topGaps.
     readyForStep2: !!payload.brief,
   }
-  w('RESEARCH_STORE.json', manifest)
+  const writes = [
+    write('raw.json', payload.raw),
+    write('distilled.json', payload.distilled),
+    write('brief.json', payload.brief || { status: 'pending_analysis' }),
+    write('brief.md', payload.briefMd),
+    write('gap-matrix.md', payload.gapMatrix),
+    write('RESEARCH_STORE.json', manifest),
+  ]
+  if (payload.promptPack) writes.push(write('analysis-prompt.md', payload.promptPack))
+  await Promise.all(writes)
   return { dir, manifest }
 }
 
@@ -517,23 +543,22 @@ function writeStore(outRoot, cfg, payload, clientInfoPath) {
 // outlives any one run and that every layer downstream can read.
 // ----------------------------------------------------------------------------
 function renderClientInfoMd(entry, history) {
-  const lines = [
-    `# Client Info — ${entry.domain}`, '', `_Last updated ${entry.at}_`, '',
-    `| Field | Value |`, `|---|---|`,
-    `| Engagement | ${entry.engagement} |`,
-    `| Industry | ${entry.industry || '—'} |`,
-    `| Market / category | ${entry.market || '—'} |`,
-    `| Geo | ${entry.geo} |`,
-    `| Languages | ${entry.languages.join(', ')} |`,
-    `| Goal | ${entry.goal || '—'} |`,
-    `| Budget | ${entry.budget || '—'} |`,
-    `| Known competitors | ${entry.competitors.length ? entry.competitors.join(', ') : 'auto-discover'} |`,
-    `| Do-not-research | ${entry.exclusions.length ? entry.exclusions.join(', ') : '—'} |`,
-    `| Notes / constraints | ${entry.notes || '—'} |`,
+  const rows = [
+    ['Engagement', entry.engagement],
+    ['Industry', entry.industry || '—'],
+    ['Market / category', entry.market || '—'],
+    ['Geo', entry.geo],
+    ['Languages', entry.languages.join(', ')],
+    ['Goal', entry.goal || '—'],
+    ['Budget', entry.budget || '—'],
+    ['Known competitors', entry.competitors.length ? entry.competitors.join(', ') : 'auto-discover'],
+    ['Do-not-research', entry.exclusions.length ? entry.exclusions.join(', ') : '—'],
+    ['Notes / constraints', entry.notes || '—'],
   ]
-  if (history.length > 1) {
-    lines.push('', `## Intake history (${history.length} logged)`, '', `| At | Engagement | Goal | Budget |`, `|---|---|---|---|`)
-    for (const h of history.slice(-10)) lines.push(`| ${h.at} | ${h.engagement} | ${h.goal || '—'} | ${h.budget || '—'} |`)
+  const lines = [`# Client Info — ${entry.domain}`, '', `_Last updated ${entry.at}_`, '', mdTable(['Field', 'Value'], rows)]
+  if (history.count > 1) {
+    const histRows = history.recent.map((h) => [h.at, h.engagement, h.goal || '—', h.budget || '—'])
+    lines.push('', `## Intake history (${history.count} logged)`, '', mdTable(['At', 'Engagement', 'Goal', 'Budget'], histRows))
   }
   lines.push('', 'Machine-readable snapshot: `client-info.json`. Full append-only log: `intake-log.jsonl`.')
   return lines.join('\n')
@@ -551,8 +576,11 @@ function logClientInfo(cfg) {
   const logFile = path.join(dir, 'intake-log.jsonl')
   fs.appendFileSync(logFile, JSON.stringify(entry) + '\n') // append-only, mirrors learnings.jsonl
   fs.writeFileSync(path.join(dir, 'client-info.json'), JSON.stringify(entry, null, 2)) // latest snapshot
-  let history = [entry]
-  try { history = fs.readFileSync(logFile, 'utf-8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)) } catch { /* first entry */ }
+  // The doc only ever shows a total count + the last 10 entries, so only
+  // JSON.parse the last 10 lines regardless of how long the log has grown —
+  // not the whole append-only history on every single run.
+  const lines = fs.readFileSync(logFile, 'utf-8').trim().split('\n').filter(Boolean)
+  const history = { count: lines.length, recent: lines.slice(-10).map((l) => JSON.parse(l)) }
   const mdPath = path.join(dir, 'client-info.md')
   fs.writeFileSync(mdPath, renderClientInfoMd(entry, history))
   return mdPath
@@ -566,7 +594,7 @@ function logClientInfo(cfg) {
 // flag-only.
 function makeConfig(over) {
   over = over || {}
-  const g = (k, flag, def) => (over[k] !== undefined && over[k] !== '' ? over[k] : (flag !== undefined && flag !== true && flag !== '' ? flag : def))
+  const g = (k, flag, def) => (over[k] !== undefined && over[k] !== '' ? over[k] : flagStr(flag, def))
   const domain = bareDomain(over.domain || args.domain || rest[0] || '')
   const compRaw = over.competitors !== undefined ? over.competitors : (args.competitors && args.competitors !== 'auto' ? args.competitors : '')
   const competitors = compRaw && compRaw !== 'auto' ? String(compRaw).split(',').map(bareDomain).filter(Boolean) : []
@@ -588,12 +616,11 @@ function makeConfig(over) {
     engagement,
     goal: g('goal', args.goal, ''),
     budget: g('budget', args.budget, ''),
-    exclusionsRaw,
     exclusions: parseExclusions(exclusionsRaw, domain),
     notes: g('notes', args.notes, ''),
-    model: args.model && args.model !== true ? String(args.model) : 'claude-sonnet-5',
-    out: args.out && args.out !== true ? String(args.out) : 'research-store',
-    clientsDir: args['clients-dir'] && args['clients-dir'] !== true ? String(args['clients-dir']) : 'clients',
+    model: flagStr(args.model, 'claude-sonnet-5'),
+    out: flagStr(args.out, 'research-store'),
+    clientsDir: flagStr(args['clients-dir'], 'clients'),
     noLlm: !!args['no-llm'],
     concurrency: args.concurrency,
   }
@@ -639,17 +666,19 @@ async function cmdRun(dry) {
 
   // If competitors were auto-discovered and none were passed in, do a second
   // lite pass on the top discovered rivals so the gap matrix isn't empty.
-  // Operator-excluded domains never get this second pass either.
+  // Operator-excluded domains never get this second pass either. Only the new
+  // probes are filtered/distilled and merged in — no need to re-run the whole
+  // pipeline over everything collected so far just to add 2-3 rival records.
   if (!cfg.competitors.length && distilled.competitor.discovered.length) {
     const top = distilled.competitor.discovered
       .filter((d) => !cfg.exclusions.domains.includes(d))
       .slice(0, Math.min(3, cfg.numCompetitors))
-    const extra = []
-    for (const c of top) extra.push({ track: 'competitor', label: `rival-dr:${c}`, kind: 'cli', tool: 'ahrefs', argv: ['domain-rating', 'get', '--target', c], needs: ['AHREFS_API_KEY'], rival: c })
-    const more = await collect(extra, { concurrency: cfg.concurrency })
+    const more = await collect(top.map(rivalDrProbe), { concurrency: cfg.concurrency })
     raw.push(...more)
-    const f2 = filterResults(raw)
-    Object.assign(distilled, distill(f2.kept, cfg))
+    const { kept: extraKept } = filterResults(more)
+    const extraDistilled = distill(extraKept, cfg)
+    Object.assign(distilled.competitor.rivals, extraDistilled.competitor.rivals)
+    distilled.provenance.push(...extraDistilled.provenance)
   }
 
   const signal = signalSummary(distilled)
@@ -673,7 +702,7 @@ async function cmdRun(dry) {
     gapMatrix: renderGapMatrix(distilled),
     collectionSummary,
   }
-  const { dir, manifest } = writeStore(cfg.out, cfg, payload, clientInfoPath)
+  const { dir, manifest } = await writeStore(cfg.out, cfg, payload, clientInfoPath)
   return {
     command: 'run', target: cfg.domain, store: dir + '/', clientInfo: clientInfoPath,
     status: manifest.status, readyForStep2: manifest.readyForStep2,
@@ -688,9 +717,7 @@ async function cmdRun(dry) {
 async function cmdIntake() {
   const intake = await runIntake(prefillFromFlags(args, rest))
   const cfg = makeConfig(intake)
-  const out = args.save && args.save !== true
-    ? String(args.save)
-    : path.join(cfg.out, slugify(cfg.domain || 'requirements'), 'requirements.json')
+  const out = flagStr(args.save, path.join(cfg.out, slugify(cfg.domain || 'requirements'), 'requirements.json'))
   fs.mkdirSync(path.dirname(out), { recursive: true })
   fs.writeFileSync(out, JSON.stringify({ ...intake, savedAt: nowISO() }, null, 2))
   const clientInfoPath = intake._confirmed && cfg.domain ? logClientInfo(cfg) : null
@@ -705,20 +732,20 @@ async function cmdIntake() {
   }
 }
 
-function cmdStatus() {
+async function cmdStatus() {
   const cfg = makeConfig()
   const root = cfg.out
   if (!fs.existsSync(root)) return { error: `no research store at ${root}/` }
-  const entries = []
-  for (const slug of fs.readdirSync(root)) {
+  const slugs = fs.readdirSync(root)
+  const results = await Promise.all(slugs.map(async (slug) => {
     const mf = path.join(root, slug, 'RESEARCH_STORE.json')
-    if (!fs.existsSync(mf)) continue
     try {
-      const m = JSON.parse(fs.readFileSync(mf, 'utf-8'))
-      if (cfg.domain && bareDomain(m.domain) !== cfg.domain) continue
-      entries.push({ domain: m.domain, status: m.status, fitScore: m.fitScore, readyForStep2: m.readyForStep2, generatedAt: m.generatedAt })
-    } catch { /* skip corrupt */ }
-  }
+      const m = JSON.parse(await fs.promises.readFile(mf, 'utf-8'))
+      if (cfg.domain && bareDomain(m.domain) !== cfg.domain) return null
+      return { domain: m.domain, status: m.status, fitScore: m.fitScore, readyForStep2: m.readyForStep2, generatedAt: m.generatedAt }
+    } catch { return null /* missing or corrupt manifest */ }
+  }))
+  const entries = results.filter(Boolean)
   entries.sort((a, b) => (b.fitScore || 0) - (a.fitScore || 0))
   return { store: root + '/', count: entries.length, prospects: entries }
 }
@@ -745,7 +772,7 @@ async function main() {
     case 'intake': result = await cmdIntake(); break
     case 'run': result = await cmdRun(false); break
     case 'plan': result = await cmdRun(true); break
-    case 'status': result = cmdStatus(); break
+    case 'status': result = await cmdStatus(); break
     default: result = { error: cmd ? `unknown command: ${cmd}` : undefined, usage: USAGE }
   }
   console.log(JSON.stringify(result, null, 2))
