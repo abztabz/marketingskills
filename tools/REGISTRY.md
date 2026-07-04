@@ -33,6 +33,7 @@ Quick reference for AI agents to discover tool capabilities and integration meth
 | clay | Data Enrichment | ✓ | ✓ | [✓](clis/clay.js) | - | [clay.md](integrations/clay.md) |
 | supermetrics | Data Aggregation | ✓ | ✓ | [✓](clis/supermetrics.js) | - | [supermetrics.md](integrations/supermetrics.md) |
 | coupler | Data Aggregation | ✓ | ✓ | [✓](clis/coupler.js) | - | [coupler.md](integrations/coupler.md) |
+| research-agent | Orchestration | - | - | [✓](clis/research-agent.js) | - | [research-agent.md](integrations/research-agent.md) |
 | hubspot | CRM | ✓ | - | ✓ | ✓ | [hubspot.md](integrations/hubspot.md) |
 | salesforce | CRM | ✓ | - | ✓ | ✓ | [salesforce.md](integrations/salesforce.md) |
 | close | CRM | ✓ | - | [✓](clis/close.js) | - | [close.md](integrations/close.md) |
