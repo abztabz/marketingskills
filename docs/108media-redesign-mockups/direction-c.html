@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>108 Media — Direction C: Bilingual Bento</title>
+<link rel="stylesheet" href="node_modules/@fontsource/archivo-black/index.css">
+<link rel="stylesheet" href="node_modules/@fontsource/archivo/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/archivo/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/archivo/600.css">
+<link rel="stylesheet" href="node_modules/@fontsource/tajawal/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/tajawal/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/tajawal/800.css">
+<style>
+:root{
+  /* BRAND ACCENT — placeholder, swap to 108 Media's real brand colour */
+  --accent:#FF3D2E;
+  --accent-tint:#FFE9E6;
+  --sand:#FAF6EE;
+  --ink:#1D1A15;
+  --soft:#6b6459;
+  --card:#FFFFFF;
+  --line:#E8E1D4;
+  --r:22px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--sand);color:var(--ink);font-family:'Archivo',sans-serif;-webkit-font-smoothing:antialiased}
+.black{font-family:'Archivo Black',sans-serif}
+.ar{font-family:'Tajawal',sans-serif;direction:rtl}
+.wrap{max-width:1280px;margin:0 auto;padding:0 40px}
+
+/* NAV */
+nav{padding:24px 0}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:12px 14px 12px 28px;box-shadow:0 2px 10px rgba(29,26,21,.05)}
+.logo{display:flex;align-items:baseline;gap:9px}
+.logo .num{font-family:'Archivo Black';font-size:23px}
+.logo .word{font-weight:600;font-size:12.5px;letter-spacing:.32em;color:var(--soft)}
+.links{display:flex;gap:30px;font-size:14px;font-weight:500;color:var(--soft)}
+.nav-cta{background:var(--ink);color:#fff;padding:12px 24px;border-radius:999px;font-weight:600;font-size:14px}
+
+/* HERO */
+.hero{text-align:center;padding:74px 0 60px}
+.badge{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:500;color:var(--soft)}
+.badge b{color:var(--accent);font-weight:700}
+h1{font-family:'Archivo Black';font-size:84px;line-height:1.02;letter-spacing:-0.025em;margin-top:34px}
+h1 .a{color:var(--accent)}
+.hero .ar-line{font-family:'Tajawal';font-weight:800;font-size:44px;margin-top:22px;direction:rtl;color:var(--ink)}
+.hero .ar-line span{color:var(--accent)}
+.hero-sub{max-width:640px;margin:26px auto 0;font-size:17.5px;line-height:1.6;color:var(--soft)}
+.hero-ctas{display:flex;gap:14px;justify-content:center;margin-top:38px}
+.btn-primary{background:var(--accent);color:#fff;padding:17px 34px;border-radius:999px;font-weight:600;font-size:16px;box-shadow:0 10px 24px rgba(255,61,46,.28)}
+.btn-ghost{background:var(--card);border:1px solid var(--line);padding:16px 32px;border-radius:999px;font-weight:600;font-size:16px}
+
+/* BENTO */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:18px;padding:40px 0 20px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:30px;box-shadow:0 2px 14px rgba(29,26,21,.04)}
+.t-lbl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.tile h3{font-size:21px;font-weight:600;margin-top:12px;letter-spacing:-0.01em}
+.tile p{font-size:14px;line-height:1.6;color:var(--soft);margin-top:9px}
+
+/* brief tile */
+.t-brief{grid-column:span 7}
+.b-rows{margin-top:22px;display:flex;flex-direction:column;gap:10px}
+.b-row{display:flex;align-items:center;gap:14px;background:var(--sand);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.b-score{flex:0 0 auto;background:var(--ink);color:#fff;font-weight:700;font-size:13.5px;border-radius:8px;padding:7px 10px}
+.b-row.hot .b-score{background:var(--accent)}
+.b-row .t{font-size:14.5px;font-weight:600}
+.b-row .d{font-size:12.5px;color:var(--soft);margin-top:2px}
+
+/* pair tile */
+.t-pair{grid-column:span 5;background:var(--ink);color:#fff;border-color:var(--ink)}
+.t-pair .t-lbl{color:#FF8A7A}
+.t-pair h3{color:#fff}
+.t-pair p{color:rgba(255,255,255,.6)}
+.pairbox{margin-top:20px;display:flex;flex-direction:column;gap:10px}
+.pairbox .en,.pairbox .arx{border-radius:12px;padding:14px 16px;font-size:14.5px;line-height:1.5}
+.pairbox .en{background:rgba(255,255,255,.09)}
+.pairbox .arx{background:var(--accent);font-family:'Tajawal';font-weight:500;direction:rtl;text-align:right;font-size:16px}
+.pair-note{margin-top:14px;font-size:12px;color:rgba(255,255,255,.45)}
+
+/* stat tiles */
+.t-stat{grid-column:span 4;text-align:left}
+.t-stat .v{font-family:'Archivo Black';font-size:56px;letter-spacing:-0.02em;margin-top:6px}
+.t-stat .v em{font-style:normal;color:var(--accent)}
+.t-stat.tinted{background:var(--accent-tint);border-color:#FFD2CB}
+
+/* services tile */
+.t-serv{grid-column:span 8}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.chip{border:1.5px solid var(--ink);border-radius:999px;padding:10px 20px;font-size:14.5px;font-weight:600;background:var(--card)}
+.chip.on{background:var(--ink);color:#fff}
+.chip.hot{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* loop tile */
+.t-loop{grid-column:span 4}
+.loop-svg{margin-top:16px}
+
+/* report tile */
+.t-report{grid-column:span 5}
+.bars{display:flex;align-items:flex-end;gap:12px;height:120px;margin-top:22px}
+.bars .b{flex:1;background:var(--sand);border:1px solid var(--line);border-radius:8px 8px 4px 4px;position:relative}
+.bars .b i{position:absolute;bottom:0;left:0;right:0;background:var(--ink);border-radius:8px 8px 4px 4px}
+.bars .b:nth-child(4) i{background:var(--accent)}
+.bars-cap{display:flex;gap:12px;margin-top:10px}
+.bars-cap span{flex:1;text-align:center;font-size:11px;color:var(--soft)}
+
+/* guardrail tile */
+.t-guard{grid-column:span 7}
+.rails{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.rail{display:flex;justify-content:space-between;align-items:center;background:var(--sand);border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-size:13.5px;font-weight:500}
+.dotok{font-size:11px;font-weight:700;color:#1B8A5A;background:#E4F5EC;border-radius:999px;padding:4px 10px}
+.dothard{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-tint);border-radius:999px;padding:4px 10px}
+
+/* CTA */
+.cta-tile{grid-column:span 12;background:var(--accent);border-color:var(--accent);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:44px 46px;border-radius:calc(var(--r) + 6px)}
+.cta-tile h2{font-family:'Archivo Black';font-size:42px;letter-spacing:-0.02em;line-height:1.05}
+.cta-tile .sub{margin-top:10px;font-size:15.5px;opacity:.85}
+.cta-tile .ar-mini{font-family:'Tajawal';font-weight:500;direction:rtl;margin-top:6px;font-size:16px;opacity:.9}
+.cta-btn{background:#fff;color:var(--ink);padding:18px 36px;border-radius:999px;font-weight:700;font-size:16px;white-space:nowrap}
+
+/* FOOTER */
+footer{padding:34px 0 40px}
+.foot-inner{display:flex;justify-content:space-between;font-size:13.5px;color:var(--soft)}
+.foot-inner b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<nav class="wrap"><div class="nav-inner">
+  <div class="logo"><span class="num">108</span><span class="word">MEDIA</span></div>
+  <div class="links"><span>Services</span><span>How it works</span><span>Evidence</span><span>About</span><span class="ar" style="font-weight:500">العربية</span></div>
+  <div class="nav-cta">Book a call</div>
+</div></nav>
+
+<header class="hero wrap">
+  <div class="badge">Dubai, UAE <b>·</b> <span>AI-native marketing agency</span> <b>·</b> <span class="ar">وكالة تسويق تعمل بالذكاء الاصطناعي</span></div>
+  <h1>Marketing that<br><span class="a">runs itself.</span></h1>
+  <div class="ar-line">تسويق يدير نفسه — <span>بالعربية والإنجليزية</span></div>
+  <p class="hero-sub">Research, creative, media and reporting as one autonomous system. Native in both of your market's languages. Humans on strategy, machines on everything else.</p>
+  <div class="hero-ctas"><div class="btn-primary">Get your free Opportunity Brief</div><div class="btn-ghost">See how it works</div></div>
+</header>
+
+<main class="bento wrap">
+
+  <div class="tile t-brief">
+    <div class="t-lbl">Start with evidence</div>
+    <h3>Your free Opportunity Brief</h3>
+    <p>Before any retainer, our research engine audits your market and hands you three to five scored, verifiable gaps.</p>
+    <div class="b-rows">
+      <div class="b-row hot"><span class="b-score">9.1</span><div><div class="t">Invisible in Arabic search</div><div class="d">60% of your market searches in Arabic — you rank for none of the top 40 queries.</div></div></div>
+      <div class="b-row"><span class="b-score">8.4</span><div><div class="t">Competitor owns your keywords</div><div class="d">Competitor X outranks you on 40 keywords worth ~12K visits/month.</div></div></div>
+      <div class="b-row"><span class="b-score">7.8</span><div><div class="t">Creative fatigue on Meta</div><div class="d">Your ads have run unchanged for 90+ days. CTR decaying, frequency climbing.</div></div></div>
+    </div>
+  </div>
+
+  <div class="tile t-pair">
+    <div class="t-lbl">Native EN + AR</div>
+    <h3>Written twice. Translated never.</h3>
+    <p>Every asset ships native in English and Arabic from your brand glossary.</p>
+    <div class="pairbox">
+      <div class="en">Iftar delivered. 30 minutes, every night.</div>
+      <div class="arx">إفطارك يوصل خلال ٣٠ دقيقة، كل ليلة</div>
+    </div>
+    <div class="pair-note">One idea, two native voices — because your customers can tell.</div>
+  </div>
+
+  <div class="tile t-stat tinted"><div class="t-lbl">Always on</div><div class="v">24<em>/</em>7</div><p>Budgets, bids and creative adjust around the clock — not at the Monday meeting.</p></div>
+  <div class="tile t-stat"><div class="t-lbl">Canary first</div><div class="v">10–20<em>%</em></div><p>Every campaign launches small and scales only when the statistics clear the bar.</p></div>
+  <div class="tile t-stat"><div class="t-lbl">Bad news fast</div><div class="v">&lt;60<em>′</em></div><p>Guardrail trips pause spend automatically — you're notified within the hour.</p></div>
+
+  <div class="tile t-serv">
+    <div class="t-lbl">Eight disciplines, one system</div>
+    <h3>Everything your growth needs, connected.</h3>
+    <div class="chips">
+      <span class="chip on">Research &amp; Intelligence</span>
+      <span class="chip hot">Paid Media</span>
+      <span class="chip">Social &amp; Content</span>
+      <span class="chip">SEO &amp; Editorial</span>
+      <span class="chip on">Lifecycle — Email &amp; SMS</span>
+      <span class="chip">Creative Production</span>
+      <span class="chip hot">24/7 Optimisation</span>
+      <span class="chip">Reporting &amp; Analytics</span>
+    </div>
+  </div>
+
+  <div class="tile t-loop">
+    <div class="t-lbl">The loop</div>
+    <h3>Research → Plan →<br>Launch → Optimise</h3>
+    <svg class="loop-svg" width="100%" height="110" viewBox="0 0 300 110" fill="none">
+      <path d="M150 10 a45 45 0 1 1 -0.1 0" stroke="#E8E1D4" stroke-width="10" fill="none"/>
+      <path d="M150 10 a45 45 0 0 1 45 45" stroke="#FF3D2E" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <circle cx="195" cy="55" r="7" fill="#FF3D2E"/>
+      <text x="150" y="60" text-anchor="middle" font-family="Archivo" font-weight="600" font-size="13" fill="#1D1A15">looping</text>
+    </svg>
+    <p>Learnings from every campaign feed the next. The agency gets smarter weekly.</p>
+  </div>
+
+  <div class="tile t-report">
+    <div class="t-lbl">Reporting</div>
+    <h3>Numbers you never have to ask for</h3>
+    <p>A live dashboard plus weekly narratives — in English or Arabic.</p>
+    <div class="bars">
+      <div class="b" style="height:45%"><i style="height:60%"></i></div>
+      <div class="b" style="height:65%"><i style="height:70%"></i></div>
+      <div class="b" style="height:80%"><i style="height:75%"></i></div>
+      <div class="b" style="height:100%"><i style="height:85%"></i></div>
+    </div>
+    <div class="bars-cap"><span>Week 1</span><span>Week 2</span><span>Week 3</span><span>Week 4</span></div>
+  </div>
+
+  <div class="tile t-guard">
+    <div class="t-lbl">Autonomy under policy</div>
+    <h3>Fast because it's safe</h3>
+    <p>Every spend, publish and send passes a deterministic policy engine — with hard caps and kill switches.</p>
+    <div class="rails">
+      <div class="rail"><span>Daily spend caps</span><span class="dothard">HARD CAP</span></div>
+      <div class="rail"><span>Hourly guardrail sweep</span><span class="dotok">ACTIVE</span></div>
+      <div class="rail"><span>UAE ad-compliance checks</span><span class="dotok">ACTIVE</span></div>
+      <div class="rail"><span>Global kill switch</span><span class="dothard">ARMED</span></div>
+    </div>
+  </div>
+
+  <div class="cta-tile">
+    <div>
+      <h2>Start with proof, not promises.</h2>
+      <div class="sub">Get your free Opportunity Brief — three to five scored gaps in your market, with sources.</div>
+      <div class="ar-mini">ابدأ بالأدلة، لا بالوعود</div>
+    </div>
+    <div class="cta-btn">Get the brief →</div>
+  </div>
+
+</main>
+
+<footer><div class="wrap foot-inner">
+  <span><b>108 MEDIA</b> — Dubai, United Arab Emirates</span>
+  <span>hello@108media.ae</span>
+  <span>Instagram · LinkedIn · X</span>
+</div></footer>
+
+</body>
+</html>

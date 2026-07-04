@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>108 Media — Direction B: Agency OS</title>
+<link rel="stylesheet" href="node_modules/@fontsource/unbounded/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/unbounded/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/sora/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/sora/600.css">
+<link rel="stylesheet" href="node_modules/@fontsource/jetbrains-mono/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/jetbrains-mono/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/tajawal/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/tajawal/700.css">
+<style>
+:root{
+  /* BRAND ACCENT — placeholder, swap to 108 Media's real brand colour */
+  --accent:#FF3D2E;
+  --accent-soft:rgba(255,61,46,.14);
+  --bg:#0A0A0C;
+  --panel:rgba(255,255,255,.035);
+  --line:rgba(255,255,255,.09);
+  --txt:#F2F0EC;
+  --dim:rgba(242,240,236,.6);
+  --faint:rgba(242,240,236,.38);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;-webkit-font-smoothing:antialiased}
+.display{font-family:'Unbounded',sans-serif}
+.mono{font-family:'JetBrains Mono',monospace}
+.wrap{max-width:1340px;margin:0 auto;padding:0 40px}
+.glow{position:absolute;border-radius:50%;filter:blur(120px);pointer-events:none}
+
+/* NAV */
+nav{border-bottom:1px solid var(--line);position:relative;z-index:5}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+.logo{display:flex;align-items:baseline;gap:10px}
+.logo .num{font-family:'Unbounded';font-weight:700;font-size:24px;color:var(--txt)}
+.logo .word{font-weight:600;font-size:13px;letter-spacing:.34em;color:var(--dim)}
+.links{display:flex;gap:34px;font-size:14px;color:var(--dim)}
+.nav-cta{border:1px solid var(--accent);color:var(--accent);padding:11px 24px;border-radius:8px;font-weight:600;font-size:13.5px}
+
+/* HERO */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.hero .glow.g1{width:700px;height:700px;background:rgba(255,61,46,.13);top:-260px;right:-140px}
+.hero .glow.g2{width:500px;height:500px;background:rgba(255,255,255,.05);bottom:-300px;left:-160px}
+.hero-inner{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:64px;padding:96px 0 100px;align-items:center}
+.eyebrow{font-family:'JetBrains Mono';font-size:12.5px;letter-spacing:.18em;color:var(--accent);text-transform:uppercase}
+.eyebrow::before{content:"● ";font-size:9px;vertical-align:2px}
+h1{font-family:'Unbounded';font-weight:700;font-size:56px;line-height:1.12;letter-spacing:-0.01em;margin-top:26px}
+h1 .a{color:var(--accent)}
+.hero-sub{margin-top:28px;font-size:17px;line-height:1.65;color:var(--dim);max-width:520px}
+.hero-ctas{display:flex;gap:14px;margin-top:38px}
+.btn-primary{background:var(--accent);color:#fff;padding:16px 30px;border-radius:10px;font-weight:600;font-size:15px}
+.btn-ghost{border:1px solid var(--line);color:var(--txt);padding:15px 28px;border-radius:10px;font-weight:600;font-size:15px;background:var(--panel)}
+.hero-tags{display:flex;gap:12px;margin-top:44px;flex-wrap:wrap}
+.tagchip{font-family:'JetBrains Mono';font-size:11.5px;letter-spacing:.08em;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:7px 14px}
+
+/* DASHBOARD */
+.dash{background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:18px;padding:0;box-shadow:0 40px 80px rgba(0,0,0,.5);overflow:hidden}
+.dash-bar{display:flex;align-items:center;justify-content:space-between;padding:15px 22px;border-bottom:1px solid var(--line)}
+.dash-bar .t{font-family:'JetBrains Mono';font-size:12px;letter-spacing:.1em;color:var(--dim)}
+.dash-bar .live{font-family:'JetBrains Mono';font-size:11px;color:#5BE49B}
+.dash-bar .live::before{content:"● ";font-size:8px}
+.dash-body{padding:22px}
+.canary{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:rgba(0,0,0,.25)}
+.canary-head{display:flex;justify-content:space-between;font-size:13px;font-weight:600}
+.canary-head .ok{color:#5BE49B;font-family:'JetBrains Mono';font-size:11px}
+.meter{height:7px;background:rgba(255,255,255,.08);border-radius:99px;margin-top:12px;overflow:hidden}
+.meter i{display:block;height:100%;width:64%;background:linear-gradient(90deg,var(--accent),#FF7A4D);border-radius:99px}
+.canary-meta{display:flex;gap:18px;margin-top:12px;font-family:'JetBrains Mono';font-size:10.5px;color:var(--faint)}
+.canary-meta b{color:var(--txt);font-weight:500}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:rgba(0,0,0,.25)}
+.card .lbl{font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+.chan{display:flex;align-items:center;gap:10px;margin-top:11px;font-size:12.5px}
+.chan .bar{flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden}
+.chan .bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.chan .pc{font-family:'JetBrains Mono';font-size:10.5px;color:var(--dim);width:34px;text-align:right}
+.pair{margin-top:11px}
+.pair .en,.pair .ar{font-size:12.5px;line-height:1.5;padding:9px 12px;border-radius:8px;border:1px solid var(--line)}
+.pair .en{background:rgba(255,255,255,.04)}
+.pair .ar{direction:rtl;text-align:right;font-family:'Tajawal';margin-top:8px;background:var(--accent-soft);border-color:rgba(255,61,46,.3)}
+.feed{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.35);padding:14px 18px}
+.feed .ln{font-family:'JetBrains Mono';font-size:11px;line-height:2.1;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed .ln b{color:#5BE49B;font-weight:500}
+.feed .ln em{color:var(--accent);font-style:normal}
+
+/* SECTIONS */
+section.block{padding:104px 0;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.kick{font-family:'JetBrains Mono';font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h2{font-family:'Unbounded';font-weight:700;font-size:40px;line-height:1.18;margin-top:20px;letter-spacing:-0.01em}
+.sec-sub{margin-top:20px;color:var(--dim);font-size:16px;line-height:1.65;max-width:600px}
+
+/* PIPELINE */
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:64px;position:relative}
+.pipe::before{content:"";position:absolute;top:26px;left:6%;right:6%;height:1px;background:linear-gradient(90deg,transparent,var(--line) 15%,var(--line) 85%,transparent)}
+.node{text-align:center;padding:0 20px;position:relative}
+.node .dot{width:52px;height:52px;margin:0 auto;border-radius:50%;border:1px solid var(--line);background:var(--bg);display:flex;align-items:center;justify-content:center;font-family:'Unbounded';font-size:15px;font-weight:700;position:relative;z-index:1}
+.node.active .dot{border-color:var(--accent);color:var(--accent);box-shadow:0 0 30px rgba(255,61,46,.35)}
+.node h3{font-size:17px;font-weight:600;margin-top:20px}
+.node p{font-size:13.5px;color:var(--dim);line-height:1.6;margin-top:9px}
+
+/* CAPABILITIES */
+.caps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:60px}
+.cap{border:1px solid var(--line);border-radius:16px;padding:28px;background:var(--panel)}
+.cap .ic{width:38px;height:38px;border-radius:10px;background:var(--accent-soft);border:1px solid rgba(255,61,46,.3);display:flex;align-items:center;justify-content:center;color:var(--accent);font-family:'Unbounded';font-size:13px;font-weight:700}
+.cap h3{font-size:17.5px;font-weight:600;margin-top:20px}
+.cap p{font-size:13.5px;color:var(--dim);line-height:1.6;margin-top:9px}
+
+/* POLICY */
+.policy{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+.rails{border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
+.rail{display:flex;justify-content:space-between;align-items:center;padding:17px 24px;border-bottom:1px solid var(--line);font-size:14px}
+.rail:last-child{border-bottom:0}
+.rail .mono{font-size:11.5px;color:var(--faint)}
+.pill{font-family:'JetBrains Mono';font-size:10.5px;padding:5px 11px;border-radius:99px}
+.pill.on{background:rgba(91,228,155,.12);color:#5BE49B;border:1px solid rgba(91,228,155,.3)}
+.pill.hard{background:var(--accent-soft);color:var(--accent);border:1px solid rgba(255,61,46,.35)}
+.policy-copy p{color:var(--dim);font-size:16px;line-height:1.7;margin-top:20px}
+.policy-copy p b{color:var(--txt);font-weight:600}
+
+/* STATS BAND */
+.statband{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:0}
+.sb{border:1px solid var(--line);border-radius:16px;padding:34px;background:var(--panel)}
+.sb .v{font-family:'Unbounded';font-weight:700;font-size:46px;color:var(--txt)}
+.sb .v span{color:var(--accent)}
+.sb p{font-size:13.5px;color:var(--dim);margin-top:12px;line-height:1.6}
+
+/* FOOTER */
+.foot-cta{padding:110px 0;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.foot-cta .glow.g3{width:800px;height:400px;background:rgba(255,61,46,.12);left:50%;transform:translateX(-50%);bottom:-260px}
+.foot-cta h2{font-size:46px}
+.foot-cta .ar-line{font-family:'Tajawal';font-weight:500;direction:rtl;color:var(--dim);font-size:22px;margin-top:18px}
+.foot-cta .btn-primary{display:inline-block;margin-top:40px;font-size:16px;padding:18px 38px}
+footer{padding:28px 0}
+.foot-inner{display:flex;justify-content:space-between;font-size:13px;color:var(--faint)}
+.foot-inner b{color:var(--dim)}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap nav-inner">
+  <div class="logo"><span class="num">108</span><span class="word">MEDIA</span></div>
+  <div class="links"><span>System</span><span>Services</span><span>Evidence</span><span>Reporting</span><span>العربية</span></div>
+  <div class="nav-cta">Get your Opportunity Brief</div>
+</div></nav>
+
+<header class="hero">
+  <div class="glow g1"></div><div class="glow g2"></div>
+  <div class="wrap hero-inner">
+    <div>
+      <div class="eyebrow">Agency OS — Dubai, UAE</div>
+      <h1>The agency that <span class="a">never clocks out.</span></h1>
+      <p class="hero-sub">108 Media runs your marketing as one autonomous system: research, creative, media and reporting in a single 24/7 loop — with hard spend caps, hourly guardrails and humans on the exception path.</p>
+      <div class="hero-ctas"><div class="btn-primary">Book a call</div><div class="btn-ghost">See the system</div></div>
+      <div class="hero-tags"><span class="tagchip">EN + AR NATIVE</span><span class="tagchip">POLICY-GUARDED SPEND</span><span class="tagchip">CANARY → SCALE</span><span class="tagchip">WEEKLY REPORTS</span></div>
+    </div>
+    <div class="dash">
+      <div class="dash-bar"><span class="t">108 OS · client: al-noor-retail</span><span class="live">LIVE</span></div>
+      <div class="dash-body">
+        <div class="canary">
+          <div class="canary-head"><span>Ramadan launch — Canary phase</span><span class="ok">GUARDRAILS PASS</span></div>
+          <div class="meter"><i></i></div>
+          <div class="canary-meta"><span>budget <b>18%</b></span><span>CTR <b>2.4%</b> ↑</span><span>CPA <b>AED 41</b> ↓</span><span>scale check <b>18:00</b></span></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="lbl">Budget reallocation — today</div>
+            <div class="chan"><span>Meta</span><span class="bar"><i style="width:72%"></i></span><span class="pc">+9%</span></div>
+            <div class="chan"><span>Google</span><span class="bar"><i style="width:55%"></i></span><span class="pc">+4%</span></div>
+            <div class="chan"><span>TikTok</span><span class="bar"><i style="width:38%"></i></span><span class="pc">−6%</span></div>
+          </div>
+          <div class="card">
+            <div class="lbl">Creative pair — native EN / AR</div>
+            <div class="pair">
+              <div class="en">Iftar delivered. 30 minutes, every night.</div>
+              <div class="ar">إفطارك يوصل خلال ٣٠ دقيقة، كل ليلة</div>
+            </div>
+          </div>
+        </div>
+        <div class="feed">
+          <div class="ln">14:02 <b>✓</b> rotated fatigued creative — Meta / <em>AR variant B promoted</em></div>
+          <div class="ln">13:00 <b>✓</b> hourly guardrail sweep — CTR floor, CPA ceiling, pacing: pass</div>
+          <div class="ln">11:36 <b>✓</b> A/B winner promoted at 95% significance — hook #3</div>
+          <div class="ln">09:00 <b>✓</b> weekly report drafted (EN + AR) → client dashboard</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="block"><div class="wrap">
+  <div class="kick">The loop</div>
+  <h2>Research → Plan → Launch → Optimise.<br>Then it starts again.</h2>
+  <div class="pipe">
+    <div class="node"><div class="dot">01</div><h3>Research</h3><p>Customer, competitor and market intelligence, distilled into scored gaps with sources.</p></div>
+    <div class="node"><div class="dot">02</div><h3>Plan</h3><p>Omni-channel plans where every line item traces to a measured gap. Live within 24h.</p></div>
+    <div class="node active"><div class="dot">03</div><h3>Launch</h3><p>Canary at 10–20% budget. Scales only when statistics — not vibes — clear the bar.</p></div>
+    <div class="node"><div class="dot">04</div><h3>Optimise</h3><p>Budgets shift daily, fatigued creative rotates out, learnings compound per client.</p></div>
+  </div>
+</div></section>
+
+<section class="block"><div class="wrap">
+  <div class="kick">Capabilities</div>
+  <h2>Eight disciplines. One system.</h2>
+  <div class="caps">
+    <div class="cap"><div class="ic">01</div><h3>Research &amp; Intelligence</h3><p>Full-market audits: your site, rankings, socials and your competitors' ad libraries.</p></div>
+    <div class="cap"><div class="ic">02</div><h3>Paid Media</h3><p>Meta, Google, TikTok, LinkedIn — launched as canaries, scaled on significance.</p></div>
+    <div class="cap"><div class="ic">03</div><h3>Social &amp; Content</h3><p>Always-on organic, planned per channel, produced native in English and Arabic.</p></div>
+    <div class="cap"><div class="ic">04</div><h3>SEO &amp; Editorial</h3><p>Demand mapping and programmatic content aimed at measured search gaps.</p></div>
+    <div class="cap"><div class="ic">05</div><h3>Lifecycle</h3><p>Email and SMS journeys, sequenced, tested and promoted on results.</p></div>
+    <div class="cap"><div class="ic">06</div><h3>Reporting</h3><p>A live dashboard, weekly narratives in your language, bad news within the hour.</p></div>
+  </div>
+</div></section>
+
+<section class="block"><div class="wrap policy">
+  <div class="policy-copy">
+    <div class="kick">Autonomy under policy</div>
+    <h2>Fast because it's safe.</h2>
+    <p>Every irreversible action — spend, publish, send — passes a deterministic policy engine before it happens. <b>Hard caps, channel allowlists, blackout windows, kill switches.</b></p>
+    <p>A guardrail breach pauses the campaign automatically and notifies you with cause and corrective action within the hour. The replacement for hope is enforcement.</p>
+  </div>
+  <div class="rails">
+    <div class="rail"><span>Daily spend cap <span class="mono">— per client, per platform</span></span><span class="pill hard">HARD CAP</span></div>
+    <div class="rail"><span>Hourly guardrail sweep <span class="mono">— CTR, CPA, pacing</span></span><span class="pill on">ACTIVE</span></div>
+    <div class="rail"><span>Canary before scale <span class="mono">— 10–20% budget, 24–48h</span></span><span class="pill on">ACTIVE</span></div>
+    <div class="rail"><span>Brand &amp; compliance checks <span class="mono">— UAE ad regulations</span></span><span class="pill on">ACTIVE</span></div>
+    <div class="rail"><span>Kill switch <span class="mono">— global and per-client</span></span><span class="pill hard">ARMED</span></div>
+  </div>
+</div></section>
+
+<section class="block"><div class="wrap">
+  <div class="statband">
+    <div class="sb"><div class="v">24<span>/</span>7</div><p>The optimisation loop runs around the clock — budgets, creative and bids adjust while your competitors wait for Monday.</p></div>
+    <div class="sb"><div class="v">2<span>×</span></div><p>Every asset ships native in English and Arabic from a shared glossary. Never post-translated.</p></div>
+    <div class="sb"><div class="v">&lt;60<span>′</span></div><p>Anomaly to notification. If something trips, you hear it from us first — with the fix already in motion.</p></div>
+  </div>
+</div></section>
+
+<section class="foot-cta">
+  <div class="glow g3"></div>
+  <div class="wrap">
+    <div class="kick">Start with evidence</div>
+    <h2>Get your free Opportunity Brief.</h2>
+    <div class="ar-line">ابدأ بالأدلة، لا بالوعود</div>
+    <div class="btn-primary">Request the brief</div>
+  </div>
+</section>
+
+<footer><div class="wrap foot-inner">
+  <span><b>108 MEDIA</b> · Dubai, United Arab Emirates</span>
+  <span>hello@108media.ae</span>
+  <span>Instagram · LinkedIn · X</span>
+</div></footer>
+
+</body>
+</html>
