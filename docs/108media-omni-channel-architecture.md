@@ -87,19 +87,48 @@ in one config file — the architecture survives model churn without a rewrite.
 A self-sustained agency acquires its own clients. Repo assets do the work:
 
 - **Prospecting agent** (daily): builds UAE/GCC target lists via `apollo`,
-  `clay`, `clearbit`, `hunter`, `similarweb` CLIs + `prospecting` skill;
-  enriches each prospect with scraped intelligence (Firecrawl for their site,
-  Exa for semantic discovery of lookalikes) and scores fit against the ideal
-  client profile
-- **Outbound agent**: personalized sequences via `instantly`/`lemlist` CLIs +
-  `cold-email` skill; replies classified by the small model; positive intent
-  auto-books via `calendly`/`savvycal` CLIs
+  `clay`, `clearbit`, `hunter` CLIs + `prospecting` skill, then hands each
+  prospect to the intelligence pipeline below before anyone drafts a word
+
+- **Prospect Intelligence Pipeline** — no outreach is drafted until the
+  prospect's current status is known across four lenses:
+
+  1. **Website audit**: Firecrawl full-site scrape → messaging, offers,
+     site structure, AR/EN coverage; `seo-audit` skill for on-page findings
+     (titles, schema, speed, mobile); `cro` skill lens on key landing pages;
+     `clearbit` for tech stack
+  2. **SEO status**: `ahrefs` / `semrush` / `dataforseo` CLIs → domain
+     rating, keyword rankings, estimated organic traffic, top pages,
+     backlink profile; `keywords-everywhere` for local (UAE/GCC, AR + EN)
+     search volumes they're missing
+  3. **Social presence**: Browserbase sessions on their public profiles
+     (Instagram, TikTok, LinkedIn, X) → posting cadence, engagement rate,
+     content mix, Arabic/English split; Meta Ad Library + TikTok Creative
+     Center → are they running paid, which creatives, and how long-running
+     (long-running = working, stale = fatigued)
+  4. **Competitor benchmark**: Exa + `similarweb` identify the top 3 local
+     competitors → same audit run lite on each (`competitors` +
+     `competitor-profiling` skills) → gap matrix: share of search, social
+     engagement, ad activity, content velocity deltas
+
+  Output: an **Opportunity Brief** per prospect — 3–5 scored, verifiable
+  gaps ("competitor X outranks you on 40 keywords worth ~12K visits/mo",
+  "no Arabic content while 60% of your market searches in Arabic", "your
+  Meta creatives have run unchanged for 90 days") plus a fit score and
+  estimated engagement value. Briefs are cached; a signed prospect's brief
+  pre-seeds L2 ingestion so nothing is scraped twice.
+
+- **Outbound agent**: sequences via `instantly`/`lemlist` CLIs +
+  `cold-email` skill, where **every first touch leads with one specific
+  finding from that prospect's Opportunity Brief** — evidence, not pitch.
+  Replies classified by the small model; positive intent auto-books via
+  `calendly`/`savvycal` CLIs
 - **Inbound engine** (weekly): `ai-seo`, `programmatic-seo`, `content-strategy`,
   `social` skills publish for 108media.ae itself — the agency's own site is
   client zero and the standing proof-of-work demo
-- **Proposal agent**: audits the prospect's presence (`seo-audit`,
-  `competitors`, `analytics` skills), generates a scoped proposal with pricing
-  from a rate card, sends for e-signature; signature event triggers Layer 2
+- **Proposal agent**: expands the Opportunity Brief into a scoped proposal —
+  each proposed line item traces to a measured gap — with pricing from a
+  rate card, sends for e-signature; signature event triggers Layer 2
 
 Policy rails: outreach volume caps, suppression lists, no unapproved pricing
 off the rate card, discovery calls stay human by default (relationship
