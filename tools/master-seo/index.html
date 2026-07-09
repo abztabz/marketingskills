@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Master SEO — The Proofing Desk</title>
+<style>
+  :root{
+    --paper:#F0EEE8;
+    --proof:#FBFAF6;
+    --proof-border:#DDD9CE;
+    --ink:#221F1A;
+    --ink-soft:#54503F;
+    --ink-faint:#8A8571;
+    --accent:#3E56A6;
+    --accent-ink:#FBFAF6;
+    --good:#237A55;
+    --warn:#B8791A;
+    --critical:#BF3B3B;
+    --good-bg:#E4EFE8;
+    --warn-bg:#F3E9D8;
+    --critical-bg:#F3E1DF;
+    --track:#E4E1D6;
+    --shadow:0 1px 0 rgba(34,31,26,0.06);
+    --serif:Charter,"Iowan Old Style","Palatino Linotype","URW Palladio L",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#14161C;
+      --proof:#1B1E27;
+      --proof-border:#31333F;
+      --ink:#E9E7E0;
+      --ink-soft:#B3AF9F;
+      --ink-faint:#726E5E;
+      --accent:#6E82D6;
+      --accent-ink:#14161C;
+      --good:#3FA277;
+      --warn:#B87F35;
+      --critical:#CC6161;
+      --good-bg:#1C2B24;
+      --warn-bg:#2B2419;
+      --critical-bg:#2C1E1E;
+      --track:#262A35;
+      --shadow:0 1px 0 rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161C; --proof:#1B1E27; --proof-border:#31333F; --ink:#E9E7E0;
+    --ink-soft:#B3AF9F; --ink-faint:#726E5E; --accent:#6E82D6; --accent-ink:#14161C;
+    --good:#3FA277; --warn:#B87F35; --critical:#CC6161;
+    --good-bg:#1C2B24; --warn-bg:#2B2419; --critical-bg:#2C1E1E; --track:#262A35;
+    --shadow:0 1px 0 rgba(0,0,0,0.4);
+  }
+  :root[data-theme="light"]{
+    --paper:#F0EEE8; --proof:#FBFAF6; --proof-border:#DDD9CE; --ink:#221F1A;
+    --ink-soft:#54503F; --ink-faint:#8A8571; --accent:#3E56A6; --accent-ink:#FBFAF6;
+    --good:#237A55; --warn:#B8791A; --critical:#BF3B3B;
+    --good-bg:#E4EFE8; --warn-bg:#F3E9D8; --critical-bg:#F3E1DF; --track:#E4E1D6;
+    --shadow:0 1px 0 rgba(34,31,26,0.06);
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;animation:none !important;}
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:var(--serif);font-weight:600;text-wrap:balance;margin:0;}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  button{font-family:inherit;}
+  input,textarea,select{font-family:inherit;color:inherit;}
+  ::selection{background:var(--accent);color:var(--accent-ink);}
+  a{color:var(--accent);}
+
+  /* ---------- shell ---------- */
+  .masthead{
+    padding:22px 28px 16px;
+    border-bottom:1px solid var(--proof-border);
+    display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  }
+  .masthead-title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .masthead h1{font-size:1.7rem;letter-spacing:-0.01em;}
+  .masthead .kicker{
+    font-family:var(--mono);font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--accent);border:1px solid var(--accent);padding:2px 7px;border-radius:2px;
+  }
+  .masthead .strap{color:var(--ink-faint);font-size:0.83rem;max-width:46ch;}
+
+  .desk{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:0;
+    min-height:calc(100vh - 84px);
+  }
+  @media (max-width:880px){
+    .desk{grid-template-columns:1fr;}
+  }
+
+  .rail{
+    border-right:1px solid var(--proof-border);
+    padding:18px 20px 60px;
+    display:flex;flex-direction:column;gap:0;
+  }
+  @media (max-width:880px){
+    .rail{border-right:none;border-bottom:1px solid var(--proof-border);}
+  }
+  .rail-panel{display:flex;flex-direction:column;gap:22px;}
+  .hidden{display:none !important;}
+
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--proof-border);margin:-18px -20px 4px;padding:0 20px;}
+  .tab-btn{
+    appearance:none;background:none;border:none;cursor:pointer;
+    font-family:var(--sans);font-size:0.86rem;font-weight:600;color:var(--ink-faint);
+    padding:12px 4px;margin-right:20px;border-bottom:2px solid transparent;
+  }
+  .tab-btn[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);}
+  .tab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  fieldset{border:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+  legend{
+    font-family:var(--mono);font-size:0.66rem;letter-spacing:0.13em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:2px;padding:0;
+  }
+  label.field{display:flex;flex-direction:column;gap:4px;font-size:0.82rem;color:var(--ink-soft);}
+  label.field .row-between{display:flex;justify-content:space-between;align-items:baseline;}
+  .char-count{font-family:var(--mono);font-size:0.7rem;color:var(--ink-faint);}
+  .char-count.over{color:var(--critical);}
+  .char-count.ok{color:var(--good);}
+
+  input[type="text"],input[type="url"],textarea,select{
+    background:var(--proof);border:1px solid var(--proof-border);border-radius:3px;
+    color:var(--ink);padding:8px 9px;font-size:0.86rem;width:100%;
+  }
+  input[type="text"]:focus-visible,textarea:focus-visible,select:focus-visible,input[type="url"]:focus-visible{
+    outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);
+  }
+  textarea{resize:vertical;line-height:1.5;}
+  .help{font-size:0.72rem;color:var(--ink-faint);}
+
+  .check-row{display:flex;align-items:flex-start;gap:8px;font-size:0.82rem;color:var(--ink-soft);}
+  .check-row input{margin-top:3px;accent-color:var(--accent);}
+  .check-row .self-tag{
+    font-family:var(--mono);font-size:0.62rem;color:var(--ink-faint);
+    border:1px solid var(--proof-border);border-radius:2px;padding:0 4px;margin-left:4px;white-space:nowrap;
+  }
+
+  .btn{
+    appearance:none;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
+    font-weight:600;font-size:0.85rem;padding:10px 14px;border-radius:3px;cursor:pointer;
+  }
+  .btn:hover{filter:brightness(1.06);}
+  .btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+  .btn.ghost{background:none;color:var(--ink);border-color:var(--proof-border);}
+  .btn.small{padding:6px 10px;font-size:0.76rem;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+  .chip-group{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{
+    appearance:none;border:1px solid var(--proof-border);background:var(--proof);color:var(--ink-soft);
+    font-size:0.78rem;padding:6px 10px;border-radius:3px;cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--ink);background:var(--good-bg);}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+  /* ---------- main proof sheet ---------- */
+  .main{padding:22px 30px 80px;max-width:900px;}
+  .empty-state{
+    border:1px dashed var(--proof-border);border-radius:4px;padding:40px 26px;text-align:center;
+    color:var(--ink-faint);
+  }
+  .empty-state h2{color:var(--ink-soft);font-size:1.2rem;margin-bottom:8px;}
+  .empty-state p{max-width:44ch;margin:0 auto;font-size:0.88rem;}
+
+  .score-block{
+    display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;
+    padding-bottom:18px;border-bottom:1px solid var(--proof-border);margin-bottom:20px;
+  }
+  .score-number{font-family:var(--mono);font-size:3.4rem;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;}
+  .score-meta{display:flex;flex-direction:column;gap:3px;}
+  .score-label{font-size:0.95rem;color:var(--ink-soft);}
+  .score-caption{font-size:0.74rem;color:var(--ink-faint);max-width:52ch;}
+
+  .meters{display:flex;flex-direction:column;gap:14px;margin-bottom:26px;}
+  .meter-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+  .meter-label{font-size:0.82rem;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
+  .meter-value{font-size:0.82rem;font-weight:600;}
+  .meter-track{position:relative;height:9px;background:var(--track);border-radius:2px;overflow:hidden;}
+  .meter-ticks{position:absolute;inset:0;display:flex;justify-content:space-between;pointer-events:none;}
+  .meter-ticks i{width:1px;background:var(--proof);opacity:0.6;height:100%;display:block;}
+  .meter-fill{height:100%;border-radius:0 2px 2px 0;width:0%;transition:width .5s ease;}
+  .self-badge{
+    font-family:var(--mono);font-size:0.6rem;letter-spacing:0.06em;color:var(--ink-faint);
+    border:1px solid var(--proof-border);border-radius:2px;padding:0 4px;
+  }
+
+  .section-title{
+    font-family:var(--mono);font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--ink-faint);margin:26px 0 10px;padding-top:16px;border-top:1px solid var(--proof-border);
+  }
+  .section-title:first-of-type{border-top:none;padding-top:0;margin-top:0;}
+
+  .serp{
+    background:var(--proof);border:1px solid var(--proof-border);border-radius:4px;padding:14px 16px;
+  }
+  .serp-url{font-size:0.78rem;color:var(--good);font-family:var(--mono);margin-bottom:2px;}
+  .serp-title{font-size:1.08rem;color:var(--accent);margin-bottom:3px;font-family:var(--sans);}
+  .serp-desc{font-size:0.84rem;color:var(--ink-soft);}
+
+  .finding{
+    display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--proof-border);
+  }
+  .finding:last-child{border-bottom:none;}
+  .finding-mark{
+    flex:none;width:9px;height:9px;border-radius:1px;margin-top:5px;
+  }
+  .finding-mark.critical{background:var(--critical);}
+  .finding-mark.warning{background:var(--warn);}
+  .finding-mark.pass{background:var(--good);}
+  .finding-body{flex:1;min-width:0;}
+  .finding-title{font-size:0.9rem;font-weight:600;margin-bottom:2px;}
+  .finding-why{font-size:0.82rem;color:var(--ink-soft);margin-bottom:4px;}
+  .finding-fix{font-size:0.82rem;color:var(--ink);}
+  .finding-fix::before{content:"Fix — ";color:var(--ink-faint);}
+  .finding-tags{display:flex;gap:6px;margin-top:6px;}
+  .tag{
+    font-family:var(--mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;
+    padding:1px 6px;border-radius:2px;border:1px solid var(--proof-border);color:var(--ink-faint);
+  }
+  .finding-group-label{
+    font-size:0.72rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.1em;
+    padding:3px 8px;border-radius:2px;display:inline-block;margin-bottom:6px;
+  }
+  .finding-group-label.critical{background:var(--critical-bg);color:var(--critical);}
+  .finding-group-label.warning{background:var(--warn-bg);color:var(--warn);}
+  .finding-group-label.pass{background:var(--good-bg);color:var(--good);}
+
+  .quickwin{
+    display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--proof-border);
+    border-radius:3px;margin-bottom:6px;font-size:0.82rem;background:var(--proof);
+  }
+  .quickwin .qw-fix{color:var(--ink-soft);}
+
+  .outline-list{list-style:none;margin:0;padding:0;counter-reset:ol;}
+  .outline-list li{
+    counter-increment:ol;padding:9px 0 9px 34px;position:relative;border-bottom:1px solid var(--proof-border);
+    font-size:0.9rem;
+  }
+  .outline-list li:last-child{border-bottom:none;}
+  .outline-list li::before{
+    content:"H2·" counter(ol);position:absolute;left:0;top:9px;font-family:var(--mono);
+    font-size:0.68rem;color:var(--ink-faint);
+  }
+
+  .headline-cards{display:flex;flex-direction:column;gap:8px;}
+  .headline-card{
+    border:1px solid var(--proof-border);border-radius:4px;padding:12px 14px;background:var(--proof);
+    display:flex;justify-content:space-between;gap:12px;align-items:center;
+  }
+  .headline-card .htext{font-family:var(--serif);font-size:1.05rem;}
+  .headline-card .hformula{font-family:var(--mono);font-size:0.65rem;color:var(--ink-faint);margin-top:3px;}
+
+  .draft-wrap{display:flex;flex-direction:column;gap:12px;}
+  #w-draft{min-height:340px;font-size:0.92rem;line-height:1.65;}
+
+  .stat-strip{display:flex;flex-wrap:wrap;gap:14px 22px;padding:12px 0;border-top:1px solid var(--proof-border);border-bottom:1px solid var(--proof-border);}
+  .stat{display:flex;flex-direction:column;gap:1px;}
+  .stat .num{font-family:var(--mono);font-size:1.05rem;font-variant-numeric:tabular-nums;}
+  .stat .lbl{font-size:0.68rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.07em;}
+  .stat .num.critical{color:var(--critical);}
+  .stat .num.warning{color:var(--warn);}
+  .stat .num.good{color:var(--good);}
+
+  .style-checklist{display:flex;flex-direction:column;gap:6px;}
+  .style-row{display:flex;align-items:center;gap:8px;font-size:0.85rem;}
+  .style-mark{flex:none;width:9px;height:9px;border-radius:1px;}
+  .style-mark.pass{background:var(--good);}
+  .style-mark.fail{background:var(--critical);}
+  .style-mark.na{background:var(--proof-border);}
+  .style-note{color:var(--ink-faint);font-size:0.76rem;margin-left:auto;font-family:var(--mono);}
+
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:3px;font-size:0.82rem;
+    opacity:0;pointer-events:none;transition:opacity .25s ease;
+  }
+  .toast.show{opacity:1;}
+
+  .report-out{width:100%;min-height:120px;font-family:var(--mono);font-size:0.78rem;display:none;}
+  .report-out.show{display:block;margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="masthead">
+  <div class="masthead-title">
+    <h1>Master SEO</h1>
+    <span class="kicker">The Proofing Desk</span>
+  </div>
+  <p class="strap">Heuristic audit, scoring, and drafting for content that ranks — a rigor check before you publish, not a replacement for Search Console.</p>
+</div>
+
+<div class="desk">
+  <!-- ============ RAIL ============ -->
+  <div class="rail">
+    <div class="tabs" role="tablist">
+      <button class="tab-btn" id="tab-analyze-btn" role="tab" aria-selected="true" aria-controls="panel-analyze">Analyze</button>
+      <button class="tab-btn" id="tab-write-btn" role="tab" aria-selected="false" aria-controls="panel-write">Write</button>
+    </div>
+
+    <!-- ANALYZE RAIL -->
+    <div id="rail-analyze" class="rail-panel">
+      <fieldset>
+        <legend>Manuscript</legend>
+        <label class="field">Content type
+          <select id="a-contentType">
+            <option value="general">General / other</option>
+            <option value="howto">How-to</option>
+            <option value="listicle">Listicle</option>
+            <option value="comparison">Comparison (X vs Y)</option>
+            <option value="definitional">Definitional ("what is")</option>
+            <option value="landing">Landing page</option>
+            <option value="product">Product page</option>
+          </select>
+        </label>
+        <label class="field">Target keyword / topic
+          <input type="text" id="a-keyword" placeholder="e.g. pour over coffee ratio" />
+        </label>
+        <label class="field">
+          <span class="row-between"><span>SEO title tag</span><span class="char-count" id="a-title-count">0 / 60</span></span>
+          <input type="text" id="a-title" placeholder="Title as it appears in search results" />
+        </label>
+        <label class="field">
+          <span class="row-between"><span>Meta description</span><span class="char-count" id="a-meta-count">0 / 160</span></span>
+          <textarea id="a-meta" rows="2" placeholder="The pitch for the click"></textarea>
+        </label>
+        <label class="field">H1 / on-page headline
+          <input type="text" id="a-h1" placeholder="The headline readers actually see" />
+        </label>
+        <label class="field">URL slug (optional, for preview)
+          <input type="text" id="a-slug" placeholder="example.com/your-page" />
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Body copy</legend>
+        <label class="field help">Use <code>##</code> / <code>###</code> for headings, <code>[text](url)</code> for links, <code>![alt](src)</code> for images.
+          <textarea id="a-body" rows="10" placeholder="Paste or write the page content here…"></textarea>
+        </label>
+        <div class="btn-row">
+          <button class="btn small ghost" id="btn-example" type="button">Load example</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Technical self-check <span class="self-badge">self-reported</span></legend>
+        <label class="check-row"><input type="checkbox" id="chk-https" /> HTTPS enabled</label>
+        <label class="check-row"><input type="checkbox" id="chk-mobile" /> Mobile-responsive / passes mobile-friendly test</label>
+        <label class="check-row"><input type="checkbox" id="chk-robots" /> Not blocked by robots.txt or noindex</label>
+        <label class="check-row"><input type="checkbox" id="chk-cwv" /> Core Web Vitals passing (LCP/INP/CLS)</label>
+        <label class="check-row"><input type="checkbox" id="chk-canonical" /> Canonical URL set correctly</label>
+        <label class="check-row"><input type="checkbox" id="chk-nodupe" /> No near-duplicate page competing for this query</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Trust signals <span class="self-badge">self-reported</span></legend>
+        <label class="check-row"><input type="checkbox" id="chk-author" /> Named author or reviewer shown</label>
+        <label class="check-row"><input type="checkbox" id="chk-date" /> Publish / last-updated date visible</label>
+        <label class="check-row"><input type="checkbox" id="chk-sources" /> Claims cited to sources or data</label>
+        <label class="check-row"><input type="checkbox" id="chk-experience" /> First-hand experience shown (examples, tests, results)</label>
+      </fieldset>
+
+      <div class="btn-row">
+        <button class="btn" id="btn-analyze" type="button">Run analysis</button>
+        <button class="btn ghost small" id="btn-reset-analyze" type="button">Reset</button>
+      </div>
+    </div>
+
+    <!-- WRITE RAIL -->
+    <div id="rail-write" class="rail-panel hidden">
+      <fieldset>
+        <legend>Content type</legend>
+        <div class="chip-group" id="w-type-chips">
+          <button class="chip" data-type="howto" type="button" aria-pressed="true">How-to</button>
+          <button class="chip" data-type="listicle" type="button" aria-pressed="false">Listicle</button>
+          <button class="chip" data-type="comparison" type="button" aria-pressed="false">Comparison</button>
+          <button class="chip" data-type="definitional" type="button" aria-pressed="false">Definitional</button>
+          <button class="chip" data-type="landing" type="button" aria-pressed="false">Landing page</button>
+          <button class="chip" data-type="product" type="button" aria-pressed="false">Product page</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Brief</legend>
+        <label class="field">Topic / keyword
+          <input type="text" id="w-topic" placeholder="e.g. pour over coffee" />
+        </label>
+        <label class="field">Audience
+          <input type="text" id="w-audience" placeholder="e.g. home baristas new to manual brewing" />
+        </label>
+        <label class="field">Pain point
+          <input type="text" id="w-pain" placeholder="e.g. bitter or watery coffee" />
+        </label>
+        <label class="field">Desired outcome
+          <input type="text" id="w-outcome" placeholder="e.g. a consistently sweet, balanced cup" />
+        </label>
+      </fieldset>
+
+      <div class="btn-row">
+        <button class="btn" id="btn-gen-outline" type="button">Generate outline</button>
+        <button class="btn ghost" id="btn-gen-headlines" type="button">Generate headlines</button>
+      </div>
+      <p class="help">Outlines and headlines are structural starting points to adapt, not finished copy.</p>
+    </div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div id="panel-analyze" role="tabpanel">
+      <div class="empty-state" id="analyze-empty">
+        <h2>Nothing on the desk yet</h2>
+        <p>Fill in the manuscript panel on the left — or load the example — then run the analysis to see scores, findings, and fixes here.</p>
+      </div>
+
+      <div id="analyze-results" style="display:none;">
+        <div class="score-block">
+          <div class="score-number mono" id="overall-score-num">—</div>
+          <div class="score-meta">
+            <div class="score-label" id="overall-score-label">—</div>
+            <div class="score-caption">Weighted: content quality 30% · trust 30% · extraction surface 20% · findability 10% · duplication 10%.</div>
+          </div>
+        </div>
+
+        <div class="meters" id="meters"></div>
+
+        <div class="section-title">Search snippet preview</div>
+        <div class="serp">
+          <div class="serp-url mono" id="serp-url">example.com/your-page</div>
+          <div class="serp-title" id="serp-title">Your title will appear here</div>
+          <div class="serp-desc" id="serp-desc">Your meta description will appear here.</div>
+        </div>
+
+        <div class="section-title">Findings</div>
+        <div id="findings-list"></div>
+
+        <div class="section-title">Quick wins</div>
+        <div id="quickwins-list"></div>
+        <p class="help" id="quickwins-empty" style="display:none;">No sub-5-minute fixes flagged.</p>
+
+        <div class="btn-row" style="margin-top:20px;">
+          <button class="btn ghost small" id="btn-copy-report" type="button">Copy report as Markdown</button>
+        </div>
+        <textarea class="report-out mono" id="report-out" readonly></textarea>
+      </div>
+    </div>
+
+    <div id="panel-write" role="tabpanel" class="hidden">
+      <div class="section-title" style="margin-top:0;">Outline</div>
+      <ol class="outline-list" id="outline-output">
+        <li style="opacity:.5;">Generate an outline from the brief on the left.</li>
+      </ol>
+
+      <div class="section-title">Headline options</div>
+      <div class="headline-cards" id="headline-output">
+        <p class="help">Generate headlines from the brief on the left.</p>
+      </div>
+
+      <div class="section-title">Draft</div>
+      <div class="draft-wrap">
+        <textarea id="w-draft" placeholder="Write here. Use ## / ### for headings, [text](url) for links, ![alt](src) for images."></textarea>
+
+        <div class="stat-strip" id="w-stats"></div>
+
+        <div class="section-title" style="margin-top:6px;">Style checklist</div>
+        <div class="style-checklist" id="w-style-checklist"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- constants ---------------- */
+  var BUZZWORDS = ["streamline","streamlined","streamlines","seamless","seamlessly","leverage","leveraging",
+    "utilize","utilizing","innovative","cutting-edge","cutting edge","revolutionize","revolutionary",
+    "game-changer","game changer","synergy","synergies","empower","empowering","unlock","unlocking",
+    "robust","best-in-class","world-class","state-of-the-art","holistic","disrupt","disruptive","unparalleled"];
+  var HEDGES = ["very","really","basically","actually","just","quite","somewhat","fairly","rather","almost","literally"];
+  var GENERIC_ANCHORS = ["click here","here","read more","learn more","this","link","this link","this page"];
+
+  var OUTLINE_TEMPLATES = {
+    howto: function(t){return ["Before you start: what you need","The direct answer: how to "+t,"Step-by-step instructions","How to verify it worked","Common mistakes and fixes","Related questions"];},
+    listicle: function(t){return ["The short answer: top picks for "+t,"How we evaluated these","The list, ranked","How to choose the right one for you","Frequently asked questions"];},
+    comparison: function(t){return [t+": the short verdict","Comparison at a glance","Where each one wins","Pricing and value","Who should choose which"];},
+    definitional: function(t){return ["What is "+t+"? (direct answer)","Why it matters","How it works","Real examples","Related concepts","Common misconceptions"];},
+    landing: function(t){return ["Headline promise + primary CTA","The problem you solve","Why "+t+" (benefits)","How it works","Objections / FAQ","Final CTA"];},
+    product: function(t){return ["What "+t+" is, and who it's for","Benefits tied to features","Proof (results, reviews)","Specs / details","Call to action"];}
+  };
+
+  var CONTENT_TYPE_LABELS = {howto:"How-to",listicle:"Listicle",comparison:"Comparison",definitional:"Definitional",landing:"Landing page",product:"Product page",general:"General"};
+
+  var EXAMPLE = {
+    keyword:"pour over coffee ratio",
+    title:"Pour Over Coffee Ratio: The Simple Formula That Actually Works",
+    meta:"The pour over coffee ratio that actually works, explained in one sentence, plus how to adjust it for taste.",
+    h1:"The Pour Over Coffee Ratio That Actually Works",
+    slug:"example.com/pour-over-ratio",
+    body:"Use 1 gram of coffee for every 16 grams of water. That's it — that's the ratio. For a standard 300g cup, that means about 18-19g of coffee.\n\n## Why 1:16 is the starting point\n\nMost specialty coffee sits between 1:15 and 1:17. Stronger than 1:15 and it can taste harsh; weaker than 1:17 and it often tastes thin. We tested 40 cups across five roasts to land on 1:16 as the most reliable starting point.\n\n## How to adjust for your taste\n\nIf your cup tastes sour or weak, move toward 1:15. If it tastes bitter or heavy, move toward 1:17. Change the ratio in small steps — a gram or two at a time.\n\n## A step-by-step brew\n\nWeigh your coffee first, then your water. Bloom with double the coffee weight in water for 30 seconds, then pour the rest in slow circles over about three minutes.\n\n## Common mistakes\n\nGrinding too fine for your filter is the most frequent problem we see, followed by pouring too fast. Read more about grind size in our companion guide."
+  };
+
+  /* ---------------- helpers ---------------- */
+  function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n));}
+  function esc(s){return (s||"").replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
+  function debounce(fn,ms){var t;return function(){var a=arguments,c=this;clearTimeout(t);t=setTimeout(function(){fn.apply(c,a);},ms);};}
+
+  function countSyllables(word){
+    word = word.toLowerCase().replace(/[^a-z]/g,"");
+    if (!word) return 0;
+    if (word.length <= 3) return 1;
+    word = word.replace(/(?:[^aeiouy]es|ed|[^aeiouy]e)$/,"");
+    word = word.replace(/^y/,"");
+    var m = word.match(/[aeiouy]{1,2}/g);
+    return m ? m.length : 1;
+  }
+
+  function stripMarkdown(raw){
+    return (raw||"")
+      .replace(/!\[([^\]]*)\]\(([^)]*)\)/g," ")
+      .replace(/(?<!!)\[([^\]]*)\]\(([^)]*)\)/g,"$1")
+      .replace(/^#{1,6}\s+/gm,"")
+      .replace(/[*_`>]/g,"");
+  }
+
+  function splitWords(text){
+    return (text||"").split(/\s+/).map(function(w){return w.replace(/[^a-zA-Z0-9'-]/g,"");}).filter(Boolean);
+  }
+
+  function splitSentences(text){
+    return (text||"").split(/[.!?]+(?:\s|$)/).map(function(s){return s.trim();}).filter(Boolean);
+  }
+
+  function countOccurrences(haystack,needle){
+    if (!needle) return 0;
+    var esc2 = needle.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    var re = new RegExp(esc2,"gi");
+    var m = haystack.match(re);
+    return m ? m.length : 0;
+  }
+
+  function extractHeadings(raw){
+    var lines = (raw||"").split(/\r?\n/);
+    var h1=0,h2=0,h3=0;
+    lines.forEach(function(l){
+      var t=l.trim();
+      if (/^#{1}\s+/.test(t)) h1++;
+      else if (/^#{2}\s+/.test(t)) h2++;
+      else if (/^#{3}\s+/.test(t)) h3++;
+    });
+    return {h1:h1,h2:h2,h3:h3};
+  }
+
+  function extractLinks(raw){
+    var links=[]; var re=/(?<!!)\[([^\]]+)\]\(([^)]+)\)/g; var m;
+    while ((m = re.exec(raw||""))) links.push({text:m[1].trim(),href:m[2].trim()});
+    return links;
+  }
+
+  function extractImages(raw){
+    var imgs=[]; var re=/!\[([^\]]*)\]\(([^)]+)\)/g; var m;
+    while ((m = re.exec(raw||""))) imgs.push({alt:m[1].trim(),src:m[2].trim()});
+    return imgs;
+  }
+
+  function analyzeBody(raw, keyword){
+    raw = raw || "";
+    var plain = stripMarkdown(raw);
+    var words = splitWords(plain);
+    var wordCount = words.length;
+    var sentences = splitSentences(plain);
+    var sentenceCount = sentences.length || 1;
+    var avgSentenceLen = wordCount / sentenceCount;
+    var syllables = words.reduce(function(s,w){return s+countSyllables(w);},0);
+    var flesch = wordCount ? clamp(206.835 - 1.015*(wordCount/sentenceCount) - 84.6*(syllables/wordCount),0,100) : 0;
+
+    var passiveRe = /\b(am|is|are|was|were|be|been|being)\s+\w+(ed|en)\b/gi;
+    var passiveMatches = plain.match(passiveRe) || [];
+    var passiveRatio = sentenceCount ? (passiveMatches.length/sentenceCount)*100 : 0;
+
+    var lowerPlain = plain.toLowerCase();
+    var buzzHits = BUZZWORDS.filter(function(b){return lowerPlain.indexOf(b) !== -1;});
+    var hedgeCount = 0;
+    HEDGES.forEach(function(h){
+      var re = new RegExp("\\b"+h+"\\b","gi");
+      var mm = plain.match(re);
+      if (mm) hedgeCount += mm.length;
+    });
+
+    var kw = (keyword||"").trim();
+    var kwCount = kw ? countOccurrences(plain,kw) : 0;
+    var kwDensity = (kw && wordCount) ? (kwCount / wordCount) * 100 : null;
+    var first100 = words.slice(0,100).join(" ").toLowerCase();
+    var kwInFirst100 = kw ? first100.indexOf(kw.toLowerCase()) !== -1 : null;
+
+    var headings = extractHeadings(raw);
+    var links = extractLinks(raw);
+    var genericAnchors = links.filter(function(l){return GENERIC_ANCHORS.indexOf(l.text.toLowerCase()) !== -1;});
+    var images = extractImages(raw);
+    var badAlt = images.filter(function(im){
+      if (!im.alt) return true;
+      if (/\.(jpe?g|png|gif|webp|svg)$/i.test(im.alt)) return true;
+      if (["image","photo","picture","img"].indexOf(im.alt.toLowerCase()) !== -1) return true;
+      return false;
+    });
+
+    return {
+      wordCount:wordCount, sentenceCount:sentenceCount, avgSentenceLen:avgSentenceLen,
+      flesch:flesch, passiveCount:passiveMatches.length, passiveRatio:passiveRatio,
+      buzzHits:buzzHits, hedgeCount:hedgeCount,
+      kwCount:kwCount, kwDensity:kwDensity, kwInFirst100:kwInFirst100,
+      headings:headings, links:links, genericAnchors:genericAnchors,
+      images:images, badAlt:badAlt
+    };
+  }
+
+  function readabilityLabel(f){
+    if (f >= 70) return "easy";
+    if (f >= 50) return "plain";
+    if (f >= 30) return "dense";
+    return "hard";
+  }
+
+  /* ---------------- findings engine (Analyze mode) ---------------- */
+  function buildFindings(inputs){
+    var F = []; // {layer, severity, deduct, title, why, fix, impact, effort}
+    function add(layer,severity,deduct,title,why,fix,impact,effort){
+      F.push({layer:layer,severity:severity,deduct:deduct,title:title,why:why,fix:fix,impact:impact,effort:effort});
+    }
+
+    /* L1 — Findability (self-report) */
+    if (!inputs.https) add("l1","critical",35,"HTTPS not confirmed","Google requires HTTPS; unsecured pages are disadvantaged and browsers flag them as Not Secure.","Get an SSL certificate and 301-redirect HTTP to HTTPS.","High","Moderate");
+    if (!inputs.mobile) add("l1","critical",35,"Mobile-responsiveness not confirmed","Google indexes the mobile version first — a non-responsive page is effectively invisible in results.","Fix responsive layout or test with a mobile-friendly checker.","High","Moderate");
+    if (!inputs.robots) add("l1","critical",35,"Page may be blocked from crawling","If robots.txt or a noindex tag blocks this page, nothing else here matters — Google can't index it.","Check robots.txt and meta robots tags; remove any unintended block.","High","Quick");
+    if (!inputs.cwv) add("l1","warning",15,"Core Web Vitals not confirmed passing","Slow, unstable pages (LCP/INP/CLS) are directly disadvantaged in ranking.","Test in PageSpeed Insights; target LCP<2.5s, INP<200ms, CLS<0.1.","Medium","Moderate");
+    if (inputs.https && inputs.mobile && inputs.robots && inputs.cwv) add("l1","pass",0,"Technical findability looks solid","HTTPS, mobile, crawlability, and Core Web Vitals are all self-confirmed.","","","");
+
+    /* L2 — Duplication (self-report) */
+    if (!inputs.canonical) add("l2","warning",30,"Canonical URL not confirmed","Without a clear canonical, ranking signals split across duplicate or parameter URLs.","Add rel=canonical pointing to the single preferred URL.","Medium","Quick");
+    if (!inputs.nodupe) add("l2","warning",30,"Possible duplicate or near-duplicate content","A near-identical page competing for the same query dilutes both.","Merge into one stronger page, or clearly differentiate search intent.","Medium","Moderate");
+    if (inputs.canonical && inputs.nodupe) add("l2","pass",0,"One URL, one idea","Canonicalization is confirmed and no competing duplicate is flagged.","","","");
+
+    /* L3 — Extraction surface (computed) */
+    var titleLen = inputs.title.length;
+    if (!inputs.title) add("l3","critical",30,"Title tag is missing","Without a <title>, Google writes one for you — usually worse than what you'd choose.","Write a unique, accurate title, 50-60 characters.","High","Quick");
+    else if (titleLen < 30 || titleLen > 60) add("l3","warning",12,"Title length is off ("+titleLen+" chars)","Titles outside ~50-60 characters get truncated or feel thin in results.","Trim or expand to the 50-60 character range, topic first.","Medium","Quick");
+    else add("l3","pass",0,"Title length is on target ("+titleLen+" chars)","","","","");
+
+    var metaLen = inputs.meta.length;
+    if (!inputs.meta) add("l3","warning",10,"Meta description is empty","Google will auto-generate one from page content, usually less compelling than a written pitch.","Write a 150-160 character description that matches search intent.","Medium","Quick");
+    else if (metaLen < 120 || metaLen > 165) add("l3","warning",8,"Meta description length is off ("+metaLen+" chars)","Outside ~150-160 characters, descriptions get cut off or waste space.","Tighten or expand to 150-160 characters.","Low","Quick");
+    else add("l3","pass",0,"Meta description length is on target ("+metaLen+" chars)","","","","");
+
+    if (!inputs.h1) add("l3","critical",25,"No H1 / on-page headline set","The H1 is the strongest on-page structural signal of what the content is about.","Add a clear H1 stating the page's core promise.","High","Quick");
+
+    var h = inputs.analysis.headings;
+    if (inputs.analysis.wordCount > 60 && h.h2 < 2) add("l3","warning",12,"No scannable heading structure (fewer than 2 H2 sections)","Readers and AI extraction both rely on headings to navigate and summarize content.","Break the body into H2 sections, one idea each.","Medium","Moderate");
+    if (h.h1 > 0) add("l3","warning",10,"Body copy contains its own H1 line","A page should have exactly one H1 — use the dedicated H1 field, not a '# ' line in the body.","Remove the '# ' line from body copy; keep the H1 field as the single source.","Low","Quick");
+
+    if (inputs.analysis.genericAnchors.length) add("l3","warning",10,inputs.analysis.genericAnchors.length+" link(s) use generic anchor text","Anchors like 'click here' tell readers and Google nothing about the destination.","Rewrite anchors to describe what's on the other end.","Low","Quick");
+    if (inputs.analysis.images.length && inputs.analysis.badAlt.length) add("l3","warning",8,inputs.analysis.badAlt.length+" image(s) missing descriptive alt text","Alt text is how images are understood by screen readers and image search alike.","Write alt text that describes the image for someone who can't see it.","Low","Quick");
+
+    /* L4 — Content quality (computed) */
+    var a = inputs.analysis;
+    if (a.wordCount < 40) {
+      add("l4","critical",50,"Body copy is too thin to evaluate ("+a.wordCount+" words)","There isn't enough content here to judge intent completeness or quality.","Add real substance — this isn't about hitting a word count, it's about finishing the reader's task.","High","Moderate");
+    } else {
+      if (inputs.keyword) {
+        if (a.kwDensity !== null && a.kwDensity > 3) add("l4","critical",30,"Keyword stuffing detected ("+a.kwDensity.toFixed(1)+"% density)","Repeating the exact phrase past ~3% density reads as manipulation, not natural writing.","Remove repeated instances; let synonyms and natural phrasing carry the topic.","High","Moderate");
+        else if (a.kwCount === 0) add("l4","warning",12,"Target keyword never appears in body copy","If the topic word never appears, neither readers nor Google can confirm relevance.","Work the keyword or a natural variant into the content, especially the opening.","Medium","Quick");
+        if (a.kwCount > 0 && a.kwInFirst100 === false) add("l4","warning",8,"Target keyword doesn't appear in the first 100 words","Leading with the direct answer helps both featured snippets and AI extraction.","Move the topic/keyword into the opening sentence or two.","Medium","Quick");
+      }
+      if (a.buzzHits.length) add("l4","warning",10,a.buzzHits.length+" vague marketing buzzword(s) found","Words like '"+a.buzzHits.slice(0,3).join("', '")+"' read as filler, not substance.","Replace with specific, concrete language.","Medium","Quick");
+      if (a.hedgeCount > Math.max(1,Math.round(a.wordCount/100))) add("l4","warning",8,a.hedgeCount+" hedge word(s) weaken confident claims","'Very / really / basically / almost' soften claims without adding information.","Cut the hedge and say the thing directly.","Low","Quick");
+      if (a.passiveRatio > 15) add("l4","warning",10,Math.round(a.passiveRatio)+"% of sentences show possible passive voice","Passive constructions distance the actor from the action and read as less direct.","Rewrite key sentences active: 'we tested' not 'was tested'.","Low","Moderate");
+      if (a.flesch < 30) add("l4","warning",10,"Text reads as difficult (readability "+Math.round(a.flesch)+"/100)","Dense, hard-to-parse sentences lose readers and complicate AI extraction.","Shorten sentences and prefer common words.","Medium","Moderate");
+      if (a.avgSentenceLen > 28) add("l4","warning",6,"Average sentence length is high ("+Math.round(a.avgSentenceLen)+" words)","Long sentences are harder to scan on a page people are skimming.","Split long sentences; aim for variety, not uniformity.","Low","Moderate");
+      if (!a.buzzHits.length && a.passiveRatio<=15 && a.flesch>=30 && a.avgSentenceLen<=28 && (!inputs.keyword || (a.kwDensity!==null && a.kwDensity<=3 && a.kwCount>0))) {
+        add("l4","pass",0,"Content quality checks look solid","No stuffing, thin content, buzzwords, or readability red flags found.","","","");
+      }
+    }
+
+    /* L5 — Trust (self-report) */
+    if (!inputs.author) add("l5","warning",22,"No named author or reviewer shown","Trustworthiness is the dominant E-E-A-T signal, especially for AI citation.","Add a byline with real credentials or demonstrated experience.","High","Moderate");
+    if (!inputs.date) add("l5","warning",22,"No visible publish or updated date","Dateless content reads as unmaintained to both readers and AI retrieval.","Show a publish date; update it when content is meaningfully revised.","Medium","Quick");
+    if (!inputs.sources) add("l5","warning",22,"Claims aren't cited to sources","Unsupported claims are the fastest way to lose trust — and rankings.","Link factual claims to primary sources or include real data.","Medium","Moderate");
+    if (!inputs.experience) add("l5","warning",22,"No first-hand experience signals","The 'Experience' in E-E-A-T comes from real examples, not descriptions of capability.","Add real examples, testing notes, or case-specific detail.","Medium","Moderate");
+    if (inputs.author && inputs.date && inputs.sources && inputs.experience) add("l5","pass",0,"Strong E-E-A-T signals present","Author, date, sources, and first-hand experience are all confirmed.","","","");
+
+    return F;
+  }
+
+  function layerScore(findings, layer){
+    var deduct = findings.filter(function(f){return f.layer===layer && f.severity!=="pass";})
+      .reduce(function(s,f){return s+f.deduct;},0);
+    return clamp(100-deduct,0,100);
+  }
+
+  function scoreBand(score){
+    if (score>=80) return "good";
+    if (score>=55) return "warning";
+    return "critical";
+  }
+  function scoreColorVar(band){
+    return band==="good" ? "var(--good)" : band==="warning" ? "var(--warn)" : "var(--critical)";
+  }
+  function overallLabel(score){
+    if (score>=90) return "Excellent — ready to publish";
+    if (score>=75) return "Solid — minor gaps";
+    if (score>=55) return "Workable — real gaps to close";
+    if (score>=35) return "Weak — needs real work before publishing";
+    return "Not ready — foundational problems";
+  }
+
+  /* ---------------- render: Analyze ---------------- */
+  var LAYER_META = [
+    {key:"l1",label:"Findability",selfReport:true},
+    {key:"l2",label:"Duplication",selfReport:true},
+    {key:"l3",label:"Extraction surface",selfReport:false},
+    {key:"l4",label:"Content quality",selfReport:false},
+    {key:"l5",label:"Trust signals",selfReport:true}
+  ];
+  var WEIGHTS = {l1:0.10,l2:0.10,l3:0.20,l4:0.30,l5:0.30};
+
+  function runAnalysis(){
+    var title = document.getElementById("a-title").value.trim();
+    var meta = document.getElementById("a-meta").value.trim();
+    var h1 = document.getElementById("a-h1").value.trim();
+    var slug = document.getElementById("a-slug").value.trim();
+    var keyword = document.getElementById("a-keyword").value.trim();
+    var body = document.getElementById("a-body").value;
+
+    var analysis = analyzeBody(body, keyword);
+    var inputs = {
+      title:title, meta:meta, h1:h1, keyword:keyword, analysis:analysis,
+      https:document.getElementById("chk-https").checked,
+      mobile:document.getElementById("chk-mobile").checked,
+      robots:document.getElementById("chk-robots").checked,
+      cwv:document.getElementById("chk-cwv").checked,
+      canonical:document.getElementById("chk-canonical").checked,
+      nodupe:document.getElementById("chk-nodupe").checked,
+      author:document.getElementById("chk-author").checked,
+      date:document.getElementById("chk-date").checked,
+      sources:document.getElementById("chk-sources").checked,
+      experience:document.getElementById("chk-experience").checked
+    };
+
+    var findings = buildFindings(inputs);
+    var scores = {};
+    LAYER_META.forEach(function(l){scores[l.key]=layerScore(findings,l.key);});
+    var overall = Math.round(
+      scores.l1*WEIGHTS.l1 + scores.l2*WEIGHTS.l2 + scores.l3*WEIGHTS.l3 + scores.l4*WEIGHTS.l4 + scores.l5*WEIGHTS.l5
+    );
+
+    renderResults(overall, scores, findings, {title:title,meta:meta,slug:slug||"example.com/your-page"});
+    saveState();
+  }
+
+  function renderResults(overall, scores, findings, serp){
+    document.getElementById("analyze-empty").style.display="none";
+    var results = document.getElementById("analyze-results");
+    results.style.display="block";
+
+    var band = scoreBand(overall);
+    document.getElementById("overall-score-num").textContent = overall;
+    document.getElementById("overall-score-num").style.color = scoreColorVar(band);
+    document.getElementById("overall-score-label").textContent = overallLabel(overall);
+
+    var metersEl = document.getElementById("meters");
+    metersEl.innerHTML = "";
+    LAYER_META.forEach(function(l){
+      var s = scores[l.key];
+      var b = scoreBand(s);
+      var row = document.createElement("div");
+      row.className = "meter";
+      row.innerHTML =
+        '<div class="meter-head"><span class="meter-label">'+esc(l.label)+(l.selfReport?' <span class="self-badge">self</span>':'')+'</span>'+
+        '<span class="meter-value mono" style="color:'+scoreColorVar(b)+'">'+s+'</span></div>'+
+        '<div class="meter-track"><div class="meter-ticks"><i></i><i></i><i></i><i></i><i></i></div>'+
+        '<div class="meter-fill" style="width:'+s+'%;background:'+scoreColorVar(b)+';"></div></div>';
+      metersEl.appendChild(row);
+    });
+
+    document.getElementById("serp-url").textContent = serp.slug;
+    document.getElementById("serp-title").textContent = serp.title ? (serp.title.length>60?serp.title.slice(0,60)+"…":serp.title) : "Your title will appear here";
+    document.getElementById("serp-desc").textContent = serp.meta ? (serp.meta.length>165?serp.meta.slice(0,165)+"…":serp.meta) : "Your meta description will appear here.";
+
+    var order = {critical:0,warning:1,pass:2};
+    var sorted = findings.slice().sort(function(a,b2){return order[a.severity]-order[b2.severity];});
+    var listEl = document.getElementById("findings-list");
+    listEl.innerHTML = "";
+    if (!sorted.length){
+      listEl.innerHTML = '<p class="help">No findings.</p>';
+    }
+    sorted.forEach(function(f){
+      var row = document.createElement("div");
+      row.className = "finding";
+      var tagsHtml = "";
+      if (f.severity !== "pass") {
+        tagsHtml = '<div class="finding-tags"><span class="tag">'+esc(f.impact)+' impact</span><span class="tag">'+esc(f.effort)+'</span></div>';
+      }
+      row.innerHTML =
+        '<div class="finding-mark '+f.severity+'"></div>'+
+        '<div class="finding-body">'+
+          '<div class="finding-title">'+esc(f.title)+'</div>'+
+          (f.why?'<div class="finding-why">'+esc(f.why)+'</div>':'')+
+          (f.fix?'<div class="finding-fix">'+esc(f.fix)+'</div>':'')+
+          tagsHtml+
+        '</div>';
+      listEl.appendChild(row);
+    });
+
+    var quick = findings.filter(function(f){return f.severity!=="pass" && f.effort==="Quick";});
+    var qwEl = document.getElementById("quickwins-list");
+    qwEl.innerHTML = "";
+    document.getElementById("quickwins-empty").style.display = quick.length? "none":"block";
+    quick.forEach(function(f){
+      var row = document.createElement("div");
+      row.className = "quickwin";
+      row.innerHTML = '<span>'+esc(f.title)+'</span><span class="qw-fix">'+esc(f.fix)+'</span>';
+      qwEl.appendChild(row);
+    });
+
+    window.__lastReport = buildReportMarkdown(overall, scores, sorted);
+  }
+
+  function buildReportMarkdown(overall, scores, findings){
+    var lines = [];
+    lines.push("# SEO Report");
+    lines.push("");
+    lines.push("Overall score: "+overall+"/100 — "+overallLabel(overall));
+    lines.push("");
+    LAYER_META.forEach(function(l){lines.push("- "+l.label+": "+scores[l.key]+"/100");});
+    lines.push("");
+    lines.push("## Findings");
+    findings.forEach(function(f){
+      lines.push("");
+      lines.push("### ["+f.severity.toUpperCase()+"] "+f.title);
+      if (f.why) lines.push(f.why);
+      if (f.fix) lines.push("Fix: "+f.fix);
+    });
+    return lines.join("\n");
+  }
+
+  /* ---------------- Write mode ---------------- */
+  var currentWriteType = "howto";
+
+  function generateOutline(){
+    var topic = document.getElementById("w-topic").value.trim() || "your topic";
+    var tpl = OUTLINE_TEMPLATES[currentWriteType] || OUTLINE_TEMPLATES.howto;
+    var items = tpl(topic);
+    var el = document.getElementById("outline-output");
+    el.innerHTML = "";
+    items.forEach(function(it){
+      var li = document.createElement("li");
+      li.textContent = it;
+      el.appendChild(li);
+    });
+  }
+
+  function generateHeadlines(){
+    var topic = document.getElementById("w-topic").value.trim() || "your topic";
+    var audience = document.getElementById("w-audience").value.trim() || "your audience";
+    var pain = document.getElementById("w-pain").value.trim() || "the usual pain point";
+    var outcome = document.getElementById("w-outcome").value.trim() || ("mastering "+topic);
+
+    var options = [
+      {text: capitalize(outcome)+", without "+pain, formula:"{outcome} without {pain}"},
+      {text: "The "+topic+" guide for "+audience, formula:"The {category} for {audience}"},
+      {text: "Still dealing with "+pain+"?", formula:"{question stating the pain}"},
+      {text: "How to "+outcome+" (even with "+pain+")", formula:"How to {outcome} ({qualifier})"}
+    ];
+    var el = document.getElementById("headline-output");
+    el.innerHTML = "";
+    options.forEach(function(o){
+      var card = document.createElement("div");
+      card.className = "headline-card";
+      card.innerHTML = '<div><div class="htext">'+esc(o.text)+'</div><div class="hformula">'+esc(o.formula)+'</div></div>';
+      el.appendChild(card);
+    });
+  }
+
+  function capitalize(s){return s ? s.charAt(0).toUpperCase()+s.slice(1) : s;}
+
+  function renderWriteStats(){
+    var text = document.getElementById("w-draft").value;
+    var keyword = document.getElementById("w-topic").value.trim();
+    var a = analyzeBody(text, keyword);
+
+    var stripped = stripMarkdown(text);
+    var strip = document.getElementById("w-stats");
+    var hasWords = a.wordCount > 0;
+    var readLbl = readabilityLabel(a.flesch);
+    strip.innerHTML = [
+      stat(a.wordCount,"words"),
+      stat(a.sentenceCount,"sentences"),
+      stat(hasWords?Math.round(a.avgSentenceLen):"—","avg words/sentence"),
+      stat(hasWords?(Math.round(a.flesch)+" ("+readLbl+")"):"—","readability", hasWords?(a.flesch<30?"critical":(a.flesch<50?"warning":"good")):null),
+      stat(a.buzzHits.length,"buzzwords", hasWords?(a.buzzHits.length?"warning":"good"):null),
+      stat(hasWords?Math.round(a.passiveRatio)+"%":"—","possible passive", hasWords?(a.passiveRatio>15?"warning":"good"):null),
+      stat(a.headings.h2,"H2 sections")
+    ].join("");
+
+    var checklist = [];
+    if (!hasWords){
+      checklist.push(styleRowNA("Active voice","write something to check"));
+      checklist.push(styleRowNA("No vague hedges","write something to check"));
+      checklist.push(styleRowNA("No buzzword filler","write something to check"));
+      checklist.push(styleRowNA("Natural keyword use","write something to check"));
+      checklist.push(styleRowNA("Keyword in opening","write something to check"));
+      checklist.push(styleRowNA("Readable","write something to check"));
+      document.getElementById("w-style-checklist").innerHTML = checklist.join("");
+      return;
+    }
+    checklist.push(styleRow("Active voice", a.passiveRatio<=15, Math.round(a.passiveRatio)+"% passive"));
+    checklist.push(styleRow("No vague hedges", a.hedgeCount<=Math.max(1,Math.round(a.wordCount/100)), a.hedgeCount+" found"));
+    checklist.push(styleRow("No buzzword filler", a.buzzHits.length===0, a.buzzHits.length+" found"));
+    if (keyword){
+      var densOk = a.kwDensity!==null && a.kwDensity>0 && a.kwDensity<=3;
+      checklist.push(styleRow("Natural keyword use", densOk, a.kwDensity===null?"n/a":a.kwDensity.toFixed(1)+"% density"));
+      checklist.push(styleRow("Keyword in opening", a.kwInFirst100===true, a.kwInFirst100?"present":"missing", a.kwInFirst100===null));
+    } else {
+      checklist.push(styleRowNA("Natural keyword use","set a topic to check"));
+      checklist.push(styleRowNA("Keyword in opening","set a topic to check"));
+    }
+    checklist.push(styleRow("Readable", a.flesch>=30, Math.round(a.flesch)+"/100"));
+    document.getElementById("w-style-checklist").innerHTML = checklist.join("");
+  }
+
+  function stat(num,label,statusClass){
+    return '<div class="stat"><div class="num'+(statusClass?" "+statusClass:"")+'">'+num+'</div><div class="lbl">'+esc(label)+'</div></div>';
+  }
+  function styleRow(label,pass,note){
+    return '<div class="style-row"><span class="style-mark '+(pass?"pass":"fail")+'"></span><span>'+esc(label)+'</span><span class="style-note">'+esc(note)+'</span></div>';
+  }
+  function styleRowNA(label,note){
+    return '<div class="style-row"><span class="style-mark na"></span><span>'+esc(label)+'</span><span class="style-note">'+esc(note)+'</span></div>';
+  }
+
+  /* ---------------- wiring ---------------- */
+  function switchTab(which){
+    var isA = which==="analyze";
+    document.getElementById("tab-analyze-btn").setAttribute("aria-selected", isA?"true":"false");
+    document.getElementById("tab-write-btn").setAttribute("aria-selected", isA?"false":"true");
+    document.getElementById("rail-analyze").classList.toggle("hidden", !isA);
+    document.getElementById("rail-write").classList.toggle("hidden", isA);
+    document.getElementById("panel-analyze").classList.toggle("hidden", !isA);
+    document.getElementById("panel-write").classList.toggle("hidden", isA);
+  }
+  document.getElementById("tab-analyze-btn").addEventListener("click", function(){switchTab("analyze");});
+  document.getElementById("tab-write-btn").addEventListener("click", function(){switchTab("write");});
+
+  function bindCount(inputId,countId,max){
+    var el = document.getElementById(inputId);
+    var out = document.getElementById(countId);
+    function update(){
+      var n = el.value.length;
+      out.textContent = n+" / "+max;
+      out.className = "char-count "+(n===0?"":(n>max?"over":(n>=Math.round(max*0.75)?"ok":"")));
+    }
+    el.addEventListener("input", update);
+    update();
+  }
+  bindCount("a-title","a-title-count",60);
+  bindCount("a-meta","a-meta-count",160);
+
+  document.getElementById("btn-analyze").addEventListener("click", runAnalysis);
+  document.getElementById("btn-reset-analyze").addEventListener("click", function(){
+    ["a-title","a-meta","a-h1","a-slug","a-keyword","a-body"].forEach(function(id){document.getElementById(id).value="";});
+    ["chk-https","chk-mobile","chk-robots","chk-cwv","chk-canonical","chk-nodupe","chk-author","chk-date","chk-sources","chk-experience"].forEach(function(id){document.getElementById(id).checked=false;});
+    document.getElementById("analyze-results").style.display="none";
+    document.getElementById("analyze-empty").style.display="block";
+    bindCount("a-title","a-title-count",60);
+    bindCount("a-meta","a-meta-count",160);
+    saveState();
+  });
+  document.getElementById("btn-example").addEventListener("click", function(){
+    document.getElementById("a-keyword").value = EXAMPLE.keyword;
+    document.getElementById("a-title").value = EXAMPLE.title;
+    document.getElementById("a-meta").value = EXAMPLE.meta;
+    document.getElementById("a-h1").value = EXAMPLE.h1;
+    document.getElementById("a-slug").value = EXAMPLE.slug;
+    document.getElementById("a-body").value = EXAMPLE.body;
+    document.getElementById("a-title").dispatchEvent(new Event("input"));
+    document.getElementById("a-meta").dispatchEvent(new Event("input"));
+  });
+
+  document.getElementById("btn-copy-report").addEventListener("click", function(){
+    if (!window.__lastReport){showToast("Run an analysis first.");return;}
+    var out = document.getElementById("report-out");
+    out.value = window.__lastReport;
+    out.classList.add("show");
+    var done = function(){showToast("Report copied to clipboard.");};
+    var fail = function(){ out.select(); showToast("Select the text below and copy manually."); };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(window.__lastReport).then(done).catch(fail);
+    } else { fail(); }
+  });
+
+  var toastTimer;
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){t.classList.remove("show");},2600);
+  }
+
+  var chips = document.querySelectorAll("#w-type-chips .chip");
+  chips.forEach(function(c){
+    c.addEventListener("click", function(){
+      chips.forEach(function(x){x.setAttribute("aria-pressed","false");});
+      c.setAttribute("aria-pressed","true");
+      currentWriteType = c.getAttribute("data-type");
+    });
+  });
+
+  document.getElementById("btn-gen-outline").addEventListener("click", generateOutline);
+  document.getElementById("btn-gen-headlines").addEventListener("click", generateHeadlines);
+  document.getElementById("w-draft").addEventListener("input", debounce(renderWriteStats,200));
+  renderWriteStats();
+
+  /* ---------------- persistence (best-effort) ---------------- */
+  function saveState(){
+    try {
+      var state = {
+        keyword:document.getElementById("a-keyword").value,
+        title:document.getElementById("a-title").value,
+        meta:document.getElementById("a-meta").value,
+        h1:document.getElementById("a-h1").value,
+        slug:document.getElementById("a-slug").value,
+        body:document.getElementById("a-body").value
+      };
+      localStorage.setItem("masterSeoState", JSON.stringify(state));
+    } catch(e) {}
+  }
+  function loadState(){
+    try {
+      var raw = localStorage.getItem("masterSeoState");
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      document.getElementById("a-keyword").value = s.keyword||"";
+      document.getElementById("a-title").value = s.title||"";
+      document.getElementById("a-meta").value = s.meta||"";
+      document.getElementById("a-h1").value = s.h1||"";
+      document.getElementById("a-slug").value = s.slug||"";
+      document.getElementById("a-body").value = s.body||"";
+      bindCount("a-title","a-title-count",60);
+      bindCount("a-meta","a-meta-count",160);
+    } catch(e) {}
+  }
+  loadState();
+})();
+</script>
+</body>
+</html>
