@@ -448,6 +448,7 @@
 
       <div class="btn-row">
         <button class="btn" id="btn-gen-draft" type="button">Draft full copy</button>
+        <button class="btn ghost" id="btn-regen" type="button" disabled>Regenerate</button>
       </div>
       <div class="btn-row">
         <button class="btn ghost small" id="btn-gen-outline" type="button">Outline only</button>
@@ -1106,18 +1107,32 @@
     var pain = document.getElementById("w-pain").value.trim() || "the usual pain point";
     var outcome = document.getElementById("w-outcome").value.trim() || ("mastering "+topic);
 
+    // Each formula carries a few phrasings; Regenerate rotates through them.
     var options = [
-      {text: capitalize(outcome)+", without "+pain, formula:"{outcome} without {pain}"},
-      {text: "The "+topic+" guide for "+audience, formula:"The {category} for {audience}"},
-      {text: "Still dealing with "+pain+"?", formula:"{question stating the pain}"},
-      {text: "How to "+outcome+" (even with "+pain+")", formula:"How to {outcome} ({qualifier})"}
+      {formula:"{outcome} without {pain}", texts:[
+        capitalize(outcome)+", without "+pain,
+        capitalize(outcome)+" — no more "+pain,
+        "Get "+outcome+" without the "+pain]},
+      {formula:"The {category} for {audience}", texts:[
+        "The "+topic+" guide for "+audience,
+        "The only "+topic+" guide "+audience+" need",
+        capitalize(topic)+", explained for "+audience]},
+      {formula:"{question stating the pain}", texts:[
+        "Still dealing with "+pain+"?",
+        "Why do "+audience+" keep hitting "+pain+"?",
+        "What if "+pain+" wasn't inevitable?"]},
+      {formula:"How to {outcome} ({qualifier})", texts:[
+        "How to "+outcome+" (even with "+pain+")",
+        "How to "+outcome+" — the "+audience+" version",
+        "How to finally "+outcome]}
     ];
     var el = document.getElementById("headline-output");
     el.innerHTML = "";
     options.forEach(function(o){
+      var text = o.texts[((draftVariant % o.texts.length) + o.texts.length) % o.texts.length];
       var card = document.createElement("div");
       card.className = "headline-card";
-      card.innerHTML = '<div><div class="htext">'+esc(o.text)+'</div><div class="hformula">'+esc(o.formula)+'</div></div>';
+      card.innerHTML = '<div><div class="htext">'+esc(text)+'</div><div class="hformula">'+esc(o.formula)+'</div></div>';
       el.appendChild(card);
     });
   }
@@ -1168,9 +1183,18 @@
     });
   }
 
+  // Regenerate: draftVariant increments each time, so pickVariant() rotates
+  // through genuinely different opening angles rather than reprinting.
+  var draftVariant = 0;
+  function pickVariant(arr){ return arr[((draftVariant % arr.length) + arr.length) % arr.length]; }
+
   function buildAdaptiveDraft(b, refHeadings){
-    var lines = [];
-    lines.push("If you're one of the many "+b.aud+" dealing with "+b.pain+", here's the short version: "+b.out+" is achievable. [State your single most important insight or answer in one sentence here.]");
+    var opening = pickVariant([
+      "If you're one of the many "+b.aud+" dealing with "+b.pain+", here's the short version: "+b.out+" is achievable. [State your single most important insight or answer in one sentence here.]",
+      "[State the direct answer about "+b.t+" in one sentence.] That's the short version for "+b.aud+" — the rest of this page shows why and how.",
+      "Most advice on "+b.t+" skips the part that actually matters to "+b.aud+". [Open with the insight others miss, then promise the payoff: "+b.out+".]"
+    ]);
+    var lines = [opening];
     refHeadings.forEach(function(h){
       lines.push("## "+h);
       lines.push("[Write this section — tie \""+h+"\" back to "+b.t+" and what it means for "+b.aud+". Lead with the point, then explain."+(b.proof ? " Consider using this proof point here or elsewhere: "+b.proof+"." : "")+"]");
@@ -1184,7 +1208,11 @@
     blog: function(b){
       var we = b.brand || "we";
       return [
-        "If you're one of the many "+b.aud+" dealing with "+b.pain+", here's the short version: "+b.out+" is achievable, and this post walks through exactly how. [State your single most important insight or answer in one sentence here.]",
+        pickVariant([
+          "If you're one of the many "+b.aud+" dealing with "+b.pain+", here's the short version: "+b.out+" is achievable, and this post walks through exactly how. [State your single most important insight or answer in one sentence here.]",
+          "[State the single most important insight about "+b.t+" in one sentence.] If "+b.pain+" has been holding you back, this is the part most guides bury — so we're leading with it.",
+          "Everyone tells "+b.aud+" the same things about "+b.t+", and most of it doesn't fix "+b.pain+". [Open with the contrarian point, then promise: here's what actually gets you to "+b.out+".]"
+        ]),
         "## Why "+b.t+" matters right now",
         "For "+b.aud+", "+b.pain+" isn't a small annoyance — it's the thing standing between you and "+b.out+". [Add one or two sentences of context: what's changed recently, or why this keeps coming up.]",
         "## The core of it",
@@ -1204,7 +1232,11 @@
     website: function(b){
       var brand = b.brand || "[Brand]";
       return [
-        capitalize(b.out)+", without "+b.pain+". "+brand+" helps "+b.aud+" [say what you do in one plain sentence].",
+        pickVariant([
+          capitalize(b.out)+", without "+b.pain+". "+brand+" helps "+b.aud+" [say what you do in one plain sentence].",
+          "Tired of "+b.pain+"? "+brand+" gives "+b.aud+" a straighter path to "+b.out+". [One plain sentence on what you do.]",
+          "The "+b.t+" built for "+b.aud+" who care about "+b.out+". [One plain sentence on what "+brand+" does and who it's for.]"
+        ]),
         "[Primary CTA — action verb + what they get, e.g. \"See how it works\"]",
         "## Who it's for",
         "Built for "+b.aud+". If "+b.pain+" sounds familiar, you're in the right place. [One sentence on who it's NOT for — honesty here builds trust.]",
@@ -1224,7 +1256,11 @@
     },
     howto: function(b){
       return [
-        "If you've dealt with "+b.pain+", here's the fix: [state the direct answer in one or two sentences — the single most important thing to know about "+b.t+"]. The rest of this guide shows you exactly how, step by step.",
+        pickVariant([
+          "If you've dealt with "+b.pain+", here's the fix: [state the direct answer in one or two sentences — the single most important thing to know about "+b.t+"]. The rest of this guide shows you exactly how, step by step.",
+          "[State the direct answer to "+b.t+" in one or two sentences.] That's the whole thing in brief; the steps below are just how to do it without hitting "+b.pain+".",
+          "Most guides on "+b.t+" overcomplicate it, which is exactly how "+b.aud+" end up with "+b.pain+". [Lead with the one thing that actually matters, then walk the steps.]"
+        ]),
         "## Before you start",
         "You'll need: [list the tools, materials, or prerequisites]. For "+b.aud+", the only non-negotiable is [the one thing that matters most].",
         "## Step-by-step",
@@ -1241,7 +1277,11 @@
     },
     listicle: function(b){
       return [
-        "Short on time? The best option for most "+b.aud+" is [top pick] — it handles "+b.pain+" better than anything else we looked at. The full list below covers [n] options and who each one actually suits.",
+        pickVariant([
+          "Short on time? The best option for most "+b.aud+" is [top pick] — it handles "+b.pain+" better than anything else we looked at. The full list below covers [n] options and who each one actually suits.",
+          "We compared [n] options for "+b.t+" so "+b.aud+" don't have to. [Name the top pick and the one reason it wins]; the full ranking and who each suits is below.",
+          "Not all "+b.t+" options are built for the same person — that's why generic \"best of\" lists lead "+b.aud+" straight into "+b.pain+". Here's the ranked list with who each one is actually for."
+        ]),
         "## How we picked",
         (b.proof ? "Our criteria: [criterion 1], [criterion 2], [criterion 3]. "+capitalize(b.proof)+"." : "Our criteria: [criterion 1], [criterion 2], [criterion 3]. [Say what you actually did — tested, compared, used daily. Real methodology is what separates a trustworthy list from filler.]"),
         "## 1. [Top pick] — best overall",
@@ -1258,7 +1298,11 @@
     },
     comparison: function(b){
       return [
-        "The short verdict: for most "+b.aud+", [option A] is the better choice for "+b.out+" — but [option B] wins if [specific situation]. Here's the full breakdown.",
+        pickVariant([
+          "The short verdict: for most "+b.aud+", [option A] is the better choice for "+b.out+" — but [option B] wins if [specific situation]. Here's the full breakdown.",
+          "The honest answer depends on one thing: [the deciding factor]. Get that right and the choice between [option A] and [option B] makes itself. Here's how to tell which fits "+b.aud+".",
+          "Most \"[option A] vs [option B]\" guides pick a winner and move on — useless if you're the exception. This one shows exactly where each wins for "+b.aud+" chasing "+b.out+"."
+        ]),
         "## At a glance",
         "[Comparison table: 4-6 rows covering the dimensions that actually drive the decision — price, the core capability, the dealbreaker. Verdict per row.]",
         "## Where [option A] wins",
@@ -1273,7 +1317,11 @@
     },
     definitional: function(b){
       return [
-        capitalize(b.t)+" is [direct one-sentence definition — no warm-up, no history lesson first]. In practical terms for "+b.aud+", it means [what it does for them].",
+        pickVariant([
+          capitalize(b.t)+" is [direct one-sentence definition — no warm-up, no history lesson first]. In practical terms for "+b.aud+", it means [what it does for them].",
+          "Think of "+b.t+" like [everyday analogy from the reader's world]. More precisely: [direct one-sentence definition]. For "+b.aud+", it matters because [the practical stake].",
+          "You've probably heard "+b.t+" thrown around without a straight definition. Here's one: [direct one-sentence definition]. And here's why it matters to "+b.aud+": [the practical stake]."
+        ]),
         "## Why it matters",
         "If you're dealing with "+b.pain+", "+b.t+" is relevant because [the connection to "+b.out+"]. [One sentence on what happens if you ignore it.]",
         "## How it works",
@@ -1289,7 +1337,11 @@
     landing: function(b){
       var brand = b.brand || "[Brand]";
       return [
-        capitalize(b.out)+" — without "+b.pain+". "+brand+" gives "+b.aud+" [the core promise in one sentence].",
+        pickVariant([
+          capitalize(b.out)+" — without "+b.pain+". "+brand+" gives "+b.aud+" [the core promise in one sentence].",
+          "What if "+b.pain+" just wasn't part of your day? "+brand+" gets "+b.aud+" to "+b.out+". [The core promise in one sentence.]",
+          "Still stuck with "+b.pain+"? You're not the problem — your tools are. "+brand+" gives "+b.aud+" [the core promise in one sentence]."
+        ]),
         "[Primary CTA button: action verb + what they get]",
         "## The problem",
         "You know the drill: "+b.pain+". [Two or three sentences that describe the reader's situation so precisely they feel seen. Use their words, not yours.]",
@@ -1312,7 +1364,11 @@
     product: function(b){
       var brand = b.brand || "[Product]";
       return [
-        brand+" is [what it is, in one sentence], built for "+b.aud+" who want "+b.out+" without "+b.pain+".",
+        pickVariant([
+          brand+" is [what it is, in one sentence], built for "+b.aud+" who want "+b.out+" without "+b.pain+".",
+          "For "+b.aud+" who are done with "+b.pain+": "+brand+" [what it is, in one sentence] — made to get you to "+b.out+".",
+          capitalize(b.out)+" starts with the right tool. "+brand+" is [what it is, in one sentence], built for "+b.aud+"."
+        ]),
         "## What it does for you",
         "[Benefit one: the outcome, then the feature behind it.]",
         "[Benefit two.]",
@@ -1329,8 +1385,39 @@
     }
   };
 
+  // Cached fetch results so Regenerate re-rolls the variant without re-fetching.
+  var lastDraftContext = null;
+
+  function renderDraftFromContext(ctx){
+    var b = ctx.brief;
+    var refHeadings = ctx.refHeadings;
+    var draftText;
+    if (refHeadings){
+      draftText = buildAdaptiveDraft(b, refHeadings);
+    } else {
+      var builder = DRAFT_BUILDERS[ctx.type] || DRAFT_BUILDERS.blog;
+      draftText = builder(b);
+    }
+    if (ctx.srcFacts && ctx.srcFacts.snippet){
+      draftText += "\n\n## Notes from your content source\n\n\""+ctx.srcFacts.snippet+"\" — from "+(ctx.srcFacts.title||ctx.srcUrl)+" ("+ctx.srcUrl+"). Pull real facts or quotes like this into the sections above; don't just paste it in as-is.";
+    }
+
+    document.getElementById("w-draft").value = draftText;
+    generateOutline(refHeadings);
+    generateHeadlines();
+    renderWriteStats();
+    document.getElementById("btn-regen").disabled = false;
+
+    var statusEl = document.getElementById("w-draft-status");
+    var parts = [];
+    if (ctx.srcUrl) parts.push(ctx.srcFacts ? "content source fetched" : "content source fetch failed"+(ctx.srcError&&ctx.srcError.details?" ("+ctx.srcError.details.join(" · ")+")":""));
+    if (ctx.refUrl) parts.push(refHeadings ? "outline drawn from reference page" : (ctx.refFetched ? "reference page fetched but had too few headings — used the default outline" : "reference page fetch failed"+(ctx.refError&&ctx.refError.details?" ("+ctx.refError.details.join(" · ")+")":"")));
+    var base = (ctx.regen ? "New angle drafted" : "Draft ready") + " — square brackets mark where your real facts go.";
+    statusEl.textContent = parts.length ? (base+" ("+parts.join(" · ")+".)") : base;
+    statusEl.style.color = (ctx.srcError||ctx.refError) ? "var(--warn)" : "var(--ink-faint)";
+  }
+
   function generateDraft(){
-    var b = getBrief();
     var srcUrl = document.getElementById("w-source-url").value.trim();
     var refUrl = document.getElementById("w-reference-url").value.trim();
     var btn = document.getElementById("btn-gen-draft");
@@ -1344,38 +1431,33 @@
 
     if (jobs.length){
       btn.disabled = true;
+      document.getElementById("btn-regen").disabled = true;
       statusEl.textContent = "Fetching reference page / content source…";
       statusEl.style.color = "var(--ink-faint)";
     }
 
     Promise.all(jobs).then(function(){
-      var refHeadings = (refOutline && refOutline.headings && refOutline.headings.length >= 3) ? refOutline.headings : null;
-
-      var draftText;
-      if (refHeadings){
-        draftText = buildAdaptiveDraft(b, refHeadings);
-      } else {
-        var builder = DRAFT_BUILDERS[currentWriteType] || DRAFT_BUILDERS.blog;
-        draftText = builder(b);
-      }
-
-      if (srcFacts && srcFacts.snippet){
-        draftText += "\n\n## Notes from your content source\n\n\""+srcFacts.snippet+"\" — from "+(srcFacts.title||srcUrl)+" ("+srcUrl+"). Pull real facts or quotes like this into the sections above; don't just paste it in as-is.";
-      }
-
-      document.getElementById("w-draft").value = draftText;
-      generateOutline(refHeadings);
-      generateHeadlines();
-      renderWriteStats();
-
       btn.disabled = false;
-      var parts = [];
-      if (srcUrl) parts.push(srcFacts ? "content source fetched" : "content source fetch failed"+(srcError&&srcError.details?" ("+srcError.details.join(" · ")+")":""));
-      if (refUrl) parts.push(refHeadings ? "outline drawn from reference page" : (refOutline ? "reference page fetched but had too few headings — used the default outline" : "reference page fetch failed"+(refError&&refError.details?" ("+refError.details.join(" · ")+")":"")));
-      var base = "Draft ready — square brackets mark where your real facts go.";
-      statusEl.textContent = parts.length ? (base+" ("+parts.join(" · ")+".)") : base;
-      statusEl.style.color = (srcError||refError) ? "var(--warn)" : "var(--ink-faint)";
+      var refHeadings = (refOutline && refOutline.headings && refOutline.headings.length >= 3) ? refOutline.headings : null;
+      lastDraftContext = {
+        brief: getBrief(), type: currentWriteType,
+        srcUrl: srcUrl, refUrl: refUrl,
+        srcFacts: srcFacts, srcError: srcError,
+        refHeadings: refHeadings, refFetched: !!refOutline, refError: refError,
+        regen: false
+      };
+      renderDraftFromContext(lastDraftContext);
     });
+  }
+
+  function regenerateDraft(){
+    draftVariant++;
+    if (lastDraftContext){
+      lastDraftContext.regen = true;
+      renderDraftFromContext(lastDraftContext);
+    } else {
+      generateDraft();
+    }
   }
 
   function renderWriteStats(){
@@ -1556,7 +1638,8 @@
   });
 
   document.getElementById("btn-gen-draft").addEventListener("click", generateDraft);
-  document.getElementById("btn-gen-outline").addEventListener("click", generateOutline);
+  document.getElementById("btn-regen").addEventListener("click", regenerateDraft);
+  document.getElementById("btn-gen-outline").addEventListener("click", function(){ generateOutline(); });
   document.getElementById("btn-gen-headlines").addEventListener("click", generateHeadlines);
   document.getElementById("w-draft").addEventListener("input", debounce(renderWriteStats,200));
   renderWriteStats();
