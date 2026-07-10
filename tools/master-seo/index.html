@@ -675,6 +675,8 @@
   /* ---------------- URL fetch + HTML parsing ---------------- */
   var lastPageMeta = null; // set when analysis came from a fetched/pasted page
 
+  var inFrame = (function(){ try { return window.top !== window.self; } catch(e){ return true; } })();
+
   function fetchWithTimeout(url, ms){
     return new Promise(function(resolve, reject){
       var ctrl = new AbortController();
@@ -683,22 +685,53 @@
         clearTimeout(t);
         if (!r.ok) { reject(new Error("HTTP "+r.status)); return; }
         r.text().then(resolve, reject);
-      }, function(e){ clearTimeout(t); reject(e); });
+      }, function(e){
+        clearTimeout(t);
+        reject(new Error(e && e.name === "AbortError" ? "timed out" : (e && e.message ? e.message : "network error")));
+      });
     });
   }
 
   function fetchPage(url){
     var attempts = [
-      url,
-      "https://api.allorigins.win/raw?url="+encodeURIComponent(url),
-      "https://corsproxy.io/?url="+encodeURIComponent(url)
+      {label:"direct", url:url},
+      {label:"corsproxy.io", url:"https://corsproxy.io/?url="+encodeURIComponent(url)},
+      {label:"allorigins", url:"https://api.allorigins.win/raw?url="+encodeURIComponent(url)},
+      {label:"r.jina.ai reader", url:"https://r.jina.ai/"+url}
     ];
+    var details = [];
     var i = 0;
     function next(){
-      if (i >= attempts.length) return Promise.reject(new Error("all attempts blocked"));
-      return fetchWithTimeout(attempts[i++], 12000).catch(next);
+      if (i >= attempts.length){
+        var err = new Error("all attempts failed");
+        err.details = details;
+        return Promise.reject(err);
+      }
+      var a = attempts[i++];
+      return fetchWithTimeout(a.url, 12000).then(function(text){
+        return {source:a.label, text:text};
+      }, function(e){
+        details.push(a.label + ": " + (e && e.message ? e.message : "failed"));
+        return next();
+      });
     }
     return next();
+  }
+
+  function parseJinaReader(text, url){
+    var titleM = text.match(/^Title:\s*(.+)$/m);
+    var title = titleM ? titleM[1].trim() : "";
+    var bodyIdx = text.indexOf("Markdown Content:");
+    var body = bodyIdx !== -1 ? text.slice(bodyIdx + "Markdown Content:".length).trim() : text.trim();
+    if (title) {
+      var escTitle = title.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+      body = body.replace(new RegExp("^#\\s+"+escTitle+"\\s*\\n+"), "");
+    }
+    if (body.length > 30000) body = body.slice(0, 30000);
+    return {
+      title:title, metaDesc:"", canonical:"", noindex:false, viewport:true, jsonLdCount:0,
+      h1s: title ? [title] : [], body:body, authorDetected:false, dateDetected:false, externalLinks:0
+    };
   }
 
   function nodeToMd(el){
@@ -1353,20 +1386,24 @@
     setFetchStatus("Fetching " + url + " …", false);
     var btn = document.getElementById("btn-fetch");
     btn.disabled = true;
-    fetchPage(url).then(function(html){
+    fetchPage(url).then(function(result){
       btn.disabled = false;
-      var parsed = parsePageHTML(html, url);
+      var parsed = (result.source === "r.jina.ai reader")
+        ? parseJinaReader(result.text, url)
+        : parsePageHTML(result.text, url);
       if (!parsed.title && !parsed.body){
-        setFetchStatus("Fetched, but the page appears empty or heavily JavaScript-rendered — paste the rendered HTML instead.", true);
+        setFetchStatus("Fetched via " + result.source + ", but found no readable content — paste the rendered HTML instead.", true);
         document.getElementById("paste-details").open = true;
         return;
       }
       applyParsedPage(parsed, url);
-      setFetchStatus("Fetched and parsed. Derived checks are pre-filled — correct any before re-running.", false);
+      setFetchStatus("Fetched via " + result.source + " and parsed. Derived checks are pre-filled — correct any before re-running.", false);
       runAnalysis();
-    }, function(){
+    }, function(err){
       btn.disabled = false;
-      setFetchStatus("Couldn't reach the page from this environment (sandbox or the site blocks proxies). Use the paste option below instead.", true);
+      var reasons = (err && err.details && err.details.length) ? err.details.join(" · ") : "no attempts completed";
+      var frameNote = inFrame ? " This preview runs inside an embedded frame that blocks outbound requests entirely — open the tool in its own browser tab (not embedded) for fetching to work." : "";
+      setFetchStatus("Couldn't fetch automatically — " + reasons + "." + frameNote + " Use the paste option below instead.", true);
       document.getElementById("paste-details").open = true;
     });
   });
