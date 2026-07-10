@@ -317,10 +317,30 @@
     <!-- ANALYZE RAIL -->
     <div id="rail-analyze" class="rail-panel">
       <fieldset>
-        <legend>Manuscript</legend>
+        <legend>Analyze a URL</legend>
+        <label class="field">Page URL
+          <input type="url" id="a-url" placeholder="https://example.com/page" />
+        </label>
+        <div class="btn-row">
+          <button class="btn" id="btn-fetch" type="button">Fetch &amp; analyze</button>
+        </div>
+        <p class="help" id="fetch-status"></p>
+        <details id="paste-details">
+          <summary class="help" style="cursor:pointer;">Fetch blocked? Paste the page HTML instead</summary>
+          <label class="field" style="margin-top:8px;">Page source (on the page: right-click → View Page Source → select all → copy)
+            <textarea id="a-html" rows="5" placeholder="&lt;!doctype html&gt;…"></textarea>
+          </label>
+          <div class="btn-row"><button class="btn ghost small" id="btn-parse-html" type="button">Analyze pasted HTML</button></div>
+        </details>
+      </fieldset>
+
+      <fieldset>
+        <legend>Manuscript — auto-filled from the page, or fill manually</legend>
         <label class="field">Content type
           <select id="a-contentType">
             <option value="general">General / other</option>
+            <option value="blog">Blog post</option>
+            <option value="website">Website page</option>
             <option value="howto">How-to</option>
             <option value="listicle">Listicle</option>
             <option value="comparison">Comparison (X vs Y)</option>
@@ -387,7 +407,9 @@
       <fieldset>
         <legend>Content type</legend>
         <div class="chip-group" id="w-type-chips">
-          <button class="chip" data-type="howto" type="button" aria-pressed="true">How-to</button>
+          <button class="chip" data-type="blog" type="button" aria-pressed="true">Blog post</button>
+          <button class="chip" data-type="website" type="button" aria-pressed="false">Website page</button>
+          <button class="chip" data-type="howto" type="button" aria-pressed="false">How-to</button>
           <button class="chip" data-type="listicle" type="button" aria-pressed="false">Listicle</button>
           <button class="chip" data-type="comparison" type="button" aria-pressed="false">Comparison</button>
           <button class="chip" data-type="definitional" type="button" aria-pressed="false">Definitional</button>
@@ -410,13 +432,22 @@
         <label class="field">Desired outcome
           <input type="text" id="w-outcome" placeholder="e.g. a consistently sweet, balanced cup" />
         </label>
+        <label class="field">Brand / product name <span class="help">(optional)</span>
+          <input type="text" id="w-brand" placeholder="e.g. Kettleworks" />
+        </label>
+        <label class="field">Proof point <span class="help">(optional — a real stat, result, or testimonial)</span>
+          <input type="text" id="w-proof" placeholder="e.g. tested across 40 cups and 5 roasts" />
+        </label>
       </fieldset>
 
       <div class="btn-row">
-        <button class="btn" id="btn-gen-outline" type="button">Generate outline</button>
-        <button class="btn ghost" id="btn-gen-headlines" type="button">Generate headlines</button>
+        <button class="btn" id="btn-gen-draft" type="button">Draft full copy</button>
       </div>
-      <p class="help">Outlines and headlines are structural starting points to adapt, not finished copy.</p>
+      <div class="btn-row">
+        <button class="btn ghost small" id="btn-gen-outline" type="button">Outline only</button>
+        <button class="btn ghost small" id="btn-gen-headlines" type="button">Headlines only</button>
+      </div>
+      <p class="help">Drafts are complete first-pass copy built from your brief. Square-bracketed prompts mark where only you can supply the real facts — the tool never invents stats or testimonials.</p>
     </div>
   </div>
 
@@ -499,6 +530,8 @@
   var GENERIC_ANCHORS = ["click here","here","read more","learn more","this","link","this link","this page"];
 
   var OUTLINE_TEMPLATES = {
+    blog: function(t){return ["The direct answer / hook for "+t,"Why this matters right now","The core of it (main sections)","A real example","What to do next","Related questions"];},
+    website: function(t){return ["Headline promise + what you do","Who it's for","Key benefits","Proof (results, logos, testimonials)","How it works","Primary call to action"];},
     howto: function(t){return ["Before you start: what you need","The direct answer: how to "+t,"Step-by-step instructions","How to verify it worked","Common mistakes and fixes","Related questions"];},
     listicle: function(t){return ["The short answer: top picks for "+t,"How we evaluated these","The list, ranked","How to choose the right one for you","Frequently asked questions"];},
     comparison: function(t){return [t+": the short verdict","Comparison at a glance","Where each one wins","Pricing and value","Who should choose which"];},
@@ -507,7 +540,7 @@
     product: function(t){return ["What "+t+" is, and who it's for","Benefits tied to features","Proof (results, reviews)","Specs / details","Call to action"];}
   };
 
-  var CONTENT_TYPE_LABELS = {howto:"How-to",listicle:"Listicle",comparison:"Comparison",definitional:"Definitional",landing:"Landing page",product:"Product page",general:"General"};
+  var CONTENT_TYPE_LABELS = {blog:"Blog post",website:"Website page",howto:"How-to",listicle:"Listicle",comparison:"Comparison",definitional:"Definitional",landing:"Landing page",product:"Product page",general:"General"};
 
   var EXAMPLE = {
     keyword:"pour over coffee ratio",
@@ -639,6 +672,144 @@
     return "hard";
   }
 
+  /* ---------------- URL fetch + HTML parsing ---------------- */
+  var lastPageMeta = null; // set when analysis came from a fetched/pasted page
+
+  function fetchWithTimeout(url, ms){
+    return new Promise(function(resolve, reject){
+      var ctrl = new AbortController();
+      var t = setTimeout(function(){ctrl.abort();}, ms);
+      fetch(url, {mode:"cors", signal:ctrl.signal}).then(function(r){
+        clearTimeout(t);
+        if (!r.ok) { reject(new Error("HTTP "+r.status)); return; }
+        r.text().then(resolve, reject);
+      }, function(e){ clearTimeout(t); reject(e); });
+    });
+  }
+
+  function fetchPage(url){
+    var attempts = [
+      url,
+      "https://api.allorigins.win/raw?url="+encodeURIComponent(url),
+      "https://corsproxy.io/?url="+encodeURIComponent(url)
+    ];
+    var i = 0;
+    function next(){
+      if (i >= attempts.length) return Promise.reject(new Error("all attempts blocked"));
+      return fetchWithTimeout(attempts[i++], 12000).catch(next);
+    }
+    return next();
+  }
+
+  function nodeToMd(el){
+    var out = "";
+    el.childNodes.forEach(function(n){
+      if (n.nodeType === 3) out += n.textContent;
+      else if (n.nodeType === 1){
+        var tag = n.tagName;
+        if (tag === "A") out += "["+(n.textContent||"").trim()+"]("+(n.getAttribute("href")||"")+")";
+        else if (tag === "IMG") out += "!["+(n.getAttribute("alt")||"")+"]("+(n.getAttribute("src")||"")+")";
+        else out += nodeToMd(n);
+      }
+    });
+    return out;
+  }
+
+  function parsePageHTML(html, url){
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    function q(sel){ return doc.querySelector(sel); }
+    function content(sel){ var el=q(sel); return el ? (el.getAttribute("content")||"") : ""; }
+
+    var title = q("title") ? q("title").textContent.trim() : "";
+    var metaDesc = content('meta[name="description"]') || content('meta[property="og:description"]');
+    var canonicalEl = q('link[rel="canonical"]');
+    var canonical = canonicalEl ? (canonicalEl.getAttribute("href")||"") : "";
+    var robotsMeta = (content('meta[name="robots"]')||"").toLowerCase();
+    var noindex = robotsMeta.indexOf("noindex") !== -1;
+    var viewport = !!q('meta[name="viewport"]');
+    var jsonLdCount = doc.querySelectorAll('script[type="application/ld+json"]').length;
+    var authorDetected = !!(content('meta[name="author"]') || q('[rel="author"]') || q('.byline, .author, [itemprop="author"]'));
+    var dateDetected = !!(content('meta[property="article:published_time"]') || q("time[datetime]") || content('meta[name="date"]'));
+
+    var h1s = Array.prototype.slice.call(doc.querySelectorAll("h1"))
+      .map(function(h){return h.textContent.trim();}).filter(Boolean);
+
+    var main = q("main") || q("article") || doc.body;
+    if (main){
+      ["script","style","nav","header","footer","noscript","svg","form","aside","iframe"].forEach(function(t){
+        Array.prototype.slice.call(main.querySelectorAll(t)).forEach(function(n){ n.remove(); });
+      });
+    }
+    var mdLines = [];
+    var externalLinks = 0;
+    var host = "";
+    try { host = new URL(url||"", "https://x.invalid").hostname; } catch(e){}
+    if (main){
+      Array.prototype.slice.call(main.querySelectorAll("h2,h3,p,li,img")).forEach(function(el){
+        if (el.tagName === "IMG"){
+          mdLines.push("!["+(el.getAttribute("alt")||"")+"]("+(el.getAttribute("src")||"")+")");
+          return;
+        }
+        var text = nodeToMd(el).replace(/\s+/g," ").trim();
+        if (!text) return;
+        if (el.tagName === "H2") mdLines.push("## "+text);
+        else if (el.tagName === "H3") mdLines.push("### "+text);
+        else mdLines.push(text);
+      });
+      Array.prototype.slice.call(main.querySelectorAll("a[href]")).forEach(function(a){
+        var href = a.getAttribute("href")||"";
+        if (/^https?:\/\//i.test(href)){
+          try { if (host && new URL(href).hostname !== host) externalLinks++; } catch(e){}
+        }
+      });
+    }
+    var body = mdLines.join("\n\n");
+    if (body.length > 30000) body = body.slice(0, 30000);
+
+    return {
+      title:title, metaDesc:metaDesc, canonical:canonical, noindex:noindex,
+      viewport:viewport, jsonLdCount:jsonLdCount, h1s:h1s, body:body,
+      authorDetected:authorDetected, dateDetected:dateDetected, externalLinks:externalLinks
+    };
+  }
+
+  function applyParsedPage(parsed, url){
+    document.getElementById("a-title").value = parsed.title;
+    document.getElementById("a-meta").value = parsed.metaDesc;
+    document.getElementById("a-h1").value = parsed.h1s[0] || "";
+    if (url){
+      try { var u = new URL(url); document.getElementById("a-slug").value = u.hostname + u.pathname; } catch(e){}
+    }
+    document.getElementById("a-body").value = parsed.body;
+    document.getElementById("a-title").dispatchEvent(new Event("input"));
+    document.getElementById("a-meta").dispatchEvent(new Event("input"));
+
+    // derived technical signals
+    document.getElementById("chk-https").checked = url ? /^https:/i.test(url) : false;
+    document.getElementById("chk-mobile").checked = parsed.viewport;
+    document.getElementById("chk-robots").checked = !parsed.noindex;
+    document.getElementById("chk-canonical").checked = !!parsed.canonical;
+    // derived trust signals (best-effort; user can correct)
+    document.getElementById("chk-author").checked = parsed.authorDetected;
+    document.getElementById("chk-date").checked = parsed.dateDetected;
+    document.getElementById("chk-sources").checked = parsed.externalLinks >= 2;
+
+    lastPageMeta = {
+      fromPage:true, url:url||"",
+      multipleH1: parsed.h1s.length > 1,
+      noH1: parsed.h1s.length === 0,
+      noindex: parsed.noindex,
+      jsonLdCount: parsed.jsonLdCount,
+      canonical: parsed.canonical
+    };
+  }
+
+  function setFetchStatus(msg, isError){
+    var el = document.getElementById("fetch-status");
+    el.textContent = msg;
+    el.style.color = isError ? "var(--critical)" : "var(--ink-faint)";
+  }
+
   /* ---------------- findings engine (Analyze mode) ---------------- */
   function buildFindings(inputs){
     var F = []; // {layer, severity, deduct, title, why, fix, impact, effort}
@@ -677,6 +848,15 @@
 
     if (inputs.analysis.genericAnchors.length) add("l3","warning",10,inputs.analysis.genericAnchors.length+" link(s) use generic anchor text","Anchors like 'click here' tell readers and Google nothing about the destination.","Rewrite anchors to describe what's on the other end.","Low","Quick");
     if (inputs.analysis.images.length && inputs.analysis.badAlt.length) add("l3","warning",8,inputs.analysis.badAlt.length+" image(s) missing descriptive alt text","Alt text is how images are understood by screen readers and image search alike.","Write alt text that describes the image for someone who can't see it.","Low","Quick");
+
+    /* Page-derived findings (only when analysis came from a fetched/pasted page) */
+    if (inputs.pageMeta && inputs.pageMeta.fromPage){
+      var pm = inputs.pageMeta;
+      if (pm.noindex) add("l1","critical",40,"Page carries a noindex directive","A meta robots noindex tells Google to drop this page from the index entirely.","Remove the noindex tag if this page should rank.","High","Quick");
+      if (pm.multipleH1) add("l3","warning",10,"Multiple H1 headings found on the page","More than one H1 dilutes the page's single strongest topical signal.","Keep one H1; demote the others to H2.","Low","Quick");
+      if (pm.jsonLdCount === 0) add("l3","pass",0,"No structured data found — that's fine","Schema markup is only needed if you want specific rich results; it is not a ranking requirement.","","","");
+      else add("l3","pass",0,pm.jsonLdCount+" structured data block(s) found","Verify the markup matches visible content exactly — mismatches are treated as spam.","","","");
+    }
 
     /* L4 — Content quality (computed) */
     var a = inputs.analysis;
@@ -750,7 +930,7 @@
 
     var analysis = analyzeBody(body, keyword);
     var inputs = {
-      title:title, meta:meta, h1:h1, keyword:keyword, analysis:analysis,
+      title:title, meta:meta, h1:h1, keyword:keyword, analysis:analysis, pageMeta:lastPageMeta,
       https:document.getElementById("chk-https").checked,
       mobile:document.getElementById("chk-mobile").checked,
       robots:document.getElementById("chk-robots").checked,
@@ -861,7 +1041,7 @@
   }
 
   /* ---------------- Write mode ---------------- */
-  var currentWriteType = "howto";
+  var currentWriteType = "blog";
 
   function generateOutline(){
     var topic = document.getElementById("w-topic").value.trim() || "your topic";
@@ -899,6 +1079,177 @@
   }
 
   function capitalize(s){return s ? s.charAt(0).toUpperCase()+s.slice(1) : s;}
+
+  /* ---------------- full-copy draft builders ---------------- */
+  function getBrief(){
+    return {
+      t: document.getElementById("w-topic").value.trim() || "your topic",
+      aud: document.getElementById("w-audience").value.trim() || "your audience",
+      pain: document.getElementById("w-pain").value.trim() || "the usual frustration",
+      out: document.getElementById("w-outcome").value.trim() || "the result you're after",
+      brand: document.getElementById("w-brand").value.trim(),
+      proof: document.getElementById("w-proof").value.trim()
+    };
+  }
+
+  var DRAFT_BUILDERS = {
+    blog: function(b){
+      var we = b.brand || "we";
+      return [
+        "If you're one of the many "+b.aud+" dealing with "+b.pain+", here's the short version: "+b.out+" is achievable, and this post walks through exactly how. [State your single most important insight or answer in one sentence here.]",
+        "## Why "+b.t+" matters right now",
+        "For "+b.aud+", "+b.pain+" isn't a small annoyance — it's the thing standing between you and "+b.out+". [Add one or two sentences of context: what's changed recently, or why this keeps coming up.]",
+        "## The core of it",
+        "[Explain the main idea in plain language. One idea per paragraph. If there are steps or components, give each its own H3 below.]",
+        "### [First key point]",
+        "[Explain it, then show it — an example beats a definition.]",
+        "### [Second key point]",
+        "[Same pattern: claim, explanation, example.]",
+        "## A real example",
+        (b.proof ? "Here's what this looks like in practice: "+b.proof+". [Expand with the specifics — what was done, what changed, what the numbers were.]" : "[Walk through one concrete, real example — yours or a customer's. This is the section readers trust most, so use real specifics, not hypotheticals.]"),
+        "## What to do next",
+        "Start with the one change that moves you toward "+b.out+" fastest: [name it]. Then [second action]. If you only remember one thing from this post, make it this: [restate your core insight].",
+        "## Related questions",
+        "[Add 2-4 questions people actually ask about "+b.t+", each answered in 2-3 sentences. Pull them from real search suggestions, forums, or support tickets.]"
+      ].join("\n\n");
+    },
+    website: function(b){
+      var brand = b.brand || "[Brand]";
+      return [
+        capitalize(b.out)+", without "+b.pain+". "+brand+" helps "+b.aud+" [say what you do in one plain sentence].",
+        "[Primary CTA — action verb + what they get, e.g. \"See how it works\"]",
+        "## Who it's for",
+        "Built for "+b.aud+". If "+b.pain+" sounds familiar, you're in the right place. [One sentence on who it's NOT for — honesty here builds trust.]",
+        "## What you get",
+        "[Benefit one — lead with the outcome, then the feature that delivers it.]",
+        "[Benefit two — same pattern.]",
+        "[Benefit three — same pattern. Three strong benefits beat six weak ones.]",
+        "## Proof",
+        (b.proof ? capitalize(b.proof)+". [Expand: add the customer name, number, or result that makes this verifiable.]" : "[Add real proof: a customer result, a number, a testimonial with a name. Never invent this — one real proof point beats five vague claims.]"),
+        "## How it works",
+        "1. [First step from the visitor's point of view]",
+        "2. [Second step]",
+        "3. [Third step — end at the moment they get "+b.out+"]",
+        "## Final call to action",
+        "Ready for "+b.out+"? [Repeat the primary CTA. Add risk reversal if true: free trial, no card, cancel anytime.]"
+      ].join("\n\n");
+    },
+    howto: function(b){
+      return [
+        "If you've dealt with "+b.pain+", here's the fix: [state the direct answer in one or two sentences — the single most important thing to know about "+b.t+"]. The rest of this guide shows you exactly how, step by step.",
+        "## Before you start",
+        "You'll need: [list the tools, materials, or prerequisites]. For "+b.aud+", the only non-negotiable is [the one thing that matters most].",
+        "## Step-by-step",
+        "1. [First step — one action, stated as a command.]",
+        "2. [Second step. If a step commonly goes wrong, say so right here, not in a footnote.]",
+        "3. [Continue — each step is one action. Split anything with an \"and\" in it into two steps.]",
+        "## How to know it worked",
+        "You're looking for [the observable sign of success]. If you're still seeing "+b.pain+", the most likely cause is [common failure] — go back to step [n].",
+        "## Common mistakes",
+        "The mistake we see most from "+b.aud+": [mistake one, and the fix]. Second most common: [mistake two, and the fix].",
+        "## Related questions",
+        "[2-3 real questions people ask about "+b.t+", each with a direct 2-3 sentence answer.]"
+      ].join("\n\n");
+    },
+    listicle: function(b){
+      return [
+        "Short on time? The best option for most "+b.aud+" is [top pick] — it handles "+b.pain+" better than anything else we looked at. The full list below covers [n] options and who each one actually suits.",
+        "## How we picked",
+        (b.proof ? "Our criteria: [criterion 1], [criterion 2], [criterion 3]. "+capitalize(b.proof)+"." : "Our criteria: [criterion 1], [criterion 2], [criterion 3]. [Say what you actually did — tested, compared, used daily. Real methodology is what separates a trustworthy list from filler.]"),
+        "## 1. [Top pick] — best overall",
+        "[Why it wins: the specific strength that matters most for "+b.out+". Then one honest limitation.]",
+        "## 2. [Runner-up] — best for [specific niche]",
+        "[Who should pick this one instead, and why.]",
+        "## 3. [Third option] — best budget choice",
+        "[The trade-off you accept, stated plainly.]",
+        "## How to choose",
+        "If "+b.pain+" is your main problem, go with [pick]. If [other priority], choose [other pick]. Don't overthink it — [the honest tiebreaker].",
+        "## Frequently asked questions",
+        "[2-4 real questions about choosing "+b.t+", answered directly.]"
+      ].join("\n\n");
+    },
+    comparison: function(b){
+      return [
+        "The short verdict: for most "+b.aud+", [option A] is the better choice for "+b.out+" — but [option B] wins if [specific situation]. Here's the full breakdown.",
+        "## At a glance",
+        "[Comparison table: 4-6 rows covering the dimensions that actually drive the decision — price, the core capability, the dealbreaker. Verdict per row.]",
+        "## Where [option A] wins",
+        "[The specific strengths, each tied to a real use case. If "+b.pain+" is the reader's problem, say explicitly which option solves it better.]",
+        "## Where [option B] wins",
+        "[Same treatment — a comparison that never lets B win anything reads as an ad, not an analysis.]",
+        "## Pricing and value",
+        "[Actual prices, what tier most "+b.aud+" realistically need, and any costs that surprise people later.]",
+        "## Who should choose which",
+        "Choose [option A] if: [2-3 concrete conditions]. Choose [option B] if: [2-3 concrete conditions]. Still unsure? [The single question that settles it.]"
+      ].join("\n\n");
+    },
+    definitional: function(b){
+      return [
+        capitalize(b.t)+" is [direct one-sentence definition — no warm-up, no history lesson first]. In practical terms for "+b.aud+", it means [what it does for them].",
+        "## Why it matters",
+        "If you're dealing with "+b.pain+", "+b.t+" is relevant because [the connection to "+b.out+"]. [One sentence on what happens if you ignore it.]",
+        "## How it works",
+        "[Explain the mechanism in plain language. An analogy helps here if the concept is abstract — pick one from the reader's world.]",
+        "## Real examples",
+        (b.proof ? capitalize(b.proof)+". [Expand this into a walkable example.]" : "[Give 2-3 concrete examples, from simple to realistic. Examples do more work than definitions.]"),
+        "## Related concepts",
+        "[Define the 2-3 terms readers will meet next, one sentence each, linking to fuller guides if you have them.]",
+        "## Common misconceptions",
+        "The biggest misunderstanding about "+b.t+": [misconception, then the correction]. [Second one if genuinely common.]"
+      ].join("\n\n");
+    },
+    landing: function(b){
+      var brand = b.brand || "[Brand]";
+      return [
+        capitalize(b.out)+" — without "+b.pain+". "+brand+" gives "+b.aud+" [the core promise in one sentence].",
+        "[Primary CTA button: action verb + what they get]",
+        "## The problem",
+        "You know the drill: "+b.pain+". [Two or three sentences that describe the reader's situation so precisely they feel seen. Use their words, not yours.]",
+        "## What "+brand+" does about it",
+        "[Benefit one — outcome first, then how.]",
+        "[Benefit two.]",
+        "[Benefit three.]",
+        "## Proof",
+        (b.proof ? capitalize(b.proof)+". [Make it verifiable: name, number, or link.]" : "[One real customer result with a name and a number. If you don't have one yet, use your own honest results — never invent.]"),
+        "## How it works",
+        "1. [Step one — from signup to first value, in the visitor's language]",
+        "2. [Step two]",
+        "3. [Step three — end at "+b.out+"]",
+        "## Questions people ask before saying yes",
+        "[The 3-4 real objections — price, effort, switching, trust — each answered honestly in 2-3 sentences.]",
+        "## Final CTA",
+        "[Repeat the promise in one line. CTA button. Risk reversal if true.]"
+      ].join("\n\n");
+    },
+    product: function(b){
+      var brand = b.brand || "[Product]";
+      return [
+        brand+" is [what it is, in one sentence], built for "+b.aud+" who want "+b.out+" without "+b.pain+".",
+        "## What it does for you",
+        "[Benefit one: the outcome, then the feature behind it.]",
+        "[Benefit two.]",
+        "[Benefit three.]",
+        "## Proof it works",
+        (b.proof ? capitalize(b.proof)+". [Add the verifiable detail.]" : "[Real reviews, ratings, results. Pull actual quotes — never write testimonials yourself.]"),
+        "## The details",
+        "[Specs, dimensions, compatibility, what's in the box — whatever "+b.aud+" check before buying. Table format if more than five rows.]",
+        "## Who it's for (and who it isn't)",
+        "Right for you if: [2-3 conditions]. Look elsewhere if: [1-2 honest exclusions — this line increases conversions, it doesn't hurt them].",
+        "## Get it",
+        "[CTA with price, shipping/availability, and return policy in one glance.]"
+      ].join("\n\n");
+    }
+  };
+
+  function generateDraft(){
+    var b = getBrief();
+    var builder = DRAFT_BUILDERS[currentWriteType] || DRAFT_BUILDERS.blog;
+    document.getElementById("w-draft").value = builder(b);
+    generateOutline();
+    generateHeadlines();
+    renderWriteStats();
+    showToast("Draft ready — square brackets mark where your real facts go.");
+  }
 
   function renderWriteStats(){
     var text = document.getElementById("w-draft").value;
@@ -984,15 +1335,55 @@
 
   document.getElementById("btn-analyze").addEventListener("click", runAnalysis);
   document.getElementById("btn-reset-analyze").addEventListener("click", function(){
-    ["a-title","a-meta","a-h1","a-slug","a-keyword","a-body"].forEach(function(id){document.getElementById(id).value="";});
+    ["a-url","a-html","a-title","a-meta","a-h1","a-slug","a-keyword","a-body"].forEach(function(id){document.getElementById(id).value="";});
     ["chk-https","chk-mobile","chk-robots","chk-cwv","chk-canonical","chk-nodupe","chk-author","chk-date","chk-sources","chk-experience"].forEach(function(id){document.getElementById(id).checked=false;});
+    lastPageMeta = null;
+    setFetchStatus("", false);
     document.getElementById("analyze-results").style.display="none";
     document.getElementById("analyze-empty").style.display="block";
     bindCount("a-title","a-title-count",60);
     bindCount("a-meta","a-meta-count",160);
     saveState();
   });
+
+  document.getElementById("btn-fetch").addEventListener("click", function(){
+    var url = document.getElementById("a-url").value.trim();
+    if (!url){ setFetchStatus("Enter a URL first.", true); return; }
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    setFetchStatus("Fetching " + url + " …", false);
+    var btn = document.getElementById("btn-fetch");
+    btn.disabled = true;
+    fetchPage(url).then(function(html){
+      btn.disabled = false;
+      var parsed = parsePageHTML(html, url);
+      if (!parsed.title && !parsed.body){
+        setFetchStatus("Fetched, but the page appears empty or heavily JavaScript-rendered — paste the rendered HTML instead.", true);
+        document.getElementById("paste-details").open = true;
+        return;
+      }
+      applyParsedPage(parsed, url);
+      setFetchStatus("Fetched and parsed. Derived checks are pre-filled — correct any before re-running.", false);
+      runAnalysis();
+    }, function(){
+      btn.disabled = false;
+      setFetchStatus("Couldn't reach the page from this environment (sandbox or the site blocks proxies). Use the paste option below instead.", true);
+      document.getElementById("paste-details").open = true;
+    });
+  });
+
+  document.getElementById("btn-parse-html").addEventListener("click", function(){
+    var html = document.getElementById("a-html").value;
+    if (!html.trim()){ setFetchStatus("Paste the page's HTML source first.", true); return; }
+    var url = document.getElementById("a-url").value.trim();
+    if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+    var parsed = parsePageHTML(html, url);
+    applyParsedPage(parsed, url);
+    setFetchStatus("Parsed pasted HTML. Derived checks are pre-filled — correct any before re-running.", false);
+    runAnalysis();
+  });
+
   document.getElementById("btn-example").addEventListener("click", function(){
+    lastPageMeta = null;
     document.getElementById("a-keyword").value = EXAMPLE.keyword;
     document.getElementById("a-title").value = EXAMPLE.title;
     document.getElementById("a-meta").value = EXAMPLE.meta;
@@ -1033,6 +1424,7 @@
     });
   });
 
+  document.getElementById("btn-gen-draft").addEventListener("click", generateDraft);
   document.getElementById("btn-gen-outline").addEventListener("click", generateOutline);
   document.getElementById("btn-gen-headlines").addEventListener("click", generateHeadlines);
   document.getElementById("w-draft").addEventListener("input", debounce(renderWriteStats,200));
