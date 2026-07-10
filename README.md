@@ -99,6 +99,7 @@ See each skill's **Related Skills** section for the full dependency map.
 | [site-architecture](skills/site-architecture/) | When the user wants to plan, map, or restructure their website's page hierarchy, navigation, URL structure, or internal... |
 | [sms](skills/sms/) | When the user wants to plan, build, or optimize SMS or MMS marketing — including welcome flows, abandoned cart texts,... |
 | [social](skills/social/) | When the user wants help creating, scheduling, or optimizing social media content for LinkedIn, Twitter/X, Instagram,... |
+| [social-engagement](skills/social-engagement/) | Find relevant questions on Reddit and Quora and draft genuinely helpful, brand-voice answers for human review before... |
 | [super-seo](skills/super-seo/) | When the user wants to optimize or write any piece of content for search — articles, blog posts, landing pages, product... |
 | [video](skills/video/) | When the user wants to create, generate, or produce video content using AI tools or programmatic frameworks. Also use... |
 <!-- SKILLS:END -->
@@ -284,6 +285,7 @@ You can also invoke skills directly:
 - `ads` - Google, Meta, LinkedIn ad campaigns
 - `ad-creative` - Bulk ad creative generation and iteration
 - `social` - Social media scheduling and strategy
+- `social-engagement` - Compliant Reddit/Quora outreach (find threads, draft answers, human-reviewed)
 
 ### Measurement & Testing
 - `analytics` - Event tracking setup

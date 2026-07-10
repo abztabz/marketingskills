@@ -1,0 +1,25 @@
+{
+  "brand": {
+    "name": "<Your Brand>",
+    "oneLiner": "<one sentence on what you do and who you help>",
+    "site": "https://example.com",
+    "expertise": [
+      "<topic you can genuinely help with>",
+      "<another topic>"
+    ],
+    "voice": "professional, warm, plain-spoken, genuinely helpful, never salesy",
+    "disclosure": "I work with <Your Brand> — sharing this because it's relevant, not to pitch."
+  },
+  "targets": {
+    "subreddits": ["<subreddit1>", "<subreddit2>"],
+    "keywords": ["<keyword phrase>", "<another keyword>"]
+  },
+  "rules": {
+    "minOpportunityScore": 3,
+    "maxDraftWords": 220,
+    "requireDisclosure": true,
+    "neverHardLinkUnlessAsked": true,
+    "noPromoSubreddits": ["<subreddit that bans self-promo>"],
+    "noPromoMode": "no-brand"
+  }
+}
