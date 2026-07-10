@@ -438,6 +438,12 @@
         <label class="field">Proof point <span class="help">(optional — a real stat, result, or testimonial)</span>
           <input type="text" id="w-proof" placeholder="e.g. tested across 40 cups and 5 roasts" />
         </label>
+        <label class="field">Reference page <span class="help">(optional — draft follows this page's heading structure)</span>
+          <input type="url" id="w-reference-url" placeholder="https://example.com/a-page-you-like" />
+        </label>
+        <label class="field">Content source <span class="help">(optional — pulls a real snippet from this page into the draft)</span>
+          <input type="url" id="w-source-url" placeholder="https://example.com/source-article" />
+        </label>
       </fieldset>
 
       <div class="btn-row">
@@ -447,7 +453,7 @@
         <button class="btn ghost small" id="btn-gen-outline" type="button">Outline only</button>
         <button class="btn ghost small" id="btn-gen-headlines" type="button">Headlines only</button>
       </div>
-      <p class="help">Drafts are complete first-pass copy built from your brief. Square-bracketed prompts mark where only you can supply the real facts — the tool never invents stats or testimonials.</p>
+      <p class="help" id="w-draft-status">Drafts are complete first-pass copy built from your brief. Square-bracketed prompts mark where only you can supply the real facts — the tool never invents stats or testimonials.</p>
     </div>
   </div>
 
@@ -1076,10 +1082,15 @@
   /* ---------------- Write mode ---------------- */
   var currentWriteType = "blog";
 
-  function generateOutline(){
-    var topic = document.getElementById("w-topic").value.trim() || "your topic";
-    var tpl = OUTLINE_TEMPLATES[currentWriteType] || OUTLINE_TEMPLATES.howto;
-    var items = tpl(topic);
+  function generateOutline(overrideHeadings){
+    var items;
+    if (overrideHeadings && overrideHeadings.length){
+      items = overrideHeadings;
+    } else {
+      var topic = document.getElementById("w-topic").value.trim() || "your topic";
+      var tpl = OUTLINE_TEMPLATES[currentWriteType] || OUTLINE_TEMPLATES.howto;
+      items = tpl(topic);
+    }
     var el = document.getElementById("outline-output");
     el.innerHTML = "";
     items.forEach(function(it){
@@ -1123,6 +1134,50 @@
       brand: document.getElementById("w-brand").value.trim(),
       proof: document.getElementById("w-proof").value.trim()
     };
+  }
+
+  function extractHeadingList(raw){
+    var out = [];
+    (raw||"").split(/\r?\n/).forEach(function(l){
+      var m = l.trim().match(/^##\s+(.+)$/);
+      if (m) out.push(m[1].trim());
+    });
+    return out;
+  }
+
+  function parseFetchedPage(result, url){
+    return (result.source === "r.jina.ai reader")
+      ? parseJinaReader(result.text, url)
+      : parsePageHTML(result.text, url);
+  }
+
+  function extractSourceFacts(url){
+    return fetchPage(url).then(function(result){
+      var parsed = parseFetchedPage(result, url);
+      var plain = stripMarkdown(parsed.body || "");
+      var snippet = splitSentences(plain).slice(0, 2).join(" ").trim();
+      if (snippet.length > 260) snippet = snippet.slice(0, 260).trim() + "…";
+      return {title: parsed.title || "", url:url, snippet:snippet, source: result.source};
+    });
+  }
+
+  function extractReferenceOutline(url){
+    return fetchPage(url).then(function(result){
+      var parsed = parseFetchedPage(result, url);
+      return {headings: extractHeadingList(parsed.body || ""), title: parsed.title || "", source: result.source};
+    });
+  }
+
+  function buildAdaptiveDraft(b, refHeadings){
+    var lines = [];
+    lines.push("If you're one of the many "+b.aud+" dealing with "+b.pain+", here's the short version: "+b.out+" is achievable. [State your single most important insight or answer in one sentence here.]");
+    refHeadings.forEach(function(h){
+      lines.push("## "+h);
+      lines.push("[Write this section — tie \""+h+"\" back to "+b.t+" and what it means for "+b.aud+". Lead with the point, then explain."+(b.proof ? " Consider using this proof point here or elsewhere: "+b.proof+"." : "")+"]");
+    });
+    lines.push("## What to do next");
+    lines.push("[Close with the single action that moves "+b.aud+" toward "+b.out+".]");
+    return lines.join("\n\n");
   }
 
   var DRAFT_BUILDERS = {
@@ -1276,12 +1331,51 @@
 
   function generateDraft(){
     var b = getBrief();
-    var builder = DRAFT_BUILDERS[currentWriteType] || DRAFT_BUILDERS.blog;
-    document.getElementById("w-draft").value = builder(b);
-    generateOutline();
-    generateHeadlines();
-    renderWriteStats();
-    showToast("Draft ready — square brackets mark where your real facts go.");
+    var srcUrl = document.getElementById("w-source-url").value.trim();
+    var refUrl = document.getElementById("w-reference-url").value.trim();
+    var btn = document.getElementById("btn-gen-draft");
+    var statusEl = document.getElementById("w-draft-status");
+
+    var srcFacts = null, srcError = null;
+    var refOutline = null, refError = null;
+    var jobs = [];
+    if (srcUrl) jobs.push(extractSourceFacts(srcUrl).then(function(r){srcFacts=r;}, function(e){srcError=e;}));
+    if (refUrl) jobs.push(extractReferenceOutline(refUrl).then(function(r){refOutline=r;}, function(e){refError=e;}));
+
+    if (jobs.length){
+      btn.disabled = true;
+      statusEl.textContent = "Fetching reference page / content source…";
+      statusEl.style.color = "var(--ink-faint)";
+    }
+
+    Promise.all(jobs).then(function(){
+      var refHeadings = (refOutline && refOutline.headings && refOutline.headings.length >= 3) ? refOutline.headings : null;
+
+      var draftText;
+      if (refHeadings){
+        draftText = buildAdaptiveDraft(b, refHeadings);
+      } else {
+        var builder = DRAFT_BUILDERS[currentWriteType] || DRAFT_BUILDERS.blog;
+        draftText = builder(b);
+      }
+
+      if (srcFacts && srcFacts.snippet){
+        draftText += "\n\n## Notes from your content source\n\n\""+srcFacts.snippet+"\" — from "+(srcFacts.title||srcUrl)+" ("+srcUrl+"). Pull real facts or quotes like this into the sections above; don't just paste it in as-is.";
+      }
+
+      document.getElementById("w-draft").value = draftText;
+      generateOutline(refHeadings);
+      generateHeadlines();
+      renderWriteStats();
+
+      btn.disabled = false;
+      var parts = [];
+      if (srcUrl) parts.push(srcFacts ? "content source fetched" : "content source fetch failed"+(srcError&&srcError.details?" ("+srcError.details.join(" · ")+")":""));
+      if (refUrl) parts.push(refHeadings ? "outline drawn from reference page" : (refOutline ? "reference page fetched but had too few headings — used the default outline" : "reference page fetch failed"+(refError&&refError.details?" ("+refError.details.join(" · ")+")":"")));
+      var base = "Draft ready — square brackets mark where your real facts go.";
+      statusEl.textContent = parts.length ? (base+" ("+parts.join(" · ")+".)") : base;
+      statusEl.style.color = (srcError||refError) ? "var(--warn)" : "var(--ink-faint)";
+    });
   }
 
   function renderWriteStats(){
