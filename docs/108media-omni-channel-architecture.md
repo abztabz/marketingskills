@@ -1,0 +1,365 @@
+# 108 Media — Autonomous AI Marketing Agency OS
+
+A self-sustained, fully automated architecture for running 108media.ae as an
+AI-native agency. Not a campaign pipeline with humans in the loop — an agency
+where agents research the market, acquire clients, onboard them, plan,
+produce, deploy, optimize, report, and bill, end to end. Humans sit on the
+**exception path only**: the system never waits for approval; it runs under
+machine-enforced policy and escalates when a policy trips.
+
+Design principles applied:
+
+- **Search Before Building** — every layer maps to existing assets in this
+  repo (44 skills, 51 zero-dependency CLIs, Composio for OAuth platforms).
+  The custom build surface is orchestration, policy, and memory. Nothing else.
+- **Boil the Ocean** — the whole agency, not just content production. An
+  automated content engine attached to manual sales, manual reporting, and
+  manual billing is not self-sustained; it's a bottleneck with a fast middle.
+- **Autonomy via policy, not via optimism** — full automation is safe only
+  when every irreversible action (spend, publish, send) passes a deterministic
+  policy engine with hard caps and auto-pause. The replacement for human
+  judgment is not model confidence; it is enforceable rules plus statistical
+  thresholds plus kill switches.
+
+## System overview
+
+```
+                        ┌────────────────────────────────────────────┐
+                        │  LAYER 0: ORCHESTRATION, MEMORY, POLICY    │
+                        │  Agent scheduler (cron + event bus)        │
+                        │  Per-client memory (git-versioned context) │
+                        │  Policy Engine (caps, rules, kill switch)  │
+                        │  Model router (frontier/mid/small tiers)   │
+                        └────────────────────┬───────────────────────┘
+      every layer below runs ON this substrate; every external action
+      (spend, publish, send, charge) passes THROUGH the Policy Engine
+                                             │
+  ┌───────────┬───────────┬───────────┬──────┼──────┬───────────┬───────────┐
+  ▼           ▼           ▼           ▼            ▼            ▼           ▼
+L1 RESEARCH L2 DEMAND  L3 ONBOARD  L4 CAMPAIGN  L5 DEPLOY   L6 OPTIMIZE  L7 CLIENT
+(customer · GENERATION & INGESTION ENGINE       & SCALE     (24/7 loop)  SUCCESS
+competitor·                                                             + L8 BACK
+market)                                                                   OFFICE
+```
+
+## Layer 0 — Orchestration, Memory, Policy (the substrate)
+
+**Scheduler + event bus.** A queue-based orchestrator (Temporal, Trigger.dev,
+or plain cron + webhooks — search before building; don't write a custom
+workflow engine) fires agents on schedules (hourly metric pulls, weekly
+retros) and events (lead replied, canary breached, invoice paid).
+
+**Per-client memory, git-versioned.** One repo per client:
+
+```
+clients/<client>/
+├── brand-dna.md          # voice, positioning, visual identity
+├── style-guide.md        # banned words, claims rules, AR/EN glossary
+├── compliance.md         # UAE ad regs + category rules (finance, health...)
+├── policy.yaml           # spend caps, channel allowlist, escalation contacts
+├── learnings.jsonl       # append-only: what worked, what didn't, why
+└── campaigns/<id>/       # briefs, assets, results per campaign
+```
+
+Loaded whole into context (200K–1M token windows make RAG-for-a-style-guide
+obsolete). A vector index exists only for cross-client asset/archive search.
+
+**Policy Engine — the autonomy license.** Deterministic code, not tokens.
+Every outbound action is a typed request checked against `policy.yaml`:
+
+- Spend: per-client daily/monthly caps, per-campaign caps, platform caps
+- Publish: platform allowlist, content categories, blackout windows
+- Outreach: send-volume caps, suppression lists, unsubscribe honor
+- Scraping: robots.txt + platform ToS allowlist, rate caps, cache TTLs
+- Billing: charge only against signed-contract line items
+- Global and per-client **kill switches** flip everything to pause instantly
+
+Breach → action blocked + auto-pause + one item on the **exception queue**
+(a Slack/WhatsApp digest a human clears asynchronously). This is the only
+place humans appear, and the system keeps running around them.
+
+**Model router.** Frontier tier (Opus-class) for strategy, critique, and
+anything judgment-heavy. Mid tier (Sonnet-class) for volume generation. Small
+tier (Haiku-class) for classification, routing, sentiment. Model IDs pinned
+in one config file — the architecture survives model churn without a rewrite.
+
+## Layer 1 — Research (customer · competitor · market)
+
+Everything downstream runs on evidence gathered here. Research is both a
+**scheduled pipeline** (prospect sweeps, quarterly competitor re-scans,
+monthly market pulse) and an **on-demand service** other layers call (deep
+dive on contract signature, refresh when optimization detects drift). All
+scraping in the system lives in this layer, behind the Policy Engine's
+scraping rails.
+
+**Requirements intake first.** Before any scraping, the research runner asks
+the operator what this engagement needs — new prospect vs signed client,
+target, industry, market, geo, languages, primary goal, budget, known
+competitors, **what to explicitly skip** ("do not waste time researching"),
+constraints — and confirms before spending an API call. Those requirements
+steer collection depth and scope (excluded tracks, domains, or topics are cut
+from the plan before a single call fires) and tailor the Opportunity Brief
+(gaps and fit score are scored against the stated goal and budget, not in the
+abstract). In scheduled/unattended runs the intake is supplied as saved
+requirements rather than asked live. Every confirmed answer set is logged,
+append-only, to the client's own memory folder (`clients/<domain>/` —
+`client-info.md`, `intake-log.jsonl`), separate from that run's research
+output, so nothing an operator has said about a client is ever lost across
+sessions. This is the operator's steering input, not a per-asset approval
+gate. Implemented by `tools/clis/research-agent.js` (`intake` / `run`).
+
+**Collection stack** (shared by all three tracks):
+
+- **Firecrawl** — any site → clean LLM-ready markdown; handles JS rendering
+  and anti-bot (`tools/integrations/firecrawl.md`)
+- **ScrapeGraphAI** — LLM-guided structured extraction on top of raw scrapes:
+  pages become typed facts, not prose blobs
+- **Browserbase** — headless sessions for dynamic/login-walled surfaces:
+  Meta Ad Library, TikTok Creative Center, social feeds
+  (`tools/integrations/browserbase.md`)
+- **Exa** — semantic web search to discover what's worth scraping:
+  competitors, press mentions, review sites (`tools/integrations/exa.md`)
+
+### Track A — Customer research
+
+Who the prospect (or client) is, and where they stand today:
+
+- **Website**: Firecrawl full-site scrape → messaging, offers, site
+  structure, AR/EN coverage; `seo-audit` skill for on-page findings (titles,
+  schema, speed, mobile); `cro` skill lens on key landing pages; `clearbit`
+  for tech stack
+- **SEO status**: `ahrefs` / `semrush` / `dataforseo` CLIs → domain rating,
+  keyword rankings, estimated organic traffic, top pages, backlinks;
+  `keywords-everywhere` for the UAE/GCC (AR + EN) volumes they're missing
+- **Socials**: Browserbase on their public profiles (Instagram, TikTok,
+  LinkedIn, X) → posting cadence, engagement rate, content mix, AR/EN split;
+  Meta Ad Library + TikTok Creative Center → paid activity and creative age
+  (long-running = working, stale = fatigued)
+- **Their customers' voice**: reviews (Google, Tripadvisor, G2 per category),
+  social comments → `customer-research` skill distills pains, objections,
+  and the words real buyers use
+
+### Track B — Competitor research
+
+- Exa + `similarweb` identify each prospect's top 3–5 local competitors;
+  Track A's audit runs lite on each (`competitors` + `competitor-profiling`
+  skills)
+- Output per prospect: **gap matrix** — share of search, social engagement,
+  ad activity, content velocity, AR/EN coverage deltas
+- Agency-level: the same machinery watches 108 Media's own competitive set,
+  feeding positioning and the rate card
+
+### Track C — Market research
+
+- **Demand**: `dataforseo` + `keywords-everywhere` → UAE/GCC search demand
+  by category, Arabic vs English, rising queries
+- **Trends**: Exa sweeps of industry press, `similarweb` category traffic,
+  platform behavior shifts (where attention is moving)
+- **Calendar**: seasonal moments that dominate GCC marketing — Ramadan,
+  Eid, UAE National Day, DSF, back-to-school — mapped to categories
+- **Benchmarks**: category-typical CPMs, CPCs, engagement rates → realistic
+  targets for `policy.yaml` guardrails and client promises
+
+### Filter → Distill → Analyze (raw scrape is not data)
+
+1. **Filter** (small model + rules): dedupe, drop boilerplate/navigation,
+   relevance-score against the research question, discard stale pages
+2. **Distill** (ScrapeGraphAI + mid model): convert to typed records —
+   offers, prices, claims, tone samples, keyword gaps, engagement stats,
+   AR/EN copy pairs — every record carrying its source URL and scrape date
+3. **Analyze** (frontier model): synthesize across tracks into scored,
+   verifiable findings with confidence levels; conflicting evidence surfaces
+   as a finding, not a silent average
+
+**Output — the Research Store** (versioned, cached with TTLs, queryable by
+every other layer):
+
+- **Opportunity Brief** per prospect: 3–5 scored, verifiable gaps
+  ("competitor X outranks you on 40 keywords worth ~12K visits/mo", "no
+  Arabic content while 60% of your market searches in Arabic", "your Meta
+  creatives have run unchanged for 90 days") + fit score + estimated value
+- **Gap matrix** per prospect vs their competitors
+- **Market playbook** per segment: demand map, seasonal calendar, benchmarks
+
+Nothing is scraped twice: L2 outreach, L3 onboarding, and L4 strategy all
+read the same store.
+
+## Layer 2 — Demand Generation (the agency sells itself)
+
+Consumes the Research Store; drafts nothing until research exists for the
+target:
+
+- **Prospecting agent** (daily): builds UAE/GCC target lists via `apollo`,
+  `clay`, `clearbit`, `hunter` CLIs + `prospecting` skill; queues each new
+  prospect for a Layer 1 sweep; ranks the pipeline by Opportunity Brief fit
+  score and estimated value
+- **Outbound agent**: sequences via `instantly`/`lemlist` CLIs +
+  `cold-email` skill, where **every first touch leads with one specific
+  finding from that prospect's Opportunity Brief** — evidence, not pitch.
+  Replies classified by the small model; positive intent auto-books via
+  `calendly`/`savvycal` CLIs
+- **Inbound engine** (weekly): `ai-seo`, `programmatic-seo`,
+  `content-strategy`, `social` skills publish for 108media.ae itself —
+  aimed at the demand gaps Track C found; the agency's own site is client
+  zero and the standing proof-of-work demo
+- **Proposal agent**: expands the Opportunity Brief into a scoped proposal —
+  each proposed line item traces to a measured gap — with pricing from a
+  rate card, sends for e-signature; signature event triggers Layer 3
+
+Policy rails: outreach volume caps, suppression lists, no unapproved pricing
+off the rate card, discovery calls stay human by default (relationship
+capital — flip to AI-led when transcripts prove parity on close rate).
+
+## Layer 3 — Autonomous Onboarding & Brand Ingestion
+
+Signature event fires the ingestion agent, no kickoff meeting required:
+
+1. Pull the prospect's existing research from the Store, then request a
+   Layer 1 **deep-dive refresh** (full-depth crawl, full competitor set,
+   category market playbook) — same pipeline, higher depth setting
+2. Draft `brand-dna.md`, `style-guide.md`, `compliance.md`, and a proposed
+   `policy.yaml` (caps derived from contract value; guardrail targets from
+   Track C benchmarks) — grounded in structured research output, not model
+   guesses about the client (`product-marketing` skill)
+3. Client confirms via a one-time portal review — a contractual boundary
+   (spend authority, brand truth), not a workflow gate; it happens once per
+   client, not per campaign
+4. Composio + CLI connections established: ad accounts, GA4, CRM, socials
+5. First campaign plan auto-generated within 24h of signature
+
+## Layer 4 — Campaign Engine (strategy → generation → critique → production)
+
+```
+Strategist Agent (frontier)                        runs per campaign trigger:
+  reads full client memory + learnings.jsonl       new client, new brief,
+  + Research Store (gap matrix, market playbook)   calendar moment, or L6
+  → omni-channel plan, channel briefs,             detecting a fatigued account
+    success metrics, budget split
+        │
+        ▼
+Generation swarm (mid tier) — existing skills, parallel per channel:
+  Paid: /ads /ad-creative /copywriting /ab-testing (variants planned upfront)
+  Organic: /social /video /content-strategy
+  PR/Editorial: /public-relations /copywriting
+  Lifecycle: /emails /sms /onboarding
+  All assets native EN + AR from the shared glossary — never post-translated
+        │
+        ▼
+Critique — deterministic first, LLM second, bounded:
+  a. Code checks (free): banned words, claim substantiation flags, required
+     disclaimers, platform char/dimension limits, link + UTM validation
+  b. Critic agent (frontier, separate prompt lineage from generators):
+     scored rubric — cohesion ≥8, brand voice ≥8, cultural fit ≥9
+     lenses: /copy-editing /marketing-psychology
+  c. Fail → regenerate with findings, MAX 2 iterations, then ship the best
+     scoring variant BELOW threshold only if policy.yaml allows it for that
+     channel; otherwise exception queue. Never loop silently.
+        │
+        ▼
+Asset production: SDXL/Flux (brand LoRA), HeyGen avatars, Bannerbear
+dynamic templates. Rendered assets re-enter check (a) for logo/dimension QA.
+```
+
+No approval step. The critic's rubric plus the policy engine ARE the gate.
+
+## Layer 5 — Autonomous Deployment & Scaling
+
+Fire-and-forget is not autonomy; it's negligence with extra steps. Autonomy
+means the system supervises itself:
+
+1. **Stage**: everything lands as drafts — paused ad sets, scheduled posts,
+   staged emails, unpublished CMS entries (`meta-ads`, `google-ads`,
+   `tiktok-ads`, `linkedin-ads`, `buffer`, HubSpot via Composio, `mailchimp`/
+   `resend` CLIs)
+2. **Canary**: auto-launch at 10–20% budget or one segment for 24–48h
+3. **Guardrail watch** (small model + hard rules, checks hourly): CTR floor,
+   CPA ceiling, spend-pacing anomaly, negative-sentiment spike, platform
+   policy flags → breach = auto-pause + exception queue
+4. **Auto-scale on statistics, not vibes**: scale to full budget only when
+   the canary clears guardrails AND performance beats the client's
+   `learnings.jsonl` baseline with adequate sample size. Not confident →
+   extend the canary. Confidence thresholds live in `policy.yaml`.
+
+The v1 human "confirm scale-up" is replaced by a statistical test plus a hard
+spend cap. That pair is auditable, tireless, and enforceable at 3am.
+
+## Layer 6 — Continuous Optimization (the 24/7 loop)
+
+- **Budget reallocation** (daily): bandit-style shifting toward winning
+  channels/ad sets within policy caps, via `ga4`, `meta-ads`, `google-ads`,
+  `mixpanel` CLIs
+- **Creative fatigue detection**: frequency up + CTR decaying → auto-trigger
+  Layer 4 for refreshed variants; fatigued creative rotates out
+- **A/B testing autonomy**: `ab-testing` skill plans variants at generation
+  time; winners promote on significance, losers killed, result + rationale
+  appended to `learnings.jsonl`
+- **Weekly auto-retro per client**: which hooks/angles/formats won by
+  channel → `learnings.jsonl` → next Strategist run starts smarter. This is
+  the compounding loop; without it the agency starts cold every campaign.
+- **Research refresh triggers**: performance drifting from Research Store
+  benchmarks → request a Layer 1 re-scan (competitor moved, market shifted)
+
+## Layer 7 — Client Success (retention runs itself)
+
+- **Reporting agent** (weekly + monthly): pulls performance, writes the
+  client-facing narrative in the client's language (EN/AR), sends via
+  `resend`/HubSpot; a live dashboard replaces "can you send me the numbers"
+- **Anomaly comms**: guardrail auto-pause → client notified with cause and
+  corrective action within the hour, automatically — bad news travels fast
+  and from us first
+- **Churn prevention** (`churn-prevention` skill): watch engagement with
+  reports, sentiment in client emails, performance-vs-promise deltas; risk
+  score crosses threshold → exception queue with a prepared save plan
+- **Expansion agent**: performance patterns that justify upsell (e.g. paid
+  search saturated, SEO opportunity large in the market playbook) →
+  auto-drafted expansion proposal from the rate card
+
+## Layer 8 — Back Office (the agency runs itself)
+
+- **Billing**: `stripe`/`paddle` CLIs — invoices generated from contract line
+  items, dunning sequences automated, revenue recognized per client
+- **Unit economics ledger** (per client, updated daily): model spend + ad
+  platform fees + tool costs vs retainer. Margin below floor → exception
+  queue with a repricing recommendation. An agency that can't see per-client
+  margin isn't self-sustained; it's self-deluding.
+- **Capacity = compute**: onboarding client #30 means scaling queue workers
+  and API budgets, not hiring. The marginal cost of a client is measurable
+  in the ledger, and pricing updates flow from it.
+
+## What "self-sustained" honestly requires
+
+Full autonomy is a property you earn per action class, not declare globally:
+
+| Action class | Autonomous from | Mechanism |
+|---|---|---|
+| Research collection (scraping) | Day 1 | robots.txt + ToS allowlist, rate caps, cache TTLs |
+| Content generation + critique | Day 1 | Rubric + deterministic checks |
+| Publish organic/social/email | Day 1 | Policy engine + staged drafts |
+| Paid spend within caps | Day 1 | Caps + canary + guardrail auto-pause |
+| Scale-up past canary | Day 1 | Statistical test + hard caps |
+| Outbound sales sequences | Day 1 | Volume caps + suppression lists |
+| Client onboarding | Day 1 | One-time portal confirm (contractual) |
+| Billing + dunning | Day 1 | Contract-derived line items only |
+| Raising a client's spend cap | Never automatic | Client's contractual call |
+| Signing contracts / pricing off rate card | Never automatic | Legal identity acts |
+| Platform account recovery (ad account bans) | Never automatic | Platforms require humans |
+
+The last three rows are not philosophy — they're law, platform ToS, and
+contract. Everything above them runs without asking anyone. Humans process
+the exception queue asynchronously; the system never blocks on them.
+
+**Failure containment**, because a fully automated agency fails at machine
+speed: per-client blast-radius isolation (one client's breach never pauses
+another), global kill switch, immutable action log (every publish/spend/send
+recorded with the policy check that authorized it), and a weekly agent-run
+audit of the audit log. Trust comes from the log, not the model.
+
+## Build order (each stage is a working system)
+
+1. **Layer 0 + one client end-to-end** — memory repo, policy engine, model
+   router; run one real client through Layers 4–6 fully automated
+2. **Layer 7** — reporting + anomaly comms (retention before acquisition)
+3. **Layers 1–3** — research pipeline, demand gen, auto-onboarding (grow
+   only after delivery is autonomous, or sales fills a leaky bucket)
+4. **Layer 8** — billing + unit-economics ledger
+5. **Scale loop** — client #N is a config file and a policy.yaml, not a hire

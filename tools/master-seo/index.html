@@ -1,0 +1,1466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Master SEO — The Proofing Desk</title>
+<style>
+  :root{
+    --paper:#F0EEE8;
+    --proof:#FBFAF6;
+    --proof-border:#DDD9CE;
+    --ink:#221F1A;
+    --ink-soft:#54503F;
+    --ink-faint:#8A8571;
+    --accent:#3E56A6;
+    --accent-ink:#FBFAF6;
+    --good:#237A55;
+    --warn:#B8791A;
+    --critical:#BF3B3B;
+    --good-bg:#E4EFE8;
+    --warn-bg:#F3E9D8;
+    --critical-bg:#F3E1DF;
+    --track:#E4E1D6;
+    --shadow:0 1px 0 rgba(34,31,26,0.06);
+    --serif:Charter,"Iowan Old Style","Palatino Linotype","URW Palladio L",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#14161C;
+      --proof:#1B1E27;
+      --proof-border:#31333F;
+      --ink:#E9E7E0;
+      --ink-soft:#B3AF9F;
+      --ink-faint:#726E5E;
+      --accent:#6E82D6;
+      --accent-ink:#14161C;
+      --good:#3FA277;
+      --warn:#B87F35;
+      --critical:#CC6161;
+      --good-bg:#1C2B24;
+      --warn-bg:#2B2419;
+      --critical-bg:#2C1E1E;
+      --track:#262A35;
+      --shadow:0 1px 0 rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161C; --proof:#1B1E27; --proof-border:#31333F; --ink:#E9E7E0;
+    --ink-soft:#B3AF9F; --ink-faint:#726E5E; --accent:#6E82D6; --accent-ink:#14161C;
+    --good:#3FA277; --warn:#B87F35; --critical:#CC6161;
+    --good-bg:#1C2B24; --warn-bg:#2B2419; --critical-bg:#2C1E1E; --track:#262A35;
+    --shadow:0 1px 0 rgba(0,0,0,0.4);
+  }
+  :root[data-theme="light"]{
+    --paper:#F0EEE8; --proof:#FBFAF6; --proof-border:#DDD9CE; --ink:#221F1A;
+    --ink-soft:#54503F; --ink-faint:#8A8571; --accent:#3E56A6; --accent-ink:#FBFAF6;
+    --good:#237A55; --warn:#B8791A; --critical:#BF3B3B;
+    --good-bg:#E4EFE8; --warn-bg:#F3E9D8; --critical-bg:#F3E1DF; --track:#E4E1D6;
+    --shadow:0 1px 0 rgba(34,31,26,0.06);
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;animation:none !important;}
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:var(--serif);font-weight:600;text-wrap:balance;margin:0;}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  button{font-family:inherit;}
+  input,textarea,select{font-family:inherit;color:inherit;}
+  ::selection{background:var(--accent);color:var(--accent-ink);}
+  a{color:var(--accent);}
+
+  /* ---------- shell ---------- */
+  .masthead{
+    padding:22px 28px 16px;
+    border-bottom:1px solid var(--proof-border);
+    display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  }
+  .masthead-title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .masthead h1{font-size:1.7rem;letter-spacing:-0.01em;}
+  .masthead .kicker{
+    font-family:var(--mono);font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--accent);border:1px solid var(--accent);padding:2px 7px;border-radius:2px;
+  }
+  .masthead .strap{color:var(--ink-faint);font-size:0.83rem;max-width:46ch;}
+
+  .desk{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:0;
+    min-height:calc(100vh - 84px);
+  }
+  @media (max-width:880px){
+    .desk{grid-template-columns:1fr;}
+  }
+
+  .rail{
+    border-right:1px solid var(--proof-border);
+    padding:18px 20px 60px;
+    display:flex;flex-direction:column;gap:0;
+  }
+  @media (max-width:880px){
+    .rail{border-right:none;border-bottom:1px solid var(--proof-border);}
+  }
+  .rail-panel{display:flex;flex-direction:column;gap:22px;}
+  .hidden{display:none !important;}
+
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--proof-border);margin:-18px -20px 4px;padding:0 20px;}
+  .tab-btn{
+    appearance:none;background:none;border:none;cursor:pointer;
+    font-family:var(--sans);font-size:0.86rem;font-weight:600;color:var(--ink-faint);
+    padding:12px 4px;margin-right:20px;border-bottom:2px solid transparent;
+  }
+  .tab-btn[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);}
+  .tab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  fieldset{border:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+  legend{
+    font-family:var(--mono);font-size:0.66rem;letter-spacing:0.13em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:2px;padding:0;
+  }
+  label.field{display:flex;flex-direction:column;gap:4px;font-size:0.82rem;color:var(--ink-soft);}
+  label.field .row-between{display:flex;justify-content:space-between;align-items:baseline;}
+  .char-count{font-family:var(--mono);font-size:0.7rem;color:var(--ink-faint);}
+  .char-count.over{color:var(--critical);}
+  .char-count.ok{color:var(--good);}
+
+  input[type="text"],input[type="url"],textarea,select{
+    background:var(--proof);border:1px solid var(--proof-border);border-radius:3px;
+    color:var(--ink);padding:8px 9px;font-size:0.86rem;width:100%;
+  }
+  input[type="text"]:focus-visible,textarea:focus-visible,select:focus-visible,input[type="url"]:focus-visible{
+    outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);
+  }
+  textarea{resize:vertical;line-height:1.5;}
+  .help{font-size:0.72rem;color:var(--ink-faint);}
+
+  .check-row{display:flex;align-items:flex-start;gap:8px;font-size:0.82rem;color:var(--ink-soft);}
+  .check-row input{margin-top:3px;accent-color:var(--accent);}
+  .check-row .self-tag{
+    font-family:var(--mono);font-size:0.62rem;color:var(--ink-faint);
+    border:1px solid var(--proof-border);border-radius:2px;padding:0 4px;margin-left:4px;white-space:nowrap;
+  }
+
+  .btn{
+    appearance:none;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
+    font-weight:600;font-size:0.85rem;padding:10px 14px;border-radius:3px;cursor:pointer;
+  }
+  .btn:hover{filter:brightness(1.06);}
+  .btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+  .btn.ghost{background:none;color:var(--ink);border-color:var(--proof-border);}
+  .btn.small{padding:6px 10px;font-size:0.76rem;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+  .chip-group{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{
+    appearance:none;border:1px solid var(--proof-border);background:var(--proof);color:var(--ink-soft);
+    font-size:0.78rem;padding:6px 10px;border-radius:3px;cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--ink);background:var(--good-bg);}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+  /* ---------- main proof sheet ---------- */
+  .main{padding:22px 30px 80px;max-width:900px;}
+  .empty-state{
+    border:1px dashed var(--proof-border);border-radius:4px;padding:40px 26px;text-align:center;
+    color:var(--ink-faint);
+  }
+  .empty-state h2{color:var(--ink-soft);font-size:1.2rem;margin-bottom:8px;}
+  .empty-state p{max-width:44ch;margin:0 auto;font-size:0.88rem;}
+
+  .score-block{
+    display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;
+    padding-bottom:18px;border-bottom:1px solid var(--proof-border);margin-bottom:20px;
+  }
+  .score-number{font-family:var(--mono);font-size:3.4rem;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;}
+  .score-meta{display:flex;flex-direction:column;gap:3px;}
+  .score-label{font-size:0.95rem;color:var(--ink-soft);}
+  .score-caption{font-size:0.74rem;color:var(--ink-faint);max-width:52ch;}
+
+  .meters{display:flex;flex-direction:column;gap:14px;margin-bottom:26px;}
+  .meter-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+  .meter-label{font-size:0.82rem;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
+  .meter-value{font-size:0.82rem;font-weight:600;}
+  .meter-track{position:relative;height:9px;background:var(--track);border-radius:2px;overflow:hidden;}
+  .meter-ticks{position:absolute;inset:0;display:flex;justify-content:space-between;pointer-events:none;}
+  .meter-ticks i{width:1px;background:var(--proof);opacity:0.6;height:100%;display:block;}
+  .meter-fill{height:100%;border-radius:0 2px 2px 0;width:0%;transition:width .5s ease;}
+  .self-badge{
+    font-family:var(--mono);font-size:0.6rem;letter-spacing:0.06em;color:var(--ink-faint);
+    border:1px solid var(--proof-border);border-radius:2px;padding:0 4px;
+  }
+
+  .section-title{
+    font-family:var(--mono);font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--ink-faint);margin:26px 0 10px;padding-top:16px;border-top:1px solid var(--proof-border);
+  }
+  .section-title:first-of-type{border-top:none;padding-top:0;margin-top:0;}
+
+  .serp{
+    background:var(--proof);border:1px solid var(--proof-border);border-radius:4px;padding:14px 16px;
+  }
+  .serp-url{font-size:0.78rem;color:var(--good);font-family:var(--mono);margin-bottom:2px;}
+  .serp-title{font-size:1.08rem;color:var(--accent);margin-bottom:3px;font-family:var(--sans);}
+  .serp-desc{font-size:0.84rem;color:var(--ink-soft);}
+
+  .finding{
+    display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--proof-border);
+  }
+  .finding:last-child{border-bottom:none;}
+  .finding-mark{
+    flex:none;width:9px;height:9px;border-radius:1px;margin-top:5px;
+  }
+  .finding-mark.critical{background:var(--critical);}
+  .finding-mark.warning{background:var(--warn);}
+  .finding-mark.pass{background:var(--good);}
+  .finding-body{flex:1;min-width:0;}
+  .finding-title{font-size:0.9rem;font-weight:600;margin-bottom:2px;}
+  .finding-why{font-size:0.82rem;color:var(--ink-soft);margin-bottom:4px;}
+  .finding-fix{font-size:0.82rem;color:var(--ink);}
+  .finding-fix::before{content:"Fix — ";color:var(--ink-faint);}
+  .finding-tags{display:flex;gap:6px;margin-top:6px;}
+  .tag{
+    font-family:var(--mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;
+    padding:1px 6px;border-radius:2px;border:1px solid var(--proof-border);color:var(--ink-faint);
+  }
+  .finding-group-label{
+    font-size:0.72rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.1em;
+    padding:3px 8px;border-radius:2px;display:inline-block;margin-bottom:6px;
+  }
+  .finding-group-label.critical{background:var(--critical-bg);color:var(--critical);}
+  .finding-group-label.warning{background:var(--warn-bg);color:var(--warn);}
+  .finding-group-label.pass{background:var(--good-bg);color:var(--good);}
+
+  .quickwin{
+    display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--proof-border);
+    border-radius:3px;margin-bottom:6px;font-size:0.82rem;background:var(--proof);
+  }
+  .quickwin .qw-fix{color:var(--ink-soft);}
+
+  .outline-list{list-style:none;margin:0;padding:0;counter-reset:ol;}
+  .outline-list li{
+    counter-increment:ol;padding:9px 0 9px 34px;position:relative;border-bottom:1px solid var(--proof-border);
+    font-size:0.9rem;
+  }
+  .outline-list li:last-child{border-bottom:none;}
+  .outline-list li::before{
+    content:"H2·" counter(ol);position:absolute;left:0;top:9px;font-family:var(--mono);
+    font-size:0.68rem;color:var(--ink-faint);
+  }
+
+  .headline-cards{display:flex;flex-direction:column;gap:8px;}
+  .headline-card{
+    border:1px solid var(--proof-border);border-radius:4px;padding:12px 14px;background:var(--proof);
+    display:flex;justify-content:space-between;gap:12px;align-items:center;
+  }
+  .headline-card .htext{font-family:var(--serif);font-size:1.05rem;}
+  .headline-card .hformula{font-family:var(--mono);font-size:0.65rem;color:var(--ink-faint);margin-top:3px;}
+
+  .draft-wrap{display:flex;flex-direction:column;gap:12px;}
+  #w-draft{min-height:340px;font-size:0.92rem;line-height:1.65;}
+
+  .stat-strip{display:flex;flex-wrap:wrap;gap:14px 22px;padding:12px 0;border-top:1px solid var(--proof-border);border-bottom:1px solid var(--proof-border);}
+  .stat{display:flex;flex-direction:column;gap:1px;}
+  .stat .num{font-family:var(--mono);font-size:1.05rem;font-variant-numeric:tabular-nums;}
+  .stat .lbl{font-size:0.68rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.07em;}
+  .stat .num.critical{color:var(--critical);}
+  .stat .num.warning{color:var(--warn);}
+  .stat .num.good{color:var(--good);}
+
+  .style-checklist{display:flex;flex-direction:column;gap:6px;}
+  .style-row{display:flex;align-items:center;gap:8px;font-size:0.85rem;}
+  .style-mark{flex:none;width:9px;height:9px;border-radius:1px;}
+  .style-mark.pass{background:var(--good);}
+  .style-mark.fail{background:var(--critical);}
+  .style-mark.na{background:var(--proof-border);}
+  .style-note{color:var(--ink-faint);font-size:0.76rem;margin-left:auto;font-family:var(--mono);}
+
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:3px;font-size:0.82rem;
+    opacity:0;pointer-events:none;transition:opacity .25s ease;
+  }
+  .toast.show{opacity:1;}
+
+  .report-out{width:100%;min-height:120px;font-family:var(--mono);font-size:0.78rem;display:none;}
+  .report-out.show{display:block;margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="masthead">
+  <div class="masthead-title">
+    <h1>Master SEO</h1>
+    <span class="kicker">The Proofing Desk</span>
+  </div>
+  <p class="strap">Heuristic audit, scoring, and drafting for content that ranks — a rigor check before you publish, not a replacement for Search Console.</p>
+</div>
+
+<div class="desk">
+  <!-- ============ RAIL ============ -->
+  <div class="rail">
+    <div class="tabs" role="tablist">
+      <button class="tab-btn" id="tab-analyze-btn" role="tab" aria-selected="true" aria-controls="panel-analyze">Analyze</button>
+      <button class="tab-btn" id="tab-write-btn" role="tab" aria-selected="false" aria-controls="panel-write">Write</button>
+    </div>
+
+    <!-- ANALYZE RAIL -->
+    <div id="rail-analyze" class="rail-panel">
+      <fieldset>
+        <legend>Analyze a URL</legend>
+        <label class="field">Page URL
+          <input type="url" id="a-url" placeholder="https://example.com/page" />
+        </label>
+        <div class="btn-row">
+          <button class="btn" id="btn-fetch" type="button">Fetch &amp; analyze</button>
+        </div>
+        <p class="help" id="fetch-status"></p>
+        <details id="paste-details">
+          <summary class="help" style="cursor:pointer;">Fetch blocked? Paste the page HTML instead</summary>
+          <label class="field" style="margin-top:8px;">Page source (on the page: right-click → View Page Source → select all → copy)
+            <textarea id="a-html" rows="5" placeholder="&lt;!doctype html&gt;…"></textarea>
+          </label>
+          <div class="btn-row"><button class="btn ghost small" id="btn-parse-html" type="button">Analyze pasted HTML</button></div>
+        </details>
+      </fieldset>
+
+      <fieldset>
+        <legend>Manuscript — auto-filled from the page, or fill manually</legend>
+        <label class="field">Content type
+          <select id="a-contentType">
+            <option value="general">General / other</option>
+            <option value="blog">Blog post</option>
+            <option value="website">Website page</option>
+            <option value="howto">How-to</option>
+            <option value="listicle">Listicle</option>
+            <option value="comparison">Comparison (X vs Y)</option>
+            <option value="definitional">Definitional ("what is")</option>
+            <option value="landing">Landing page</option>
+            <option value="product">Product page</option>
+          </select>
+        </label>
+        <label class="field">Target keyword / topic
+          <input type="text" id="a-keyword" placeholder="e.g. pour over coffee ratio" />
+        </label>
+        <label class="field">
+          <span class="row-between"><span>SEO title tag</span><span class="char-count" id="a-title-count">0 / 60</span></span>
+          <input type="text" id="a-title" placeholder="Title as it appears in search results" />
+        </label>
+        <label class="field">
+          <span class="row-between"><span>Meta description</span><span class="char-count" id="a-meta-count">0 / 160</span></span>
+          <textarea id="a-meta" rows="2" placeholder="The pitch for the click"></textarea>
+        </label>
+        <label class="field">H1 / on-page headline
+          <input type="text" id="a-h1" placeholder="The headline readers actually see" />
+        </label>
+        <label class="field">URL slug (optional, for preview)
+          <input type="text" id="a-slug" placeholder="example.com/your-page" />
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Body copy</legend>
+        <label class="field help">Use <code>##</code> / <code>###</code> for headings, <code>[text](url)</code> for links, <code>![alt](src)</code> for images.
+          <textarea id="a-body" rows="10" placeholder="Paste or write the page content here…"></textarea>
+        </label>
+        <div class="btn-row">
+          <button class="btn small ghost" id="btn-example" type="button">Load example</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Technical self-check <span class="self-badge">self-reported</span></legend>
+        <label class="check-row"><input type="checkbox" id="chk-https" /> HTTPS enabled</label>
+        <label class="check-row"><input type="checkbox" id="chk-mobile" /> Mobile-responsive / passes mobile-friendly test</label>
+        <label class="check-row"><input type="checkbox" id="chk-robots" /> Not blocked by robots.txt or noindex</label>
+        <label class="check-row"><input type="checkbox" id="chk-cwv" /> Core Web Vitals passing (LCP/INP/CLS)</label>
+        <label class="check-row"><input type="checkbox" id="chk-canonical" /> Canonical URL set correctly</label>
+        <label class="check-row"><input type="checkbox" id="chk-nodupe" /> No near-duplicate page competing for this query</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Trust signals <span class="self-badge">self-reported</span></legend>
+        <label class="check-row"><input type="checkbox" id="chk-author" /> Named author or reviewer shown</label>
+        <label class="check-row"><input type="checkbox" id="chk-date" /> Publish / last-updated date visible</label>
+        <label class="check-row"><input type="checkbox" id="chk-sources" /> Claims cited to sources or data</label>
+        <label class="check-row"><input type="checkbox" id="chk-experience" /> First-hand experience shown (examples, tests, results)</label>
+      </fieldset>
+
+      <div class="btn-row">
+        <button class="btn" id="btn-analyze" type="button">Run analysis</button>
+        <button class="btn ghost small" id="btn-reset-analyze" type="button">Reset</button>
+      </div>
+    </div>
+
+    <!-- WRITE RAIL -->
+    <div id="rail-write" class="rail-panel hidden">
+      <fieldset>
+        <legend>Content type</legend>
+        <div class="chip-group" id="w-type-chips">
+          <button class="chip" data-type="blog" type="button" aria-pressed="true">Blog post</button>
+          <button class="chip" data-type="website" type="button" aria-pressed="false">Website page</button>
+          <button class="chip" data-type="howto" type="button" aria-pressed="false">How-to</button>
+          <button class="chip" data-type="listicle" type="button" aria-pressed="false">Listicle</button>
+          <button class="chip" data-type="comparison" type="button" aria-pressed="false">Comparison</button>
+          <button class="chip" data-type="definitional" type="button" aria-pressed="false">Definitional</button>
+          <button class="chip" data-type="landing" type="button" aria-pressed="false">Landing page</button>
+          <button class="chip" data-type="product" type="button" aria-pressed="false">Product page</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Brief</legend>
+        <label class="field">Topic / keyword
+          <input type="text" id="w-topic" placeholder="e.g. pour over coffee" />
+        </label>
+        <label class="field">Audience
+          <input type="text" id="w-audience" placeholder="e.g. home baristas new to manual brewing" />
+        </label>
+        <label class="field">Pain point
+          <input type="text" id="w-pain" placeholder="e.g. bitter or watery coffee" />
+        </label>
+        <label class="field">Desired outcome
+          <input type="text" id="w-outcome" placeholder="e.g. a consistently sweet, balanced cup" />
+        </label>
+        <label class="field">Brand / product name <span class="help">(optional)</span>
+          <input type="text" id="w-brand" placeholder="e.g. Kettleworks" />
+        </label>
+        <label class="field">Proof point <span class="help">(optional — a real stat, result, or testimonial)</span>
+          <input type="text" id="w-proof" placeholder="e.g. tested across 40 cups and 5 roasts" />
+        </label>
+      </fieldset>
+
+      <div class="btn-row">
+        <button class="btn" id="btn-gen-draft" type="button">Draft full copy</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost small" id="btn-gen-outline" type="button">Outline only</button>
+        <button class="btn ghost small" id="btn-gen-headlines" type="button">Headlines only</button>
+      </div>
+      <p class="help">Drafts are complete first-pass copy built from your brief. Square-bracketed prompts mark where only you can supply the real facts — the tool never invents stats or testimonials.</p>
+    </div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div id="panel-analyze" role="tabpanel">
+      <div class="empty-state" id="analyze-empty">
+        <h2>Nothing on the desk yet</h2>
+        <p>Fill in the manuscript panel on the left — or load the example — then run the analysis to see scores, findings, and fixes here.</p>
+      </div>
+
+      <div id="analyze-results" style="display:none;">
+        <div class="score-block">
+          <div class="score-number mono" id="overall-score-num">—</div>
+          <div class="score-meta">
+            <div class="score-label" id="overall-score-label">—</div>
+            <div class="score-caption">Weighted: content quality 30% · trust 30% · extraction surface 20% · findability 10% · duplication 10%.</div>
+          </div>
+        </div>
+
+        <div class="meters" id="meters"></div>
+
+        <div class="section-title">Search snippet preview</div>
+        <div class="serp">
+          <div class="serp-url mono" id="serp-url">example.com/your-page</div>
+          <div class="serp-title" id="serp-title">Your title will appear here</div>
+          <div class="serp-desc" id="serp-desc">Your meta description will appear here.</div>
+        </div>
+
+        <div class="section-title">Findings</div>
+        <div id="findings-list"></div>
+
+        <div class="section-title">Quick wins</div>
+        <div id="quickwins-list"></div>
+        <p class="help" id="quickwins-empty" style="display:none;">No sub-5-minute fixes flagged.</p>
+
+        <div class="btn-row" style="margin-top:20px;">
+          <button class="btn ghost small" id="btn-copy-report" type="button">Copy report as Markdown</button>
+        </div>
+        <textarea class="report-out mono" id="report-out" readonly></textarea>
+      </div>
+    </div>
+
+    <div id="panel-write" role="tabpanel" class="hidden">
+      <div class="section-title" style="margin-top:0;">Outline</div>
+      <ol class="outline-list" id="outline-output">
+        <li style="opacity:.5;">Generate an outline from the brief on the left.</li>
+      </ol>
+
+      <div class="section-title">Headline options</div>
+      <div class="headline-cards" id="headline-output">
+        <p class="help">Generate headlines from the brief on the left.</p>
+      </div>
+
+      <div class="section-title">Draft</div>
+      <div class="draft-wrap">
+        <textarea id="w-draft" placeholder="Write here. Use ## / ### for headings, [text](url) for links, ![alt](src) for images."></textarea>
+
+        <div class="stat-strip" id="w-stats"></div>
+
+        <div class="section-title" style="margin-top:6px;">Style checklist</div>
+        <div class="style-checklist" id="w-style-checklist"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- constants ---------------- */
+  var BUZZWORDS = ["streamline","streamlined","streamlines","seamless","seamlessly","leverage","leveraging",
+    "utilize","utilizing","innovative","cutting-edge","cutting edge","revolutionize","revolutionary",
+    "game-changer","game changer","synergy","synergies","empower","empowering","unlock","unlocking",
+    "robust","best-in-class","world-class","state-of-the-art","holistic","disrupt","disruptive","unparalleled"];
+  var HEDGES = ["very","really","basically","actually","just","quite","somewhat","fairly","rather","almost","literally"];
+  var GENERIC_ANCHORS = ["click here","here","read more","learn more","this","link","this link","this page"];
+
+  var OUTLINE_TEMPLATES = {
+    blog: function(t){return ["The direct answer / hook for "+t,"Why this matters right now","The core of it (main sections)","A real example","What to do next","Related questions"];},
+    website: function(t){return ["Headline promise + what you do","Who it's for","Key benefits","Proof (results, logos, testimonials)","How it works","Primary call to action"];},
+    howto: function(t){return ["Before you start: what you need","The direct answer: how to "+t,"Step-by-step instructions","How to verify it worked","Common mistakes and fixes","Related questions"];},
+    listicle: function(t){return ["The short answer: top picks for "+t,"How we evaluated these","The list, ranked","How to choose the right one for you","Frequently asked questions"];},
+    comparison: function(t){return [t+": the short verdict","Comparison at a glance","Where each one wins","Pricing and value","Who should choose which"];},
+    definitional: function(t){return ["What is "+t+"? (direct answer)","Why it matters","How it works","Real examples","Related concepts","Common misconceptions"];},
+    landing: function(t){return ["Headline promise + primary CTA","The problem you solve","Why "+t+" (benefits)","How it works","Objections / FAQ","Final CTA"];},
+    product: function(t){return ["What "+t+" is, and who it's for","Benefits tied to features","Proof (results, reviews)","Specs / details","Call to action"];}
+  };
+
+  var CONTENT_TYPE_LABELS = {blog:"Blog post",website:"Website page",howto:"How-to",listicle:"Listicle",comparison:"Comparison",definitional:"Definitional",landing:"Landing page",product:"Product page",general:"General"};
+
+  var EXAMPLE = {
+    keyword:"pour over coffee ratio",
+    title:"Pour Over Coffee Ratio: The Simple Formula That Actually Works",
+    meta:"The pour over coffee ratio that actually works, explained in one sentence, plus how to adjust it for taste.",
+    h1:"The Pour Over Coffee Ratio That Actually Works",
+    slug:"example.com/pour-over-ratio",
+    body:"Use 1 gram of coffee for every 16 grams of water. That's it — that's the ratio. For a standard 300g cup, that means about 18-19g of coffee.\n\n## Why 1:16 is the starting point\n\nMost specialty coffee sits between 1:15 and 1:17. Stronger than 1:15 and it can taste harsh; weaker than 1:17 and it often tastes thin. We tested 40 cups across five roasts to land on 1:16 as the most reliable starting point.\n\n## How to adjust for your taste\n\nIf your cup tastes sour or weak, move toward 1:15. If it tastes bitter or heavy, move toward 1:17. Change the ratio in small steps — a gram or two at a time.\n\n## A step-by-step brew\n\nWeigh your coffee first, then your water. Bloom with double the coffee weight in water for 30 seconds, then pour the rest in slow circles over about three minutes.\n\n## Common mistakes\n\nGrinding too fine for your filter is the most frequent problem we see, followed by pouring too fast. Read more about grind size in our companion guide."
+  };
+
+  /* ---------------- helpers ---------------- */
+  function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n));}
+  function esc(s){return (s||"").replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
+  function debounce(fn,ms){var t;return function(){var a=arguments,c=this;clearTimeout(t);t=setTimeout(function(){fn.apply(c,a);},ms);};}
+
+  function countSyllables(word){
+    word = word.toLowerCase().replace(/[^a-z]/g,"");
+    if (!word) return 0;
+    if (word.length <= 3) return 1;
+    word = word.replace(/(?:[^aeiouy]es|ed|[^aeiouy]e)$/,"");
+    word = word.replace(/^y/,"");
+    var m = word.match(/[aeiouy]{1,2}/g);
+    return m ? m.length : 1;
+  }
+
+  function stripMarkdown(raw){
+    return (raw||"")
+      .replace(/!\[([^\]]*)\]\(([^)]*)\)/g," ")
+      .replace(/(?<!!)\[([^\]]*)\]\(([^)]*)\)/g,"$1")
+      .replace(/^#{1,6}\s+/gm,"")
+      .replace(/[*_`>]/g,"");
+  }
+
+  function splitWords(text){
+    return (text||"").split(/\s+/).map(function(w){return w.replace(/[^a-zA-Z0-9'-]/g,"");}).filter(Boolean);
+  }
+
+  function splitSentences(text){
+    return (text||"").split(/[.!?]+(?:\s|$)/).map(function(s){return s.trim();}).filter(Boolean);
+  }
+
+  function countOccurrences(haystack,needle){
+    if (!needle) return 0;
+    var esc2 = needle.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    var re = new RegExp(esc2,"gi");
+    var m = haystack.match(re);
+    return m ? m.length : 0;
+  }
+
+  function extractHeadings(raw){
+    var lines = (raw||"").split(/\r?\n/);
+    var h1=0,h2=0,h3=0;
+    lines.forEach(function(l){
+      var t=l.trim();
+      if (/^#{1}\s+/.test(t)) h1++;
+      else if (/^#{2}\s+/.test(t)) h2++;
+      else if (/^#{3}\s+/.test(t)) h3++;
+    });
+    return {h1:h1,h2:h2,h3:h3};
+  }
+
+  function extractLinks(raw){
+    var links=[]; var re=/(?<!!)\[([^\]]+)\]\(([^)]+)\)/g; var m;
+    while ((m = re.exec(raw||""))) links.push({text:m[1].trim(),href:m[2].trim()});
+    return links;
+  }
+
+  function extractImages(raw){
+    var imgs=[]; var re=/!\[([^\]]*)\]\(([^)]+)\)/g; var m;
+    while ((m = re.exec(raw||""))) imgs.push({alt:m[1].trim(),src:m[2].trim()});
+    return imgs;
+  }
+
+  function analyzeBody(raw, keyword){
+    raw = raw || "";
+    var plain = stripMarkdown(raw);
+    var words = splitWords(plain);
+    var wordCount = words.length;
+    var sentences = splitSentences(plain);
+    var sentenceCount = sentences.length || 1;
+    var avgSentenceLen = wordCount / sentenceCount;
+    var syllables = words.reduce(function(s,w){return s+countSyllables(w);},0);
+    var flesch = wordCount ? clamp(206.835 - 1.015*(wordCount/sentenceCount) - 84.6*(syllables/wordCount),0,100) : 0;
+
+    var passiveRe = /\b(am|is|are|was|were|be|been|being)\s+\w+(ed|en)\b/gi;
+    var passiveMatches = plain.match(passiveRe) || [];
+    var passiveRatio = sentenceCount ? (passiveMatches.length/sentenceCount)*100 : 0;
+
+    var lowerPlain = plain.toLowerCase();
+    var buzzHits = BUZZWORDS.filter(function(b){return lowerPlain.indexOf(b) !== -1;});
+    var hedgeCount = 0;
+    HEDGES.forEach(function(h){
+      var re = new RegExp("\\b"+h+"\\b","gi");
+      var mm = plain.match(re);
+      if (mm) hedgeCount += mm.length;
+    });
+
+    var kw = (keyword||"").trim();
+    var kwCount = kw ? countOccurrences(plain,kw) : 0;
+    var kwDensity = (kw && wordCount) ? (kwCount / wordCount) * 100 : null;
+    var first100 = words.slice(0,100).join(" ").toLowerCase();
+    var kwInFirst100 = kw ? first100.indexOf(kw.toLowerCase()) !== -1 : null;
+
+    var headings = extractHeadings(raw);
+    var links = extractLinks(raw);
+    var genericAnchors = links.filter(function(l){return GENERIC_ANCHORS.indexOf(l.text.toLowerCase()) !== -1;});
+    var images = extractImages(raw);
+    var badAlt = images.filter(function(im){
+      if (!im.alt) return true;
+      if (/\.(jpe?g|png|gif|webp|svg)$/i.test(im.alt)) return true;
+      if (["image","photo","picture","img"].indexOf(im.alt.toLowerCase()) !== -1) return true;
+      return false;
+    });
+
+    return {
+      wordCount:wordCount, sentenceCount:sentenceCount, avgSentenceLen:avgSentenceLen,
+      flesch:flesch, passiveCount:passiveMatches.length, passiveRatio:passiveRatio,
+      buzzHits:buzzHits, hedgeCount:hedgeCount,
+      kwCount:kwCount, kwDensity:kwDensity, kwInFirst100:kwInFirst100,
+      headings:headings, links:links, genericAnchors:genericAnchors,
+      images:images, badAlt:badAlt
+    };
+  }
+
+  function readabilityLabel(f){
+    if (f >= 70) return "easy";
+    if (f >= 50) return "plain";
+    if (f >= 30) return "dense";
+    return "hard";
+  }
+
+  /* ---------------- URL fetch + HTML parsing ---------------- */
+  var lastPageMeta = null; // set when analysis came from a fetched/pasted page
+
+  function fetchWithTimeout(url, ms){
+    return new Promise(function(resolve, reject){
+      var ctrl = new AbortController();
+      var t = setTimeout(function(){ctrl.abort();}, ms);
+      fetch(url, {mode:"cors", signal:ctrl.signal}).then(function(r){
+        clearTimeout(t);
+        if (!r.ok) { reject(new Error("HTTP "+r.status)); return; }
+        r.text().then(resolve, reject);
+      }, function(e){ clearTimeout(t); reject(e); });
+    });
+  }
+
+  function fetchPage(url){
+    var attempts = [
+      url,
+      "https://api.allorigins.win/raw?url="+encodeURIComponent(url),
+      "https://corsproxy.io/?url="+encodeURIComponent(url)
+    ];
+    var i = 0;
+    function next(){
+      if (i >= attempts.length) return Promise.reject(new Error("all attempts blocked"));
+      return fetchWithTimeout(attempts[i++], 12000).catch(next);
+    }
+    return next();
+  }
+
+  function nodeToMd(el){
+    var out = "";
+    el.childNodes.forEach(function(n){
+      if (n.nodeType === 3) out += n.textContent;
+      else if (n.nodeType === 1){
+        var tag = n.tagName;
+        if (tag === "A") out += "["+(n.textContent||"").trim()+"]("+(n.getAttribute("href")||"")+")";
+        else if (tag === "IMG") out += "!["+(n.getAttribute("alt")||"")+"]("+(n.getAttribute("src")||"")+")";
+        else out += nodeToMd(n);
+      }
+    });
+    return out;
+  }
+
+  function parsePageHTML(html, url){
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    function q(sel){ return doc.querySelector(sel); }
+    function content(sel){ var el=q(sel); return el ? (el.getAttribute("content")||"") : ""; }
+
+    var title = q("title") ? q("title").textContent.trim() : "";
+    var metaDesc = content('meta[name="description"]') || content('meta[property="og:description"]');
+    var canonicalEl = q('link[rel="canonical"]');
+    var canonical = canonicalEl ? (canonicalEl.getAttribute("href")||"") : "";
+    var robotsMeta = (content('meta[name="robots"]')||"").toLowerCase();
+    var noindex = robotsMeta.indexOf("noindex") !== -1;
+    var viewport = !!q('meta[name="viewport"]');
+    var jsonLdCount = doc.querySelectorAll('script[type="application/ld+json"]').length;
+    var authorDetected = !!(content('meta[name="author"]') || q('[rel="author"]') || q('.byline, .author, [itemprop="author"]'));
+    var dateDetected = !!(content('meta[property="article:published_time"]') || q("time[datetime]") || content('meta[name="date"]'));
+
+    var h1s = Array.prototype.slice.call(doc.querySelectorAll("h1"))
+      .map(function(h){return h.textContent.trim();}).filter(Boolean);
+
+    var main = q("main") || q("article") || doc.body;
+    if (main){
+      ["script","style","nav","header","footer","noscript","svg","form","aside","iframe"].forEach(function(t){
+        Array.prototype.slice.call(main.querySelectorAll(t)).forEach(function(n){ n.remove(); });
+      });
+    }
+    var mdLines = [];
+    var externalLinks = 0;
+    var host = "";
+    try { host = new URL(url||"", "https://x.invalid").hostname; } catch(e){}
+    if (main){
+      Array.prototype.slice.call(main.querySelectorAll("h2,h3,p,li,img")).forEach(function(el){
+        if (el.tagName === "IMG"){
+          mdLines.push("!["+(el.getAttribute("alt")||"")+"]("+(el.getAttribute("src")||"")+")");
+          return;
+        }
+        var text = nodeToMd(el).replace(/\s+/g," ").trim();
+        if (!text) return;
+        if (el.tagName === "H2") mdLines.push("## "+text);
+        else if (el.tagName === "H3") mdLines.push("### "+text);
+        else mdLines.push(text);
+      });
+      Array.prototype.slice.call(main.querySelectorAll("a[href]")).forEach(function(a){
+        var href = a.getAttribute("href")||"";
+        if (/^https?:\/\//i.test(href)){
+          try { if (host && new URL(href).hostname !== host) externalLinks++; } catch(e){}
+        }
+      });
+    }
+    var body = mdLines.join("\n\n");
+    if (body.length > 30000) body = body.slice(0, 30000);
+
+    return {
+      title:title, metaDesc:metaDesc, canonical:canonical, noindex:noindex,
+      viewport:viewport, jsonLdCount:jsonLdCount, h1s:h1s, body:body,
+      authorDetected:authorDetected, dateDetected:dateDetected, externalLinks:externalLinks
+    };
+  }
+
+  function applyParsedPage(parsed, url){
+    document.getElementById("a-title").value = parsed.title;
+    document.getElementById("a-meta").value = parsed.metaDesc;
+    document.getElementById("a-h1").value = parsed.h1s[0] || "";
+    if (url){
+      try { var u = new URL(url); document.getElementById("a-slug").value = u.hostname + u.pathname; } catch(e){}
+    }
+    document.getElementById("a-body").value = parsed.body;
+    document.getElementById("a-title").dispatchEvent(new Event("input"));
+    document.getElementById("a-meta").dispatchEvent(new Event("input"));
+
+    // derived technical signals
+    document.getElementById("chk-https").checked = url ? /^https:/i.test(url) : false;
+    document.getElementById("chk-mobile").checked = parsed.viewport;
+    document.getElementById("chk-robots").checked = !parsed.noindex;
+    document.getElementById("chk-canonical").checked = !!parsed.canonical;
+    // derived trust signals (best-effort; user can correct)
+    document.getElementById("chk-author").checked = parsed.authorDetected;
+    document.getElementById("chk-date").checked = parsed.dateDetected;
+    document.getElementById("chk-sources").checked = parsed.externalLinks >= 2;
+
+    lastPageMeta = {
+      fromPage:true, url:url||"",
+      multipleH1: parsed.h1s.length > 1,
+      noH1: parsed.h1s.length === 0,
+      noindex: parsed.noindex,
+      jsonLdCount: parsed.jsonLdCount,
+      canonical: parsed.canonical
+    };
+  }
+
+  function setFetchStatus(msg, isError){
+    var el = document.getElementById("fetch-status");
+    el.textContent = msg;
+    el.style.color = isError ? "var(--critical)" : "var(--ink-faint)";
+  }
+
+  /* ---------------- findings engine (Analyze mode) ---------------- */
+  function buildFindings(inputs){
+    var F = []; // {layer, severity, deduct, title, why, fix, impact, effort}
+    function add(layer,severity,deduct,title,why,fix,impact,effort){
+      F.push({layer:layer,severity:severity,deduct:deduct,title:title,why:why,fix:fix,impact:impact,effort:effort});
+    }
+
+    /* L1 — Findability (self-report) */
+    if (!inputs.https) add("l1","critical",35,"HTTPS not confirmed","Google requires HTTPS; unsecured pages are disadvantaged and browsers flag them as Not Secure.","Get an SSL certificate and 301-redirect HTTP to HTTPS.","High","Moderate");
+    if (!inputs.mobile) add("l1","critical",35,"Mobile-responsiveness not confirmed","Google indexes the mobile version first — a non-responsive page is effectively invisible in results.","Fix responsive layout or test with a mobile-friendly checker.","High","Moderate");
+    if (!inputs.robots) add("l1","critical",35,"Page may be blocked from crawling","If robots.txt or a noindex tag blocks this page, nothing else here matters — Google can't index it.","Check robots.txt and meta robots tags; remove any unintended block.","High","Quick");
+    if (!inputs.cwv) add("l1","warning",15,"Core Web Vitals not confirmed passing","Slow, unstable pages (LCP/INP/CLS) are directly disadvantaged in ranking.","Test in PageSpeed Insights; target LCP<2.5s, INP<200ms, CLS<0.1.","Medium","Moderate");
+    if (inputs.https && inputs.mobile && inputs.robots && inputs.cwv) add("l1","pass",0,"Technical findability looks solid","HTTPS, mobile, crawlability, and Core Web Vitals are all self-confirmed.","","","");
+
+    /* L2 — Duplication (self-report) */
+    if (!inputs.canonical) add("l2","warning",30,"Canonical URL not confirmed","Without a clear canonical, ranking signals split across duplicate or parameter URLs.","Add rel=canonical pointing to the single preferred URL.","Medium","Quick");
+    if (!inputs.nodupe) add("l2","warning",30,"Possible duplicate or near-duplicate content","A near-identical page competing for the same query dilutes both.","Merge into one stronger page, or clearly differentiate search intent.","Medium","Moderate");
+    if (inputs.canonical && inputs.nodupe) add("l2","pass",0,"One URL, one idea","Canonicalization is confirmed and no competing duplicate is flagged.","","","");
+
+    /* L3 — Extraction surface (computed) */
+    var titleLen = inputs.title.length;
+    if (!inputs.title) add("l3","critical",30,"Title tag is missing","Without a <title>, Google writes one for you — usually worse than what you'd choose.","Write a unique, accurate title, 50-60 characters.","High","Quick");
+    else if (titleLen < 30 || titleLen > 60) add("l3","warning",12,"Title length is off ("+titleLen+" chars)","Titles outside ~50-60 characters get truncated or feel thin in results.","Trim or expand to the 50-60 character range, topic first.","Medium","Quick");
+    else add("l3","pass",0,"Title length is on target ("+titleLen+" chars)","","","","");
+
+    var metaLen = inputs.meta.length;
+    if (!inputs.meta) add("l3","warning",10,"Meta description is empty","Google will auto-generate one from page content, usually less compelling than a written pitch.","Write a 150-160 character description that matches search intent.","Medium","Quick");
+    else if (metaLen < 120 || metaLen > 165) add("l3","warning",8,"Meta description length is off ("+metaLen+" chars)","Outside ~150-160 characters, descriptions get cut off or waste space.","Tighten or expand to 150-160 characters.","Low","Quick");
+    else add("l3","pass",0,"Meta description length is on target ("+metaLen+" chars)","","","","");
+
+    if (!inputs.h1) add("l3","critical",25,"No H1 / on-page headline set","The H1 is the strongest on-page structural signal of what the content is about.","Add a clear H1 stating the page's core promise.","High","Quick");
+
+    var h = inputs.analysis.headings;
+    if (inputs.analysis.wordCount > 60 && h.h2 < 2) add("l3","warning",12,"No scannable heading structure (fewer than 2 H2 sections)","Readers and AI extraction both rely on headings to navigate and summarize content.","Break the body into H2 sections, one idea each.","Medium","Moderate");
+    if (h.h1 > 0) add("l3","warning",10,"Body copy contains its own H1 line","A page should have exactly one H1 — use the dedicated H1 field, not a '# ' line in the body.","Remove the '# ' line from body copy; keep the H1 field as the single source.","Low","Quick");
+
+    if (inputs.analysis.genericAnchors.length) add("l3","warning",10,inputs.analysis.genericAnchors.length+" link(s) use generic anchor text","Anchors like 'click here' tell readers and Google nothing about the destination.","Rewrite anchors to describe what's on the other end.","Low","Quick");
+    if (inputs.analysis.images.length && inputs.analysis.badAlt.length) add("l3","warning",8,inputs.analysis.badAlt.length+" image(s) missing descriptive alt text","Alt text is how images are understood by screen readers and image search alike.","Write alt text that describes the image for someone who can't see it.","Low","Quick");
+
+    /* Page-derived findings (only when analysis came from a fetched/pasted page) */
+    if (inputs.pageMeta && inputs.pageMeta.fromPage){
+      var pm = inputs.pageMeta;
+      if (pm.noindex) add("l1","critical",40,"Page carries a noindex directive","A meta robots noindex tells Google to drop this page from the index entirely.","Remove the noindex tag if this page should rank.","High","Quick");
+      if (pm.multipleH1) add("l3","warning",10,"Multiple H1 headings found on the page","More than one H1 dilutes the page's single strongest topical signal.","Keep one H1; demote the others to H2.","Low","Quick");
+      if (pm.jsonLdCount === 0) add("l3","pass",0,"No structured data found — that's fine","Schema markup is only needed if you want specific rich results; it is not a ranking requirement.","","","");
+      else add("l3","pass",0,pm.jsonLdCount+" structured data block(s) found","Verify the markup matches visible content exactly — mismatches are treated as spam.","","","");
+    }
+
+    /* L4 — Content quality (computed) */
+    var a = inputs.analysis;
+    if (a.wordCount < 40) {
+      add("l4","critical",50,"Body copy is too thin to evaluate ("+a.wordCount+" words)","There isn't enough content here to judge intent completeness or quality.","Add real substance — this isn't about hitting a word count, it's about finishing the reader's task.","High","Moderate");
+    } else {
+      if (inputs.keyword) {
+        if (a.kwDensity !== null && a.kwDensity > 3) add("l4","critical",30,"Keyword stuffing detected ("+a.kwDensity.toFixed(1)+"% density)","Repeating the exact phrase past ~3% density reads as manipulation, not natural writing.","Remove repeated instances; let synonyms and natural phrasing carry the topic.","High","Moderate");
+        else if (a.kwCount === 0) add("l4","warning",12,"Target keyword never appears in body copy","If the topic word never appears, neither readers nor Google can confirm relevance.","Work the keyword or a natural variant into the content, especially the opening.","Medium","Quick");
+        if (a.kwCount > 0 && a.kwInFirst100 === false) add("l4","warning",8,"Target keyword doesn't appear in the first 100 words","Leading with the direct answer helps both featured snippets and AI extraction.","Move the topic/keyword into the opening sentence or two.","Medium","Quick");
+      }
+      if (a.buzzHits.length) add("l4","warning",10,a.buzzHits.length+" vague marketing buzzword(s) found","Words like '"+a.buzzHits.slice(0,3).join("', '")+"' read as filler, not substance.","Replace with specific, concrete language.","Medium","Quick");
+      if (a.hedgeCount > Math.max(1,Math.round(a.wordCount/100))) add("l4","warning",8,a.hedgeCount+" hedge word(s) weaken confident claims","'Very / really / basically / almost' soften claims without adding information.","Cut the hedge and say the thing directly.","Low","Quick");
+      if (a.passiveRatio > 15) add("l4","warning",10,Math.round(a.passiveRatio)+"% of sentences show possible passive voice","Passive constructions distance the actor from the action and read as less direct.","Rewrite key sentences active: 'we tested' not 'was tested'.","Low","Moderate");
+      if (a.flesch < 30) add("l4","warning",10,"Text reads as difficult (readability "+Math.round(a.flesch)+"/100)","Dense, hard-to-parse sentences lose readers and complicate AI extraction.","Shorten sentences and prefer common words.","Medium","Moderate");
+      if (a.avgSentenceLen > 28) add("l4","warning",6,"Average sentence length is high ("+Math.round(a.avgSentenceLen)+" words)","Long sentences are harder to scan on a page people are skimming.","Split long sentences; aim for variety, not uniformity.","Low","Moderate");
+      if (!a.buzzHits.length && a.passiveRatio<=15 && a.flesch>=30 && a.avgSentenceLen<=28 && (!inputs.keyword || (a.kwDensity!==null && a.kwDensity<=3 && a.kwCount>0))) {
+        add("l4","pass",0,"Content quality checks look solid","No stuffing, thin content, buzzwords, or readability red flags found.","","","");
+      }
+    }
+
+    /* L5 — Trust (self-report) */
+    if (!inputs.author) add("l5","warning",22,"No named author or reviewer shown","Trustworthiness is the dominant E-E-A-T signal, especially for AI citation.","Add a byline with real credentials or demonstrated experience.","High","Moderate");
+    if (!inputs.date) add("l5","warning",22,"No visible publish or updated date","Dateless content reads as unmaintained to both readers and AI retrieval.","Show a publish date; update it when content is meaningfully revised.","Medium","Quick");
+    if (!inputs.sources) add("l5","warning",22,"Claims aren't cited to sources","Unsupported claims are the fastest way to lose trust — and rankings.","Link factual claims to primary sources or include real data.","Medium","Moderate");
+    if (!inputs.experience) add("l5","warning",22,"No first-hand experience signals","The 'Experience' in E-E-A-T comes from real examples, not descriptions of capability.","Add real examples, testing notes, or case-specific detail.","Medium","Moderate");
+    if (inputs.author && inputs.date && inputs.sources && inputs.experience) add("l5","pass",0,"Strong E-E-A-T signals present","Author, date, sources, and first-hand experience are all confirmed.","","","");
+
+    return F;
+  }
+
+  function layerScore(findings, layer){
+    var deduct = findings.filter(function(f){return f.layer===layer && f.severity!=="pass";})
+      .reduce(function(s,f){return s+f.deduct;},0);
+    return clamp(100-deduct,0,100);
+  }
+
+  function scoreBand(score){
+    if (score>=80) return "good";
+    if (score>=55) return "warning";
+    return "critical";
+  }
+  function scoreColorVar(band){
+    return band==="good" ? "var(--good)" : band==="warning" ? "var(--warn)" : "var(--critical)";
+  }
+  function overallLabel(score){
+    if (score>=90) return "Excellent — ready to publish";
+    if (score>=75) return "Solid — minor gaps";
+    if (score>=55) return "Workable — real gaps to close";
+    if (score>=35) return "Weak — needs real work before publishing";
+    return "Not ready — foundational problems";
+  }
+
+  /* ---------------- render: Analyze ---------------- */
+  var LAYER_META = [
+    {key:"l1",label:"Findability",selfReport:true},
+    {key:"l2",label:"Duplication",selfReport:true},
+    {key:"l3",label:"Extraction surface",selfReport:false},
+    {key:"l4",label:"Content quality",selfReport:false},
+    {key:"l5",label:"Trust signals",selfReport:true}
+  ];
+  var WEIGHTS = {l1:0.10,l2:0.10,l3:0.20,l4:0.30,l5:0.30};
+
+  function runAnalysis(){
+    var title = document.getElementById("a-title").value.trim();
+    var meta = document.getElementById("a-meta").value.trim();
+    var h1 = document.getElementById("a-h1").value.trim();
+    var slug = document.getElementById("a-slug").value.trim();
+    var keyword = document.getElementById("a-keyword").value.trim();
+    var body = document.getElementById("a-body").value;
+
+    var analysis = analyzeBody(body, keyword);
+    var inputs = {
+      title:title, meta:meta, h1:h1, keyword:keyword, analysis:analysis, pageMeta:lastPageMeta,
+      https:document.getElementById("chk-https").checked,
+      mobile:document.getElementById("chk-mobile").checked,
+      robots:document.getElementById("chk-robots").checked,
+      cwv:document.getElementById("chk-cwv").checked,
+      canonical:document.getElementById("chk-canonical").checked,
+      nodupe:document.getElementById("chk-nodupe").checked,
+      author:document.getElementById("chk-author").checked,
+      date:document.getElementById("chk-date").checked,
+      sources:document.getElementById("chk-sources").checked,
+      experience:document.getElementById("chk-experience").checked
+    };
+
+    var findings = buildFindings(inputs);
+    var scores = {};
+    LAYER_META.forEach(function(l){scores[l.key]=layerScore(findings,l.key);});
+    var overall = Math.round(
+      scores.l1*WEIGHTS.l1 + scores.l2*WEIGHTS.l2 + scores.l3*WEIGHTS.l3 + scores.l4*WEIGHTS.l4 + scores.l5*WEIGHTS.l5
+    );
+
+    renderResults(overall, scores, findings, {title:title,meta:meta,slug:slug||"example.com/your-page"});
+    saveState();
+  }
+
+  function renderResults(overall, scores, findings, serp){
+    document.getElementById("analyze-empty").style.display="none";
+    var results = document.getElementById("analyze-results");
+    results.style.display="block";
+
+    var band = scoreBand(overall);
+    document.getElementById("overall-score-num").textContent = overall;
+    document.getElementById("overall-score-num").style.color = scoreColorVar(band);
+    document.getElementById("overall-score-label").textContent = overallLabel(overall);
+
+    var metersEl = document.getElementById("meters");
+    metersEl.innerHTML = "";
+    LAYER_META.forEach(function(l){
+      var s = scores[l.key];
+      var b = scoreBand(s);
+      var row = document.createElement("div");
+      row.className = "meter";
+      row.innerHTML =
+        '<div class="meter-head"><span class="meter-label">'+esc(l.label)+(l.selfReport?' <span class="self-badge">self</span>':'')+'</span>'+
+        '<span class="meter-value mono" style="color:'+scoreColorVar(b)+'">'+s+'</span></div>'+
+        '<div class="meter-track"><div class="meter-ticks"><i></i><i></i><i></i><i></i><i></i></div>'+
+        '<div class="meter-fill" style="width:'+s+'%;background:'+scoreColorVar(b)+';"></div></div>';
+      metersEl.appendChild(row);
+    });
+
+    document.getElementById("serp-url").textContent = serp.slug;
+    document.getElementById("serp-title").textContent = serp.title ? (serp.title.length>60?serp.title.slice(0,60)+"…":serp.title) : "Your title will appear here";
+    document.getElementById("serp-desc").textContent = serp.meta ? (serp.meta.length>165?serp.meta.slice(0,165)+"…":serp.meta) : "Your meta description will appear here.";
+
+    var order = {critical:0,warning:1,pass:2};
+    var sorted = findings.slice().sort(function(a,b2){return order[a.severity]-order[b2.severity];});
+    var listEl = document.getElementById("findings-list");
+    listEl.innerHTML = "";
+    if (!sorted.length){
+      listEl.innerHTML = '<p class="help">No findings.</p>';
+    }
+    sorted.forEach(function(f){
+      var row = document.createElement("div");
+      row.className = "finding";
+      var tagsHtml = "";
+      if (f.severity !== "pass") {
+        tagsHtml = '<div class="finding-tags"><span class="tag">'+esc(f.impact)+' impact</span><span class="tag">'+esc(f.effort)+'</span></div>';
+      }
+      row.innerHTML =
+        '<div class="finding-mark '+f.severity+'"></div>'+
+        '<div class="finding-body">'+
+          '<div class="finding-title">'+esc(f.title)+'</div>'+
+          (f.why?'<div class="finding-why">'+esc(f.why)+'</div>':'')+
+          (f.fix?'<div class="finding-fix">'+esc(f.fix)+'</div>':'')+
+          tagsHtml+
+        '</div>';
+      listEl.appendChild(row);
+    });
+
+    var quick = findings.filter(function(f){return f.severity!=="pass" && f.effort==="Quick";});
+    var qwEl = document.getElementById("quickwins-list");
+    qwEl.innerHTML = "";
+    document.getElementById("quickwins-empty").style.display = quick.length? "none":"block";
+    quick.forEach(function(f){
+      var row = document.createElement("div");
+      row.className = "quickwin";
+      row.innerHTML = '<span>'+esc(f.title)+'</span><span class="qw-fix">'+esc(f.fix)+'</span>';
+      qwEl.appendChild(row);
+    });
+
+    window.__lastReport = buildReportMarkdown(overall, scores, sorted);
+  }
+
+  function buildReportMarkdown(overall, scores, findings){
+    var lines = [];
+    lines.push("# SEO Report");
+    lines.push("");
+    lines.push("Overall score: "+overall+"/100 — "+overallLabel(overall));
+    lines.push("");
+    LAYER_META.forEach(function(l){lines.push("- "+l.label+": "+scores[l.key]+"/100");});
+    lines.push("");
+    lines.push("## Findings");
+    findings.forEach(function(f){
+      lines.push("");
+      lines.push("### ["+f.severity.toUpperCase()+"] "+f.title);
+      if (f.why) lines.push(f.why);
+      if (f.fix) lines.push("Fix: "+f.fix);
+    });
+    return lines.join("\n");
+  }
+
+  /* ---------------- Write mode ---------------- */
+  var currentWriteType = "blog";
+
+  function generateOutline(){
+    var topic = document.getElementById("w-topic").value.trim() || "your topic";
+    var tpl = OUTLINE_TEMPLATES[currentWriteType] || OUTLINE_TEMPLATES.howto;
+    var items = tpl(topic);
+    var el = document.getElementById("outline-output");
+    el.innerHTML = "";
+    items.forEach(function(it){
+      var li = document.createElement("li");
+      li.textContent = it;
+      el.appendChild(li);
+    });
+  }
+
+  function generateHeadlines(){
+    var topic = document.getElementById("w-topic").value.trim() || "your topic";
+    var audience = document.getElementById("w-audience").value.trim() || "your audience";
+    var pain = document.getElementById("w-pain").value.trim() || "the usual pain point";
+    var outcome = document.getElementById("w-outcome").value.trim() || ("mastering "+topic);
+
+    var options = [
+      {text: capitalize(outcome)+", without "+pain, formula:"{outcome} without {pain}"},
+      {text: "The "+topic+" guide for "+audience, formula:"The {category} for {audience}"},
+      {text: "Still dealing with "+pain+"?", formula:"{question stating the pain}"},
+      {text: "How to "+outcome+" (even with "+pain+")", formula:"How to {outcome} ({qualifier})"}
+    ];
+    var el = document.getElementById("headline-output");
+    el.innerHTML = "";
+    options.forEach(function(o){
+      var card = document.createElement("div");
+      card.className = "headline-card";
+      card.innerHTML = '<div><div class="htext">'+esc(o.text)+'</div><div class="hformula">'+esc(o.formula)+'</div></div>';
+      el.appendChild(card);
+    });
+  }
+
+  function capitalize(s){return s ? s.charAt(0).toUpperCase()+s.slice(1) : s;}
+
+  /* ---------------- full-copy draft builders ---------------- */
+  function getBrief(){
+    return {
+      t: document.getElementById("w-topic").value.trim() || "your topic",
+      aud: document.getElementById("w-audience").value.trim() || "your audience",
+      pain: document.getElementById("w-pain").value.trim() || "the usual frustration",
+      out: document.getElementById("w-outcome").value.trim() || "the result you're after",
+      brand: document.getElementById("w-brand").value.trim(),
+      proof: document.getElementById("w-proof").value.trim()
+    };
+  }
+
+  var DRAFT_BUILDERS = {
+    blog: function(b){
+      var we = b.brand || "we";
+      return [
+        "If you're one of the many "+b.aud+" dealing with "+b.pain+", here's the short version: "+b.out+" is achievable, and this post walks through exactly how. [State your single most important insight or answer in one sentence here.]",
+        "## Why "+b.t+" matters right now",
+        "For "+b.aud+", "+b.pain+" isn't a small annoyance — it's the thing standing between you and "+b.out+". [Add one or two sentences of context: what's changed recently, or why this keeps coming up.]",
+        "## The core of it",
+        "[Explain the main idea in plain language. One idea per paragraph. If there are steps or components, give each its own H3 below.]",
+        "### [First key point]",
+        "[Explain it, then show it — an example beats a definition.]",
+        "### [Second key point]",
+        "[Same pattern: claim, explanation, example.]",
+        "## A real example",
+        (b.proof ? "Here's what this looks like in practice: "+b.proof+". [Expand with the specifics — what was done, what changed, what the numbers were.]" : "[Walk through one concrete, real example — yours or a customer's. This is the section readers trust most, so use real specifics, not hypotheticals.]"),
+        "## What to do next",
+        "Start with the one change that moves you toward "+b.out+" fastest: [name it]. Then [second action]. If you only remember one thing from this post, make it this: [restate your core insight].",
+        "## Related questions",
+        "[Add 2-4 questions people actually ask about "+b.t+", each answered in 2-3 sentences. Pull them from real search suggestions, forums, or support tickets.]"
+      ].join("\n\n");
+    },
+    website: function(b){
+      var brand = b.brand || "[Brand]";
+      return [
+        capitalize(b.out)+", without "+b.pain+". "+brand+" helps "+b.aud+" [say what you do in one plain sentence].",
+        "[Primary CTA — action verb + what they get, e.g. \"See how it works\"]",
+        "## Who it's for",
+        "Built for "+b.aud+". If "+b.pain+" sounds familiar, you're in the right place. [One sentence on who it's NOT for — honesty here builds trust.]",
+        "## What you get",
+        "[Benefit one — lead with the outcome, then the feature that delivers it.]",
+        "[Benefit two — same pattern.]",
+        "[Benefit three — same pattern. Three strong benefits beat six weak ones.]",
+        "## Proof",
+        (b.proof ? capitalize(b.proof)+". [Expand: add the customer name, number, or result that makes this verifiable.]" : "[Add real proof: a customer result, a number, a testimonial with a name. Never invent this — one real proof point beats five vague claims.]"),
+        "## How it works",
+        "1. [First step from the visitor's point of view]",
+        "2. [Second step]",
+        "3. [Third step — end at the moment they get "+b.out+"]",
+        "## Final call to action",
+        "Ready for "+b.out+"? [Repeat the primary CTA. Add risk reversal if true: free trial, no card, cancel anytime.]"
+      ].join("\n\n");
+    },
+    howto: function(b){
+      return [
+        "If you've dealt with "+b.pain+", here's the fix: [state the direct answer in one or two sentences — the single most important thing to know about "+b.t+"]. The rest of this guide shows you exactly how, step by step.",
+        "## Before you start",
+        "You'll need: [list the tools, materials, or prerequisites]. For "+b.aud+", the only non-negotiable is [the one thing that matters most].",
+        "## Step-by-step",
+        "1. [First step — one action, stated as a command.]",
+        "2. [Second step. If a step commonly goes wrong, say so right here, not in a footnote.]",
+        "3. [Continue — each step is one action. Split anything with an \"and\" in it into two steps.]",
+        "## How to know it worked",
+        "You're looking for [the observable sign of success]. If you're still seeing "+b.pain+", the most likely cause is [common failure] — go back to step [n].",
+        "## Common mistakes",
+        "The mistake we see most from "+b.aud+": [mistake one, and the fix]. Second most common: [mistake two, and the fix].",
+        "## Related questions",
+        "[2-3 real questions people ask about "+b.t+", each with a direct 2-3 sentence answer.]"
+      ].join("\n\n");
+    },
+    listicle: function(b){
+      return [
+        "Short on time? The best option for most "+b.aud+" is [top pick] — it handles "+b.pain+" better than anything else we looked at. The full list below covers [n] options and who each one actually suits.",
+        "## How we picked",
+        (b.proof ? "Our criteria: [criterion 1], [criterion 2], [criterion 3]. "+capitalize(b.proof)+"." : "Our criteria: [criterion 1], [criterion 2], [criterion 3]. [Say what you actually did — tested, compared, used daily. Real methodology is what separates a trustworthy list from filler.]"),
+        "## 1. [Top pick] — best overall",
+        "[Why it wins: the specific strength that matters most for "+b.out+". Then one honest limitation.]",
+        "## 2. [Runner-up] — best for [specific niche]",
+        "[Who should pick this one instead, and why.]",
+        "## 3. [Third option] — best budget choice",
+        "[The trade-off you accept, stated plainly.]",
+        "## How to choose",
+        "If "+b.pain+" is your main problem, go with [pick]. If [other priority], choose [other pick]. Don't overthink it — [the honest tiebreaker].",
+        "## Frequently asked questions",
+        "[2-4 real questions about choosing "+b.t+", answered directly.]"
+      ].join("\n\n");
+    },
+    comparison: function(b){
+      return [
+        "The short verdict: for most "+b.aud+", [option A] is the better choice for "+b.out+" — but [option B] wins if [specific situation]. Here's the full breakdown.",
+        "## At a glance",
+        "[Comparison table: 4-6 rows covering the dimensions that actually drive the decision — price, the core capability, the dealbreaker. Verdict per row.]",
+        "## Where [option A] wins",
+        "[The specific strengths, each tied to a real use case. If "+b.pain+" is the reader's problem, say explicitly which option solves it better.]",
+        "## Where [option B] wins",
+        "[Same treatment — a comparison that never lets B win anything reads as an ad, not an analysis.]",
+        "## Pricing and value",
+        "[Actual prices, what tier most "+b.aud+" realistically need, and any costs that surprise people later.]",
+        "## Who should choose which",
+        "Choose [option A] if: [2-3 concrete conditions]. Choose [option B] if: [2-3 concrete conditions]. Still unsure? [The single question that settles it.]"
+      ].join("\n\n");
+    },
+    definitional: function(b){
+      return [
+        capitalize(b.t)+" is [direct one-sentence definition — no warm-up, no history lesson first]. In practical terms for "+b.aud+", it means [what it does for them].",
+        "## Why it matters",
+        "If you're dealing with "+b.pain+", "+b.t+" is relevant because [the connection to "+b.out+"]. [One sentence on what happens if you ignore it.]",
+        "## How it works",
+        "[Explain the mechanism in plain language. An analogy helps here if the concept is abstract — pick one from the reader's world.]",
+        "## Real examples",
+        (b.proof ? capitalize(b.proof)+". [Expand this into a walkable example.]" : "[Give 2-3 concrete examples, from simple to realistic. Examples do more work than definitions.]"),
+        "## Related concepts",
+        "[Define the 2-3 terms readers will meet next, one sentence each, linking to fuller guides if you have them.]",
+        "## Common misconceptions",
+        "The biggest misunderstanding about "+b.t+": [misconception, then the correction]. [Second one if genuinely common.]"
+      ].join("\n\n");
+    },
+    landing: function(b){
+      var brand = b.brand || "[Brand]";
+      return [
+        capitalize(b.out)+" — without "+b.pain+". "+brand+" gives "+b.aud+" [the core promise in one sentence].",
+        "[Primary CTA button: action verb + what they get]",
+        "## The problem",
+        "You know the drill: "+b.pain+". [Two or three sentences that describe the reader's situation so precisely they feel seen. Use their words, not yours.]",
+        "## What "+brand+" does about it",
+        "[Benefit one — outcome first, then how.]",
+        "[Benefit two.]",
+        "[Benefit three.]",
+        "## Proof",
+        (b.proof ? capitalize(b.proof)+". [Make it verifiable: name, number, or link.]" : "[One real customer result with a name and a number. If you don't have one yet, use your own honest results — never invent.]"),
+        "## How it works",
+        "1. [Step one — from signup to first value, in the visitor's language]",
+        "2. [Step two]",
+        "3. [Step three — end at "+b.out+"]",
+        "## Questions people ask before saying yes",
+        "[The 3-4 real objections — price, effort, switching, trust — each answered honestly in 2-3 sentences.]",
+        "## Final CTA",
+        "[Repeat the promise in one line. CTA button. Risk reversal if true.]"
+      ].join("\n\n");
+    },
+    product: function(b){
+      var brand = b.brand || "[Product]";
+      return [
+        brand+" is [what it is, in one sentence], built for "+b.aud+" who want "+b.out+" without "+b.pain+".",
+        "## What it does for you",
+        "[Benefit one: the outcome, then the feature behind it.]",
+        "[Benefit two.]",
+        "[Benefit three.]",
+        "## Proof it works",
+        (b.proof ? capitalize(b.proof)+". [Add the verifiable detail.]" : "[Real reviews, ratings, results. Pull actual quotes — never write testimonials yourself.]"),
+        "## The details",
+        "[Specs, dimensions, compatibility, what's in the box — whatever "+b.aud+" check before buying. Table format if more than five rows.]",
+        "## Who it's for (and who it isn't)",
+        "Right for you if: [2-3 conditions]. Look elsewhere if: [1-2 honest exclusions — this line increases conversions, it doesn't hurt them].",
+        "## Get it",
+        "[CTA with price, shipping/availability, and return policy in one glance.]"
+      ].join("\n\n");
+    }
+  };
+
+  function generateDraft(){
+    var b = getBrief();
+    var builder = DRAFT_BUILDERS[currentWriteType] || DRAFT_BUILDERS.blog;
+    document.getElementById("w-draft").value = builder(b);
+    generateOutline();
+    generateHeadlines();
+    renderWriteStats();
+    showToast("Draft ready — square brackets mark where your real facts go.");
+  }
+
+  function renderWriteStats(){
+    var text = document.getElementById("w-draft").value;
+    var keyword = document.getElementById("w-topic").value.trim();
+    var a = analyzeBody(text, keyword);
+
+    var stripped = stripMarkdown(text);
+    var strip = document.getElementById("w-stats");
+    var hasWords = a.wordCount > 0;
+    var readLbl = readabilityLabel(a.flesch);
+    strip.innerHTML = [
+      stat(a.wordCount,"words"),
+      stat(a.sentenceCount,"sentences"),
+      stat(hasWords?Math.round(a.avgSentenceLen):"—","avg words/sentence"),
+      stat(hasWords?(Math.round(a.flesch)+" ("+readLbl+")"):"—","readability", hasWords?(a.flesch<30?"critical":(a.flesch<50?"warning":"good")):null),
+      stat(a.buzzHits.length,"buzzwords", hasWords?(a.buzzHits.length?"warning":"good"):null),
+      stat(hasWords?Math.round(a.passiveRatio)+"%":"—","possible passive", hasWords?(a.passiveRatio>15?"warning":"good"):null),
+      stat(a.headings.h2,"H2 sections")
+    ].join("");
+
+    var checklist = [];
+    if (!hasWords){
+      checklist.push(styleRowNA("Active voice","write something to check"));
+      checklist.push(styleRowNA("No vague hedges","write something to check"));
+      checklist.push(styleRowNA("No buzzword filler","write something to check"));
+      checklist.push(styleRowNA("Natural keyword use","write something to check"));
+      checklist.push(styleRowNA("Keyword in opening","write something to check"));
+      checklist.push(styleRowNA("Readable","write something to check"));
+      document.getElementById("w-style-checklist").innerHTML = checklist.join("");
+      return;
+    }
+    checklist.push(styleRow("Active voice", a.passiveRatio<=15, Math.round(a.passiveRatio)+"% passive"));
+    checklist.push(styleRow("No vague hedges", a.hedgeCount<=Math.max(1,Math.round(a.wordCount/100)), a.hedgeCount+" found"));
+    checklist.push(styleRow("No buzzword filler", a.buzzHits.length===0, a.buzzHits.length+" found"));
+    if (keyword){
+      var densOk = a.kwDensity!==null && a.kwDensity>0 && a.kwDensity<=3;
+      checklist.push(styleRow("Natural keyword use", densOk, a.kwDensity===null?"n/a":a.kwDensity.toFixed(1)+"% density"));
+      checklist.push(styleRow("Keyword in opening", a.kwInFirst100===true, a.kwInFirst100?"present":"missing", a.kwInFirst100===null));
+    } else {
+      checklist.push(styleRowNA("Natural keyword use","set a topic to check"));
+      checklist.push(styleRowNA("Keyword in opening","set a topic to check"));
+    }
+    checklist.push(styleRow("Readable", a.flesch>=30, Math.round(a.flesch)+"/100"));
+    document.getElementById("w-style-checklist").innerHTML = checklist.join("");
+  }
+
+  function stat(num,label,statusClass){
+    return '<div class="stat"><div class="num'+(statusClass?" "+statusClass:"")+'">'+num+'</div><div class="lbl">'+esc(label)+'</div></div>';
+  }
+  function styleRow(label,pass,note){
+    return '<div class="style-row"><span class="style-mark '+(pass?"pass":"fail")+'"></span><span>'+esc(label)+'</span><span class="style-note">'+esc(note)+'</span></div>';
+  }
+  function styleRowNA(label,note){
+    return '<div class="style-row"><span class="style-mark na"></span><span>'+esc(label)+'</span><span class="style-note">'+esc(note)+'</span></div>';
+  }
+
+  /* ---------------- wiring ---------------- */
+  function switchTab(which){
+    var isA = which==="analyze";
+    document.getElementById("tab-analyze-btn").setAttribute("aria-selected", isA?"true":"false");
+    document.getElementById("tab-write-btn").setAttribute("aria-selected", isA?"false":"true");
+    document.getElementById("rail-analyze").classList.toggle("hidden", !isA);
+    document.getElementById("rail-write").classList.toggle("hidden", isA);
+    document.getElementById("panel-analyze").classList.toggle("hidden", !isA);
+    document.getElementById("panel-write").classList.toggle("hidden", isA);
+  }
+  document.getElementById("tab-analyze-btn").addEventListener("click", function(){switchTab("analyze");});
+  document.getElementById("tab-write-btn").addEventListener("click", function(){switchTab("write");});
+
+  function bindCount(inputId,countId,max){
+    var el = document.getElementById(inputId);
+    var out = document.getElementById(countId);
+    function update(){
+      var n = el.value.length;
+      out.textContent = n+" / "+max;
+      out.className = "char-count "+(n===0?"":(n>max?"over":(n>=Math.round(max*0.75)?"ok":"")));
+    }
+    el.addEventListener("input", update);
+    update();
+  }
+  bindCount("a-title","a-title-count",60);
+  bindCount("a-meta","a-meta-count",160);
+
+  document.getElementById("btn-analyze").addEventListener("click", runAnalysis);
+  document.getElementById("btn-reset-analyze").addEventListener("click", function(){
+    ["a-url","a-html","a-title","a-meta","a-h1","a-slug","a-keyword","a-body"].forEach(function(id){document.getElementById(id).value="";});
+    ["chk-https","chk-mobile","chk-robots","chk-cwv","chk-canonical","chk-nodupe","chk-author","chk-date","chk-sources","chk-experience"].forEach(function(id){document.getElementById(id).checked=false;});
+    lastPageMeta = null;
+    setFetchStatus("", false);
+    document.getElementById("analyze-results").style.display="none";
+    document.getElementById("analyze-empty").style.display="block";
+    bindCount("a-title","a-title-count",60);
+    bindCount("a-meta","a-meta-count",160);
+    saveState();
+  });
+
+  document.getElementById("btn-fetch").addEventListener("click", function(){
+    var url = document.getElementById("a-url").value.trim();
+    if (!url){ setFetchStatus("Enter a URL first.", true); return; }
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    setFetchStatus("Fetching " + url + " …", false);
+    var btn = document.getElementById("btn-fetch");
+    btn.disabled = true;
+    fetchPage(url).then(function(html){
+      btn.disabled = false;
+      var parsed = parsePageHTML(html, url);
+      if (!parsed.title && !parsed.body){
+        setFetchStatus("Fetched, but the page appears empty or heavily JavaScript-rendered — paste the rendered HTML instead.", true);
+        document.getElementById("paste-details").open = true;
+        return;
+      }
+      applyParsedPage(parsed, url);
+      setFetchStatus("Fetched and parsed. Derived checks are pre-filled — correct any before re-running.", false);
+      runAnalysis();
+    }, function(){
+      btn.disabled = false;
+      setFetchStatus("Couldn't reach the page from this environment (sandbox or the site blocks proxies). Use the paste option below instead.", true);
+      document.getElementById("paste-details").open = true;
+    });
+  });
+
+  document.getElementById("btn-parse-html").addEventListener("click", function(){
+    var html = document.getElementById("a-html").value;
+    if (!html.trim()){ setFetchStatus("Paste the page's HTML source first.", true); return; }
+    var url = document.getElementById("a-url").value.trim();
+    if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+    var parsed = parsePageHTML(html, url);
+    applyParsedPage(parsed, url);
+    setFetchStatus("Parsed pasted HTML. Derived checks are pre-filled — correct any before re-running.", false);
+    runAnalysis();
+  });
+
+  document.getElementById("btn-example").addEventListener("click", function(){
+    lastPageMeta = null;
+    document.getElementById("a-keyword").value = EXAMPLE.keyword;
+    document.getElementById("a-title").value = EXAMPLE.title;
+    document.getElementById("a-meta").value = EXAMPLE.meta;
+    document.getElementById("a-h1").value = EXAMPLE.h1;
+    document.getElementById("a-slug").value = EXAMPLE.slug;
+    document.getElementById("a-body").value = EXAMPLE.body;
+    document.getElementById("a-title").dispatchEvent(new Event("input"));
+    document.getElementById("a-meta").dispatchEvent(new Event("input"));
+  });
+
+  document.getElementById("btn-copy-report").addEventListener("click", function(){
+    if (!window.__lastReport){showToast("Run an analysis first.");return;}
+    var out = document.getElementById("report-out");
+    out.value = window.__lastReport;
+    out.classList.add("show");
+    var done = function(){showToast("Report copied to clipboard.");};
+    var fail = function(){ out.select(); showToast("Select the text below and copy manually."); };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(window.__lastReport).then(done).catch(fail);
+    } else { fail(); }
+  });
+
+  var toastTimer;
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){t.classList.remove("show");},2600);
+  }
+
+  var chips = document.querySelectorAll("#w-type-chips .chip");
+  chips.forEach(function(c){
+    c.addEventListener("click", function(){
+      chips.forEach(function(x){x.setAttribute("aria-pressed","false");});
+      c.setAttribute("aria-pressed","true");
+      currentWriteType = c.getAttribute("data-type");
+    });
+  });
+
+  document.getElementById("btn-gen-draft").addEventListener("click", generateDraft);
+  document.getElementById("btn-gen-outline").addEventListener("click", generateOutline);
+  document.getElementById("btn-gen-headlines").addEventListener("click", generateHeadlines);
+  document.getElementById("w-draft").addEventListener("input", debounce(renderWriteStats,200));
+  renderWriteStats();
+
+  /* ---------------- persistence (best-effort) ---------------- */
+  function saveState(){
+    try {
+      var state = {
+        keyword:document.getElementById("a-keyword").value,
+        title:document.getElementById("a-title").value,
+        meta:document.getElementById("a-meta").value,
+        h1:document.getElementById("a-h1").value,
+        slug:document.getElementById("a-slug").value,
+        body:document.getElementById("a-body").value
+      };
+      localStorage.setItem("masterSeoState", JSON.stringify(state));
+    } catch(e) {}
+  }
+  function loadState(){
+    try {
+      var raw = localStorage.getItem("masterSeoState");
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      document.getElementById("a-keyword").value = s.keyword||"";
+      document.getElementById("a-title").value = s.title||"";
+      document.getElementById("a-meta").value = s.meta||"";
+      document.getElementById("a-h1").value = s.h1||"";
+      document.getElementById("a-slug").value = s.slug||"";
+      document.getElementById("a-body").value = s.body||"";
+      bindCount("a-title","a-title-count",60);
+      bindCount("a-meta","a-meta-count",160);
+    } catch(e) {}
+  }
+  loadState();
+})();
+</script>
+</body>
+</html>
