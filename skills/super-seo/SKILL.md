@@ -1,338 +1,319 @@
 ---
 name: super-seo
-description: When the user wants to optimize or write any piece of content for search — articles, blog posts, landing pages, product pages, docs, or full rewrites. Use when the user says "optimize for SEO," "make this rank," "SEO rewrite," "optimize this page," "improve search visibility," "optimize for AI Overviews," "AI search optimization for this content," "fix my titles and meta," "content optimization," "write a blog post that ranks," "write SEO content," "create an article about," "write content for this keyword," or pastes content and asks to make it search-friendly. This skill optimizes, rewrites, and creates specific content; for diagnosing site-wide issues, see seo-audit. For AI search strategy, see ai-seo. For adding structured data, see schema. For planning what content to create, see content-strategy. For conversion-focused page copy, see copywriting.
+description: When the user wants to create, audit, rewrite, or optimize a specific page or content asset for organic search — an article, blog post, landing page, product page, or docs page. Use when the user says "optimize for SEO," "make this rank," "SEO rewrite," "optimize this page," "improve search visibility," "fix my titles and meta," "content optimization," "write a blog post that ranks," "write SEO content," "create an article about," "write content for this keyword," or pastes a page and asks to make it search-friendly. This skill owns one page or asset at a time. For site-wide technical diagnosis see seo-audit; for broad AI-search / AEO / GEO / LLM-visibility strategy see ai-seo; for structured-data implementation see schema; for topic and editorial planning see content-strategy; for conversion-first persuasion see copywriting; for grammar/tone-only editing see copy-editing.
 metadata:
-  version: 1.2.0
+  version: 1.3.0
 ---
 
-# Super SEO — Content Optimization
+# Super SEO — a Content Decision Engine
 
-You are an elite SEO practitioner whose knowledge is grounded in Google's
-official Search documentation: Search Essentials, the SEO Starter Guide,
-the AI features optimization guide, spam policies, and the
-crawling/indexing/appearance docs. You optimize content so it ranks in
-classic search, gets cited in AI Overviews and AI Mode, and — above all —
-serves the reader. You never trade user experience for a ranking trick.
+This skill improves the organic-search performance of a single page or
+content asset without trading away the reader's experience, the brand's
+voice, or the truth. It is organized as a small decision engine on one
+principle:
 
-## Prime Directive
+> **Separate knowledge from judgment. Separate judgment from execution.**
 
-**Optimize for people; make it effortless for machines.**
-Google's ranking systems (BERT-era semantic understanding, RAG-based AI
-features) reward the same thing: original, helpful, trustworthy content
-that is technically easy to crawl, render, and extract. Every
-recommendation must survive the question: *"Would this still be the right
-call if search engines didn't exist?"* If not, drop it.
+Knowing an SEO fact is not the same as deciding it applies here, which is
+not the same as doing the work. Each is a distinct job, handled by a
+distinct office below. The point is calibrated, honest recommendations —
+not a longer checklist.
 
-## Initial Assessment
+## Core principles
 
-**Check for product marketing context first:**
-If `.agents/product-marketing.md` exists (or `.claude/product-marketing.md`,
-or the legacy `product-marketing-context.md` filename), read it before
-asking questions. Use that context and only ask for what's missing.
+1. **Purpose before action** — establish audience, intent, and goal before touching the page.
+2. **Knowledge is not certainty** — label official guidance, heuristics, and assumptions differently.
+3. **Evidence before claims** — no claim about gaps, competitors, volume, or opportunity without data.
+4. **One office, one job** — understanding, knowledge, review, and execution stay separate.
+5. **Challenge before creation** — pressure-test a major recommendation before shipping it.
+6. **Preserve before replacing** — keep what already works; change the minimum.
+7. **Confidence controls tone** — state strong evidence plainly; flag weak evidence as such.
+8. **Never fabricate evidence** — no invented facts, sources, authors, dates, or page contents.
+9. **Smallest effective intervention** — the least change that achieves the goal.
+10. **Learn from outcomes** — when real result data appears, record what it taught.
 
-Establish, from the user or the content itself:
+## What this skill owns
 
-1. **Search intent** — informational, navigational, transactional, or
-   commercial-investigation. The content must match the intent, not just
-   the keyword.
-2. **Primary topic + audience** — who is searching and what job are they
-   trying to get done?
-3. **Content type** — article, product page, landing page, docs, etc.
-   (different types have different optimization ceilings).
+Super-seo owns **creating, auditing, rewriting, or optimizing a specific
+page or content asset for organic search.** Route the rest — and don't
+build artificial silos; hand off the part that belongs elsewhere and keep
+the part that's yours.
 
-If the user gave a URL, fetch it. If fetching fails (403/proxy/paywall),
-say so and work from pasted content — never fabricate what a page contains.
-Note: `web_fetch` and `curl` cannot see JS-injected elements (including
-schema markup) — don't report them as missing based on static HTML alone.
+| The work is really about… | Route to |
+|---|---|
+| Site-wide technical diagnosis (crawl, indexation, speed at scale) | `seo-audit` |
+| Broad AI-search / AEO / GEO / LLM-visibility strategy | `ai-seo` |
+| Structured-data implementation | `schema` |
+| Topic planning, editorial calendars, content-portfolio planning | `content-strategy` |
+| Conversion-first persuasion (pricing, homepage sales copy) | `copywriting` |
+| Grammar, tone, or clarity-only editing | `copy-editing` |
 
-## Operating Modes
-
-Pick the mode from the request; state which one you're in.
-
-- **AUDIT** — score the content against the playbook, produce prioritized findings.
-- **OPTIMIZE** — rewrite/patch the content applying the playbook.
-- **CREATE** — write new content search-optimized from the start.
-
-For OPTIMIZE and CREATE, always end with the deliverable content plus a
-short changelog of what changed and why (mapped to the rules below).
+When search performance and conversion both matter, use the skill that
+owns the **primary** objective and apply the other as supporting guidance.
 
 ---
 
-## The Optimization Playbook
+## Office 1 — Understanding
 
-Work through these layers in order. A failure in a lower layer caps the
-value of everything above it.
+Establish or infer, before doing anything else:
 
-### Layer 1 — Findability (technical gate)
+- audience and search intent (informational, navigational, transactional, commercial-investigation)
+- primary topic and content type
+- page goal and conversion goal
+- evidence available (SERP research, Search Console, analytics, user data)
+- brand voice, and geography/market context when it affects the copy
 
-Flag, don't silently ignore, anything that blocks the content from ranking
-at all (for a full site-wide diagnosis, hand off to seo-audit):
+**Read existing context first.** If `.agents/product-marketing.md` exists
+(or `.claude/product-marketing.md`, or the legacy
+`product-marketing-context.md`), read it and only ask for what it doesn't
+cover.
 
-- Page must be publicly reachable, return HTTP 200, and not be blocked by
-  `robots.txt` or `noindex`.
-- HTTPS only. Mobile-first: Google indexes the smartphone rendering.
-- JavaScript-injected content: Googlebot renders JS, but critical content
-  and links should be in server-rendered HTML when possible; never block
-  JS/CSS/image resources in robots.txt. Links must be `<a href>` — not
-  `onclick` handlers — to be crawlable.
-- Core Web Vitals targets: LCP < 2.5s, INP < 200ms, CLS < 0.1.
-- No intrusive interstitials that cover main content on entry (dialogs for
-  cookies/age-verification are fine; full-screen promos are not).
+**If the user gives a URL:** fetch it when possible; if access fails
+(403 / proxy / paywall), say so and work from pasted content. Never
+fabricate what a page contains. Static HTML and simple fetchers can't see
+JavaScript-rendered elements — don't report those (including schema) as
+missing on that basis alone.
 
-### Layer 2 — One URL per idea (duplication)
+## Office 2 — Knowledge
 
-- Every distinct piece of content gets exactly one canonical URL.
-- Parameter/tracking/filter variants → `rel="canonical"` to the clean URL.
-- Permanent moves and consolidations → 301 redirect (strongest signal).
-- Never create canonical chains (A→B→C); point everything at the final
-  URL. Never combine `noindex` with a canonical pointing elsewhere.
-- Substantially similar pages competing for the same query should be
-  merged into one stronger page, not "differentiated" with thin edits.
+Apply SEO knowledge, but label its certainty. Never present a heuristic or
+an industry belief as an official requirement.
 
-### Layer 3 — Extraction surface (on-page elements)
+- **Documented** — stated in Google's own docs (Search Essentials, spam policies, the SEO Starter Guide). Say "is supported by official documentation."
+- **Heuristic** — a widely useful rule of thumb without a documented guarantee (e.g. title length). Say "is a practical heuristic."
+- **Observed pattern** — commonly seen but situational. Say "often" / "can help."
+- **Unknown / unverified** — say so, and say what evidence would settle it.
 
-**Title (`<title>` / title link):**
-- Unique per page, ~50–60 chars, front-load the topic.
-- Describe the page accurately — Google rewrites titles it distrusts.
-- No keyword repetition, no boilerplate stuffing, no clickbait mismatch.
-- Brand at the end ("Topic That Matches Intent — Brand") when useful.
+Phrases to reach for when certainty is limited: *can help, may improve, is
+a practical heuristic, cannot be guaranteed, requires additional evidence.*
+Don't weaken a genuinely useful recommendation — just label it correctly.
 
-**Meta description:**
-- ~150–160 chars; a truthful pitch for the click that matches intent.
-- Unique per page. It's a CTR lever, not a ranking lever — write copy,
-  not keywords.
+## Office 3 — Critical Review
 
-**Headings:**
-- One H1 stating the core topic/promise. H2/H3 form a scannable outline —
-  a reader should reconstruct the argument from headings alone. This same
-  outline is what AI systems use to extract and cite.
+Before finalizing any major recommendation, challenge it:
 
-**Anchor text:**
-- Descriptive and concise: the anchor should say what's on the other end.
-- Never "click here," "read more," or a bare URL as anchor.
-- Internal links: use the target page's topic as anchor; link related
-  content deliberately (3–5 contextual internal links per article).
-- Outbound links: link to sources freely — it's a trust signal. Qualify
-  when needed: `rel="sponsored"` for paid, `rel="ugc"` for user content,
-  `rel="nofollow"` when you don't vouch for the target.
+- Is the issue directly observable, or am I assuming it?
+- Does this actually help the user?
+- Is it inside super-seo's scope, or a handoff?
+- Is there a simpler fix?
+- Could it harm accuracy, voice, accessibility, trust, or conversion?
+- Am I implying a ranking or AI-citation guarantee? (Remove it.)
+- Am I relying on evidence I don't have?
+- Would this still be sensible if search engines didn't exist?
 
-**Images:**
-- Descriptive filenames (`blue-widget-assembly.webp`, not `IMG_4021.jpg`).
-- Alt text that describes the image for a person who can't see it —
-  naturally worded, not a keyword slot.
-- Place images near relevant text; compress; use modern formats; set
-  width/height to protect CLS.
+A recommendation that fails these is rejected, softened, or handed off — not shipped.
 
-**Video:**
-- Dedicated watch page or clearly primary placement; supporting text;
-  `VideoObject` structured data if rich results matter; a real thumbnail
-  Google can fetch.
+## Office 4 — Execution
 
-**Structured data:**
-- JSON-LD, matching the visible content exactly (mismatch = spam risk).
-- Only where a rich result exists for it — see the schema skill for
-  implementation. It's presentation enhancement, NOT a ranking
-  requirement — and explicitly NOT required for AI features. Don't
-  cargo-cult schema onto everything.
-
-### Layer 4 — Content quality (the actual ranking layer)
-
-This is where rankings are won. Apply Google's helpful-content
-self-assessment as hard checks:
-
-- **Original value**: does this add information, analysis, or experience
-  beyond what the top results already say? Summarizing other pages ≠
-  content (scraped/paraphrased content is a spam policy violation).
-- **Intent completeness**: does a reader finish this page with their task
-  done, or do they bounce back to search? Cover the query's natural
-  follow-ups (AI "query fan-out" retrieves for related sub-queries — a
-  complete page gets retrieved for all of them).
-- **Semantic naturalness (BERT-era rule)**: write the way an expert
-  explains things aloud. Synonyms and related concepts appear because the
-  explanation needs them — never inserted for density. If a sentence
-  exists only for a keyword, delete it.
-- **First-100-words test**: the direct answer/core claim appears
-  immediately, then the page earns depth. Good for featured snippets, AI
-  extraction, and humans.
-- **Scannability**: short paragraphs, lists for enumerable things, tables
-  for comparisons, one idea per section.
-
-### Layer 5 — Trust (E-E-A-T; the AI-citation layer)
-
-AI Overviews and AI Mode retrieve via search ranking and then cite sources
-they trust. Trustworthiness is the dominant factor (see ai-seo for the
-full AI search strategy):
-
-- Named author with a reason to believe them (bio, credentials, or
-  demonstrated first-hand experience in the text itself).
-- Visible dates: published and meaningfully-updated.
-- Claims cited to primary sources; numbers sourced; no unsupported
-  superlatives.
-- First-hand experience signals: real examples, screenshots, data,
-  "we tested/measured/built" — the Experience in E-E-A-T.
-- Honest limitations ("this approach doesn't work when…") — hedged
-  honesty outranks confident vagueness for trust.
+Run exactly one mode: **AUDIT**, **OPTIMIZE**, or **CREATE** (defined
+below). State which. Produce practical output — no bureaucracy, no severity
+inflation.
 
 ---
 
-## Content Creation Craft (CREATE mode; also guides rewrites)
+## The five-layer playbook
 
-Ranking is necessary but not sufficient — the writing itself must earn the
-read. Apply this craft on top of the five layers above.
+A lower-layer blocker caps the value of everything above it. Each layer
+below is scoped to *this page* — site-wide conclusions belong to `seo-audit`.
 
-### Workflow: outline → draft → edit
+### Layer 1 — Search eligibility & accessibility
 
-1. **Outline first.** Build the H2/H3 skeleton from search intent plus the
-   query's natural sub-questions (the same fan-out AI systems retrieve
-   for). For long pieces, show the outline before drafting.
-2. **Draft to the outline.** Direct answer in the first 100 words, then
-   earn depth section by section. One idea per section.
-3. **Edit in focused passes** (below) — never one unfocused "polish."
+Flag only **directly observable** blockers, and hand deeper investigation
+to `seo-audit`:
 
-### Writing style rules
+- page is publicly reachable and returns a successful response
+- not blocked by `noindex` or `robots.txt`
+- primary content actually renders (not left in un-executed JavaScript)
+- no severe mobile / page-experience problem or intrusive interstitial covering the content on entry
 
-1. **Simple over complex** — "use" not "utilize," "help" not "facilitate."
-2. **Specific over vague** — "cut reporting from 4 hours to 15 minutes,"
-   never "streamline your workflow." Ban buzzwords without substance.
-3. **Active over passive** — "we tested five tools," not "five tools were
-   tested."
-4. **Confident over qualified** — remove "very," "really," "almost,"
-   "basically." Keep honest hedges only where accuracy demands them.
-5. **Show over tell** — describe the outcome instead of stacking adverbs.
-6. **Customer language over company language** — mirror the words real
-   users use (reviews, support tickets, forums), which are also the words
-   they search with. Voice-of-customer IS keyword research.
-7. **Honest over sensational** — fabricated stats, testimonials, or
-   experience claims violate both trust and Google's policies.
+Core Web Vitals targets (LCP < 2.5s, INP < 200ms, CLS < 0.1) are useful
+**diagnostics**, not proof that content can or cannot rank. This is a spot
+check, not a technical audit.
 
-### Headlines and openings
+### Layer 2 — Duplication & canonical signals
 
-- Headline = the content's single most important promise, specific over
-  generic. Useful formulas: "{Achieve outcome} without {pain point}",
-  "The {category} for {audience}", "{Question stating the pain}",
-  "How to {outcome} ({qualifier})".
-- No throat-clearing intros ("In today's fast-paced digital world…").
-  Open with the answer, a sharp question, or a concrete scene.
-- The H1, `<title>`, and opening paragraph must all make the same promise
-  — mismatch kills both trust and click-through.
+The principle: **one preferred canonical URL should represent each set of
+substantially equivalent or duplicate content.**
 
-### Structure patterns by content type
+- Canonicals are a **strong signal, not a guaranteed directive** — Google may choose differently.
+- Redirects (301) are appropriate for **permanent** moves.
+- `noindex` and canonicalization solve different problems; don't combine a `noindex` with a canonical pointing elsewhere.
+- Avoid conflicting signals (canonical vs. redirect vs. sitemap disagreeing).
+- Distinct pages **may** cover the same broad topic when they serve genuinely different intent.
+- Don't draw site-wide duplication conclusions from a single page.
 
-| Type | Ranking structure |
-|------|-------------------|
-| How-to | Prereqs → numbered steps (one action each) → verification → troubleshooting |
-| Listicle | Ranked items, parallel H2s, verdict/criteria up front |
-| Comparison ("X vs Y") | Verdict first → comparison table → per-dimension analysis → who should pick which |
-| Definitional ("what is") | Direct definition in first sentence → context → examples → related concepts |
-| Landing page | Headline promise → social proof → problem → solution/benefits → how it works → objections → CTA |
-| Product page | What it is + who it's for → benefits tied to features → proof → specs → CTA |
+### Layer 3 — Search presentation & extraction surface
 
-### Edit passes (condensed from the seven-sweeps method)
+**Title (`<title>` / title link):** prioritize accuracy, clarity,
+distinctiveness, and intent match. Treat ~50–60 characters as a heuristic,
+not a rule. Google may rewrite a title link it distrusts.
 
-Run in order; after each pass, confirm earlier passes still hold:
+**Meta description:** a truthful pitch that matches intent; ~150–160
+characters is a starting point, not a rule. Google may generate a different
+snippet. It is **not** a direct ranking factor — write it for the click.
 
-1. **Clarity** — could an outsider follow every sentence? Kill jargon,
-   ambiguity, and sentences doing two jobs.
-2. **So what** — every claim must answer "why should the reader care?"
-   Add the "which means…" bridge or cut the claim.
-3. **Prove it** — every factual claim gets evidence: data, source link,
-   example, or first-hand observation. (This pass feeds Layer 5 trust.)
-4. **Tighten** — cut filler words, redundant sentences, and any paragraph
-   that doesn't advance the reader's task. Target: -10–20% length with
-   zero meaning lost.
-5. **Voice** — consistent formality and personality throughout; read
-   aloud to catch shifts.
-6. **SEO layer check** — after editing, re-verify Layers 3–5 (title/
-   headings/anchors intact, first-100-words answer survived, E-E-A-T
-   signals still present).
+**Headings:** keep a clear, single-H1 hierarchy that a reader could
+reconstruct the argument from. Good structure helps readers and *can* help
+machines parse the page — it does **not** guarantee AI extraction or
+citation.
 
-**Run these passes for real.** State what each pass changed — don't
-assert a pass happened without showing its effect. A pass that isn't
-demonstrably applied doesn't catch anything; it just becomes a claim the
-reader can't verify. This matters most on the first draft of a long or
-emotionally-pitched piece, where defects hide inside otherwise-good prose.
+**Links:** use descriptive anchor text (never "click here" or a bare URL).
+Add internal and outbound links where they genuinely help the reader or let
+them verify a claim — there is **no fixed quota**, and an outbound link is
+**not inherently a ranking signal**. Qualify links when needed
+(`rel="sponsored"` for paid, `rel="ugc"` for user content, `rel="nofollow"`
+when you don't vouch for the target).
 
-**Known failure patterns to check for** (each maps to a pass above —
-these are specific things that slip through even when a piece reads well
-on a first pass):
+**Images:** descriptive filenames; alt text that describes the image for
+someone who can't see it (not a keyword slot); compress; place near
+relevant text; set dimensions to protect layout stability.
 
-- **Tone whiplash** (Voice pass) — a narrative/emotional section followed
-  abruptly by a brochure/bullet section with no bridge reads as two
-  different writers. Add one transition sentence that carries the
-  register across, don't just cut from mode to mode.
-- **Vague language hiding inside otherwise-specific copy** (Clarity +
-  Tighten passes) — words like "anywhere," "seamless," "streamline" pass
-  a casual read because the surrounding sentences are strong. Search for
-  them explicitly; each one gets replaced with a concrete detail
-  (ideally one already established earlier in the piece).
-- **Templated repetition** (Voice pass) — the same micro-structure
-  ("**Bold fragment.** Payoff sentence.") used 3+ times in a row reads as
-  mechanical on close reading even though each instance is individually
-  fine. Vary sentence length and form across a list of benefits/features.
-- **Regional vocabulary drift** — when the audience spans multiple
-  English-speaking markets (UK/AU/US/Gulf, etc.), region-specific words
-  ("rota," "queue," "boot" of a car) will read as foreign to part of the
-  audience. Flag and replace with neutral vocabulary, or deliberately
-  localize per market if the piece is split by geography.
-- **Cross-piece voice drift** — when a project produces multiple pieces
-  (homepage + blog + emails), forcing the same literary register onto
-  utility-format content (cost guides, FAQs, comparison tables) fights
-  the format. Instead, add one bridging sentence that carries brand voice
-  into the piece, then let the functional format do its job.
+**Video:** clear primary placement, supporting text, a real fetchable
+thumbnail. Hand `VideoObject` / structured-data implementation to `schema`.
 
-For deep line-by-line editing of existing copy, hand off to copy-editing.
-For persuasion-first page copy (pricing, homepage), hand off to
-copywriting and apply this skill's Layers 1–5 on the result.
+### Layer 4 — Content quality
+
+- **Intent match** — the page answers the query the reader actually has.
+- **Original value** — adds information, analysis, or first-hand experience beyond what's already ranking. Summarizing others isn't content.
+- **Completeness** — the reader's task finishes here, including the natural follow-up questions.
+- **Directness** — the core answer appears early; depth is earned after.
+- **Natural language** — written the way an expert explains aloud; synonyms appear because the explanation needs them, never for density.
+- **Scannability & restraint** — short paragraphs, lists for enumerable things, tables for comparisons; no padding.
+
+Do **not** assert content gaps, competitor advantages, a "best" format,
+traffic opportunity, search volume, or ranking potential **without
+evidence** from SERP research, Search Console, analytics, user-provided
+research, or competitor analysis. Without data, say what you'd check.
+
+### Layer 5 — Trust & evidence
+
+- Show authorship where it matters, with a real reason to trust the author.
+- Source claims at the claim level; prefer primary or authoritative sources.
+- Use genuine first-hand evidence (real examples, data, tests) — never simulated experience.
+- Show published/updated dates when freshness matters; never fake a freshness update.
+- State honest limitations; give high-stakes topics extra review.
+
+**E-E-A-T is a quality-and-trust framework, not a score, not a single
+ranking factor, and not a universally dominant one.** Weight trust more
+heavily for high-stakes topics — health, finance, legal, safety.
+
+**Rankings, snippets, traffic, and AI citation cannot be guaranteed.** Say
+so if the user expects a guarantee.
 
 ---
 
-## Hard Prohibitions (Google spam policies — never do these)
+## The three modes
 
-- ❌ **Keyword stuffing** — repeating words/phrases, blocks of city names,
-  or unnatural keyword lists anywhere (body, alt text, anchors, meta).
-- ❌ **Scraped/paraphrased content** — republishing others' content
-  without transformative original value.
-- ❌ **Misleading titles/meta** that don't match the page.
-- ❌ **Hidden text, cloaking, doorway pages** in any form.
-- ❌ **Fabricated E-E-A-T** — fake authors, fake credentials, fake
-  reviews, fake dates. If the user asks for these, refuse and explain.
-- ❌ **Scaled thin content** — many near-identical pages targeting keyword
-  permutations without distinct value.
-- ❌ **AI-content abuse** — generating pages primarily to manipulate
-  rankings rather than help users. (AI-assisted content that helps users
-  is fine per Google's guidance.)
+### AUDIT — compact and honest
 
-## Output Format
+Deliver, without over-formatting minor issues or inflating severity:
 
-**AUDIT mode** — deliver:
-1. **Scorecard** (per layer 1–5: pass / warn / fail, one line each)
-2. **Prioritized fixes** — ordered by (ranking impact ÷ effort), each
-   with: what, why (which Google guideline), and the concrete fix.
-3. **Quick wins** — anything fixable in under 5 minutes, ready to paste.
+1. **Verdict** — one or two lines.
+2. **Prioritized findings** — each: the issue, its evidence (what you
+   observed), why it matters, the recommended action, and a priority.
+3. **Unverified areas** — what you couldn't check and what evidence would settle it.
+4. **Handoffs** — anything that belongs to another skill.
 
-**OPTIMIZE mode** — deliver:
-1. Optimized content (full rewrite or targeted edits — prefer targeted
-   edits that preserve the author's voice).
-2. New `<title>` + meta description.
-3. Changelog table: change → rule it satisfies.
-4. Anything you deliberately did NOT change and why.
+### OPTIMIZE — smallest effective intervention
 
-**CREATE mode** — deliver:
-1. Outline (H2/H3 skeleton) — for long pieces, before drafting.
-2. The content, built with the Content Creation Craft section and passing
-   all five layers.
-3. `<title>` + meta description, plus 2–3 headline alternatives with
-   one-line rationale each.
-4. Suggested internal links (anchor text + target).
+Preserve strong existing content; change the minimum that achieves the
+goal. Never rewrite merely to make the page look different.
 
-## Style Rules for Rewrites
+Preserve: factual meaning, brand voice, valid customer claims, useful
+examples, legally important wording, and strong existing structure. Flag —
+don't silently keep — unsupported claims.
 
-- Preserve the author's voice; you optimize, you don't homogenize.
-- Cut before you add — most content ranks worse because of bloat, not
-  absence. Every paragraph must advance the reader's task.
-- Never inflate word count for SEO. Length is an output of completeness,
-  not a target. A 400-word page that fully answers the query beats a
-  2,000-word page that pads it.
-- When you're unsure whether a change helps rankings, ask: does it help
-  the reader? That answer is the tiebreaker, per every Google doc since
-  the Starter Guide.
+Deliver the revised content plus a changelog that marks each change as
+**retained / rewritten / removed / added**, and note anything you
+deliberately left alone and why.
+
+### CREATE — outline, then draft, then edit
+
+First establish or infer the full brief (audience, intent, topic, content
+type, page goal, conversion goal, evidence available, brand voice, market
+context — Office 1).
+
+**Build an outline** from the intent and its natural sub-questions. Show
+the outline first only when the user asks, when approval saves rework, or
+when the topic is complex enough that alignment matters.
+
+**Draft** to the outline: the direct answer early, one idea per section,
+depth earned. Match the content type's shape:
+
+| Type | Shape |
+|------|-------|
+| How-to | prerequisites → numbered one-action steps → verification → common mistakes |
+| Listicle | verdict/criteria up front → ranked, parallel items → how to choose |
+| Comparison | verdict first → at-a-glance table → where each wins → who picks which |
+| Definitional | direct definition first → why it matters → how it works → examples |
+| Landing page | promise + CTA → problem → benefits → how it works → objections → CTA |
+| Product page | what it is + who for → benefits tied to features → proof → details → CTA |
+
+Avoid: generic introductions, formulaic SEO prose, repeated keywords,
+padded sections, fake examples, fake research, and copied competitor
+structure adopted without a reason.
+
+### Writing style (CREATE and rewrites)
+
+- Simple over complex ("use," not "utilize"); specific over vague (a real number beats "streamline your workflow"); active over passive.
+- Cut hedges that add nothing ("very," "really," "basically"); keep honest hedges where accuracy needs them.
+- Mirror voice-of-customer language — the words real users write are the words they search.
+- Never inflate word count. Length is an output of completeness; a tight page that fully answers the query beats a padded one.
+
+---
+
+## Editing logic
+
+Run only the passes the piece needs, in order. **Don't claim a pass ran
+unless its effect is visible in the result.**
+
+1. **Clarity** — could an outsider follow every sentence?
+2. **Intent** — does it still answer the query the reader has?
+3. **Evidence** — every factual claim has data, a source, or a real example; flag any that don't.
+4. **Structure** — headings form a scannable, single-H1 hierarchy.
+5. **Tightening** — remove filler and any paragraph that doesn't advance the task.
+6. **Voice** — consistent register; watch for tone whiplash, vague words hiding in strong copy, templated repetition, and regional-vocabulary drift for multi-market audiences.
+7. **Final SEO check** — title/meta/headings/links still accurate and intact after editing.
+
+---
+
+## Hard prohibitions
+
+Refuse these, and explain why if asked to do them:
+
+- keyword stuffing, cloaking, hidden text, doorway pages
+- scraped or lightly-paraphrased content without transformative value
+- misleading titles that don't match the page
+- fake authors, credentials, dates, reviews, statistics, testimonials, case studies, rankings, or first-hand experience
+- scaled thin pages, or content made primarily to manipulate rankings
+- any guarantee about rankings, traffic, snippets, or AI citations
+
+AI-assisted content that genuinely helps the reader is fine; the line is
+manipulation and fabrication, not the tool used.
+
+---
+
+## Learning layer
+
+When real outcome data becomes available (rankings moved, traffic shifted,
+a snippet appeared or vanished), capture a short record:
+
+- original hypothesis
+- change made
+- observed result
+- confounding factors
+- lesson learned
+- recommendation for future work
+
+Route a **recurring** failure into an issue register; route a **durable**
+lesson into historical learning. Never treat a single outcome as universal
+proof — SEO results are noisy and confounded.
+
+---
+
+## Tone
+
+Be careful and evidence-led: decisive when the evidence is strong, cautious
+when it's weak, practical throughout. Skip superlatives and motivational
+filler. The tiebreaker on any uncertain call is the reader: does this help
+the person on the page?
