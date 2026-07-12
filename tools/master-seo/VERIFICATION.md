@@ -3,6 +3,39 @@
 The repository has no automated test framework, so this tool ships with a
 self-contained browser verification script instead: [`verify.mjs`](verify.mjs).
 
+## Continuous integration
+
+The suite is enforced by GitHub Actions:
+[`.github/workflows/master-seo-verify.yml`](../../.github/workflows/master-seo-verify.yml)
+("Master SEO Verification").
+
+**When it runs:** on pull requests targeting `main` and pushes to `main` that
+touch `tools/master-seo/**` or the workflow file itself, plus manual runs via
+*workflow_dispatch* from the Actions tab.
+
+**What it does:** on `ubuntu-latest` with Node 20, it installs a pinned
+Playwright (`npm install --no-save playwright@1.56.1` — workflow-scoped; the
+repository deliberately has no package.json and this doesn't add one), installs
+Chromium with system dependencies (`npx playwright install --with-deps
+chromium`), then runs exactly the same command you run locally:
+
+```bash
+node tools/master-seo/verify.mjs
+```
+
+**Interpreting failures:** the job fails (non-zero exit) if any check fails.
+The log lists every check as `ok` / `FAIL` with a detail snippet, ends with the
+`N passed, M failed` summary, and repeats the failed check names at the bottom
+— read those lines first; a Playwright/browser launch error instead means the
+environment step broke, not the tool. The job also has a 15-minute timeout so
+a hung browser cannot run forever.
+
+**Script vs. enforcement:** `verify.mjs` is the verification (runnable anywhere,
+committed with the tool); the workflow is only the enforcement wrapper that runs
+it automatically. Keep new checks in the script, not the workflow. Note this is
+CI feedback only — merging is not blocked unless branch protection is configured
+for the repository, which this file does not assume.
+
 ## How to run
 
 ```bash
