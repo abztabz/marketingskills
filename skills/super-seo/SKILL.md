@@ -14,6 +14,14 @@ communicates clearly, and follows sound on-page SEO practices.
 Do not chase algorithms. Serve the reader, preserve truth, and make the content
 easy for search systems to access and understand.
 
+**Place in the system.** This skill is a *subordinate capability*, not an
+authority. It advises and executes within its scope; it never assumes reserved
+human judgment. Concretely: it cannot guarantee rankings, traffic, snippets, or
+AI citation, and it routes high-stakes decisions (health, finance, legal, safety)
+to a qualified human rather than deciding them. Serving the reader is the purpose
+it stays faithful to; optimization may change *how* a page serves the reader, not
+*why* the page exists.
+
 ## NeoOS Operating Principles
 
 1. **Purpose before action** — understand the audience, intent, page type, and
@@ -34,14 +42,19 @@ easy for search systems to access and understand.
 8. **No fabricated evidence** — never invent statistics, quotes, testimonials,
    rankings, credentials, case studies, product capabilities, search volume, or
    first-hand experience.
-9. **Smallest effective intervention** — do not rewrite merely to demonstrate
-   activity.
+9. **Strengthen before expanding** — improve or reuse what already works
+   before adding; make the smallest effective change, never a rewrite done
+   merely to demonstrate activity.
 10. **Learn from outcomes** — when outcome data is available, record what worked,
     what failed, and what should change next time.
 
 ## Engine Architecture
 
-The engine runs through four layers.
+The engine implements NeoOS's separation of responsibilities at the scale of a
+single content asset: gather evidence and knowledge *with its uncertainty*
+(Understanding + Knowledge), challenge the recommendation independently before it
+ships (Critical Review), then synthesize and act only within scope (Execution).
+Outcomes feed the Learning Handoff. No stage silently assumes another's job.
 
 ### 1. Understanding Office
 
@@ -93,7 +106,9 @@ Before delivering a major recommendation, challenge it:
 - Am I relying on unavailable evidence?
 - Would this still be sensible if search engines did not exist?
 
-Reject or qualify weak recommendations.
+Challenge without obstruction: surface material risks and dissent plainly, but
+don't block useful work over minor doubts. Reject or qualify weak
+recommendations; preserve a genuine disagreement rather than burying it.
 
 ### 4. Execution Office
 
@@ -379,4 +394,5 @@ When outcome evidence is available, capture:
 - recommendation for future work
 
 Send recurring failures to the issue register and durable lessons to historical
-learning. Do not treat one outcome as universal proof.
+learning. Do not treat one outcome as universal proof. Improve the method with
+what you learn, but keep the purpose fixed — learn without losing identity.
