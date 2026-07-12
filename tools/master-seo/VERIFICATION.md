@@ -9,9 +9,15 @@ The suite is enforced by GitHub Actions:
 [`.github/workflows/master-seo-verify.yml`](../../.github/workflows/master-seo-verify.yml)
 ("Master SEO Verification").
 
-**When it runs:** on pull requests targeting `main` and pushes to `main` that
-touch `tools/master-seo/**` or the workflow file itself, plus manual runs via
-*workflow_dispatch* from the Actions tab.
+**When it runs:** on every pull request targeting `main` (unfiltered, so the
+`verify` job can serve as a required status check without deadlocking PRs that
+don't touch the tool), on pushes to `main` that touch `tools/master-seo/**` or
+the workflow file, and manually via *workflow_dispatch* from the Actions tab.
+
+**Required-check name:** if you enforce this in branch protection or a ruleset,
+the status check to require is **`verify`** (the job name) — not the workflow
+name "Master SEO Verification". GitHub matches required checks against job
+names.
 
 **What it does:** on `ubuntu-latest` with Node 20, it installs a pinned
 Playwright (`npm install --no-save playwright@1.56.1` — workflow-scoped; the

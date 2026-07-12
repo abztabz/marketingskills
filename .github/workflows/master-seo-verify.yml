@@ -8,12 +8,13 @@ name: Master SEO Verification
 # notebook persistence & export/import, Markdown report contents, both
 # themes, Write-flow regression, and zero console errors.
 
+# pull_request intentionally has NO path filter: the 'verify' job is meant to
+# be a required status check, and a path-filtered required check deadlocks any
+# PR that doesn't touch the filtered paths ("Expected — waiting for status").
+# The suite costs ~50s. Pushes to main keep the filter to avoid redundant runs.
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "tools/master-seo/**"
-      - ".github/workflows/master-seo-verify.yml"
   push:
     branches: [main]
     paths:
