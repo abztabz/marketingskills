@@ -242,6 +242,52 @@
   .finding-group-label.warning{background:var(--warn-bg);color:var(--warn);}
   .finding-group-label.pass{background:var(--good-bg);color:var(--good);}
 
+  /* NeoOS: evidence tier + confidence badges */
+  .badge{
+    font-family:var(--mono);font-size:0.6rem;letter-spacing:0.04em;text-transform:uppercase;
+    padding:1px 6px;border-radius:2px;border:1px solid var(--proof-border);
+  }
+  .badge.tier-documented{color:var(--good);border-color:var(--good);}
+  .badge.tier-heuristic{color:var(--warn);border-color:var(--warn);}
+  .badge.tier-observed{color:var(--accent);border-color:var(--accent);}
+  .badge.tier-unknown{color:var(--ink-faint);}
+  .badge.conf-high{color:var(--good);border-color:var(--good);}
+  .badge.conf-medium{color:var(--warn);border-color:var(--warn);}
+  .badge.conf-low{color:var(--ink-faint);}
+  .badge.src-observed{color:var(--ink-soft);}
+  .badge.src-self{color:var(--ink-faint);border-style:dashed;}
+  .finding-review{font-size:0.76rem;color:var(--ink-faint);font-style:italic;margin-top:4px;}
+
+  .confidence-line{
+    font-size:0.82rem;color:var(--ink-soft);margin:2px 0 4px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .capability-note{
+    font-size:0.74rem;color:var(--ink-faint);border-left:2px solid var(--proof-border);
+    padding-left:10px;margin:6px 0 14px;
+  }
+  .stage-note{font-size:0.76rem;color:var(--ink-faint);margin:-4px 0 10px;}
+
+  .gate{
+    background:var(--warn-bg);border:1px solid var(--warn);border-radius:4px;
+    padding:10px 14px;margin:6px 0 4px;font-size:0.84rem;color:var(--ink);
+  }
+  .gate strong{color:var(--warn);display:block;margin-bottom:2px;}
+
+  .learn-form{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+  .learn-form input{
+    background:var(--proof);border:1px solid var(--proof-border);border-radius:3px;
+    color:var(--ink);padding:7px 9px;font-size:0.82rem;
+  }
+  .learn-form input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+  .learn-entry{
+    border:1px solid var(--proof-border);border-radius:3px;padding:9px 11px;margin-bottom:6px;
+    font-size:0.8rem;background:var(--proof);
+  }
+  .learn-entry .le-field{display:block;margin-bottom:2px;}
+  .learn-entry .le-k{color:var(--ink-faint);font-family:var(--mono);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.05em;}
+  .learn-entry .le-del{float:right;cursor:pointer;color:var(--ink-faint);border:none;background:none;font-size:0.9rem;}
+
   .quickwin{
     display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--proof-border);
     border-radius:3px;margin-bottom:6px;font-size:0.82rem;background:var(--proof);
@@ -475,6 +521,15 @@
           </div>
         </div>
 
+        <div class="confidence-line" id="confidence-line"></div>
+
+        <div class="gate" id="ymyl-gate" style="display:none;">
+          <strong>High-stakes topic — reserved for human judgment.</strong>
+          <span id="ymyl-gate-text"></span>
+        </div>
+
+        <p class="capability-note">This is a subordinate tool, not an authority. It reports observable signals and labelled heuristics — it cannot guarantee rankings, traffic, snippets, or AI citation.</p>
+
         <div class="meters" id="meters"></div>
 
         <div class="section-title">Search snippet preview</div>
@@ -484,18 +539,35 @@
           <div class="serp-desc" id="serp-desc">Your meta description will appear here.</div>
         </div>
 
-        <div class="section-title">Findings</div>
+        <div class="section-title">Intelligence &amp; Wisdom — what was found</div>
+        <p class="stage-note">Each finding is labelled by evidence tier and whether it was directly observed or self-reported. Heuristics are not presented as rules.</p>
         <div id="findings-list"></div>
 
-        <div class="section-title">Quick wins</div>
+        <div class="section-title" id="review-title">Critical Review — challenged and softened</div>
+        <p class="stage-note" id="review-note"></p>
+        <div id="review-list"></div>
+
+        <div class="section-title">Execution — do these next</div>
         <div id="quickwins-list"></div>
-        <p class="help" id="quickwins-empty" style="display:none;">No sub-5-minute fixes flagged.</p>
+        <p class="help" id="quickwins-empty" style="display:none;">No high-confidence quick actions flagged.</p>
 
         <div class="btn-row" style="margin-top:20px;">
           <button class="btn ghost small" id="btn-copy-report" type="button">Copy report as Markdown</button>
         </div>
         <textarea class="report-out mono" id="report-out" readonly></textarea>
       </div>
+
+      <div class="section-title">Learning log</div>
+      <p class="stage-note">When real outcome data appears (rankings moved, traffic shifted, a snippet changed), record it. One result is not proof — the log preserves what you tried and what it taught. Available any time, saved in this browser only.</p>
+      <div class="learn-form">
+        <input type="text" id="learn-hypothesis" placeholder="Hypothesis — what you expected the change to do" />
+        <input type="text" id="learn-change" placeholder="Change made" />
+        <input type="text" id="learn-result" placeholder="Observed result" />
+        <input type="text" id="learn-confounders" placeholder="Confounding factors (other changes, seasonality…)" />
+        <input type="text" id="learn-lesson" placeholder="Lesson learned" />
+        <div class="btn-row"><button class="btn ghost small" id="btn-learn-add" type="button">Add to log</button></div>
+      </div>
+      <div id="learn-list"></div>
     </div>
 
     <div id="panel-write" role="tabpanel" class="hidden">
@@ -928,6 +1000,64 @@
     return F;
   }
 
+  /* ---------------- Critical Review Office (NeoOS) ----------------
+     Separate stage: it does not generate findings, it challenges them —
+     labels evidence tier and confidence, marks observed vs self-reported,
+     and softens (never deletes) weak recommendations. */
+
+  var YMYL_TERMS = ["health","medical","medicine","symptom","diagnos","disease","treatment",
+    "drug","dosage","vaccine","therapy","mental health","nutrition","supplement","pregnan",
+    "finance","financial","invest","loan","mortgage","tax","insurance","retirement","credit",
+    "debt","crypto","legal","lawyer","attorney","lawsuit","custody","visa","immigration",
+    "safety","emergency","poison","suicide","self-harm"];
+
+  function detectYMYL(inputs){
+    var hay = ((inputs.keyword||"")+" "+(inputs.title||"")+" "+(inputs.h1||"")+" "+
+      (inputs.bodyText||"").slice(0,2000)).toLowerCase();
+    return YMYL_TERMS.filter(function(t){return hay.indexOf(t)!==-1;});
+  }
+
+  function classifyTier(title){
+    var t = title.toLowerCase();
+    if (/noindex|blocked from crawling|https|mobile-respons|structured data|keyword stuffing|scraped/.test(t)) return "documented";
+    if (/buzzword|passive voice|generic anchor|alt text/.test(t)) return "observed";
+    return "heuristic";
+  }
+
+  function isObserved(f, page){
+    if (f.layer === "l3" || f.layer === "l4") return true; // computed from the actual text/markup
+    if (/noindex|structured data|multiple h1/i.test(f.title)) return true; // page-derived
+    return !!page; // L1/L2/L5: auto-derived when a page was fetched, else self-reported
+  }
+
+  function reviewFindings(findings, inputs){
+    var page = inputs.pageMeta && inputs.pageMeta.fromPage;
+    findings.forEach(function(f){
+      f.tier = classifyTier(f.title);
+      f.observed = isObserved(f, page);
+      if (f.severity === "pass"){ f.confidence = "—"; return; }
+      f.confidence = !f.observed ? "Low" : (f.tier === "documented" ? "High" : "Medium");
+      if (!f.observed) f.review = "Self-reported — confirm directly; not independently observed.";
+      else if (f.tier === "heuristic") f.review = "Practical heuristic, not a documented rule.";
+      else if (f.tier === "observed") f.review = "Observed pattern — apply judgment.";
+      else f.review = "Supported by official documentation.";
+      // Challenge without obstruction: soften weak, low-stakes findings (keep, don't delete)
+      f.softened = (f.confidence === "Low" && f.impact !== "High");
+    });
+    return findings;
+  }
+
+  function overallConfidence(findings, inputs){
+    var nonPass = findings.filter(function(f){return f.severity!=="pass";});
+    if (!nonPass.length) return {level:"—", text:"No open issues to weigh."};
+    var selfReported = nonPass.filter(function(f){return !f.observed;}).length;
+    var frac = selfReported / nonPass.length;
+    var page = inputs.pageMeta && inputs.pageMeta.fromPage;
+    if (page && frac < 0.34) return {level:"High", text:"Most findings were observed directly from the page."};
+    if (frac < 0.5) return {level:"Medium", text:"A mix of observed findings and self-reported inputs."};
+    return {level:"Low", text:"Many findings rest on self-reported checkboxes — verify the technical and trust items directly."};
+  }
+
   function layerScore(findings, layer){
     var deduct = findings.filter(function(f){return f.layer===layer && f.severity!=="pass";})
       .reduce(function(s,f){return s+f.deduct;},0);
@@ -980,21 +1110,25 @@
       author:document.getElementById("chk-author").checked,
       date:document.getElementById("chk-date").checked,
       sources:document.getElementById("chk-sources").checked,
-      experience:document.getElementById("chk-experience").checked
+      experience:document.getElementById("chk-experience").checked,
+      bodyText: stripMarkdown(body)
     };
 
     var findings = buildFindings(inputs);
+    reviewFindings(findings, inputs);            // Critical Review Office
+    var confidence = overallConfidence(findings, inputs);
+    var ymyl = detectYMYL(inputs);
     var scores = {};
     LAYER_META.forEach(function(l){scores[l.key]=layerScore(findings,l.key);});
     var overall = Math.round(
       scores.l1*WEIGHTS.l1 + scores.l2*WEIGHTS.l2 + scores.l3*WEIGHTS.l3 + scores.l4*WEIGHTS.l4 + scores.l5*WEIGHTS.l5
     );
 
-    renderResults(overall, scores, findings, {title:title,meta:meta,slug:slug||"example.com/your-page"});
+    renderResults(overall, scores, findings, {title:title,meta:meta,slug:slug||"example.com/your-page"}, confidence, ymyl);
     saveState();
   }
 
-  function renderResults(overall, scores, findings, serp){
+  function renderResults(overall, scores, findings, serp, confidence, ymyl){
     document.getElementById("analyze-empty").style.display="none";
     var results = document.getElementById("analyze-results");
     results.style.display="block";
@@ -1003,6 +1137,24 @@
     document.getElementById("overall-score-num").textContent = overall;
     document.getElementById("overall-score-num").style.color = scoreColorVar(band);
     document.getElementById("overall-score-label").textContent = overallLabel(overall);
+
+    // Confidence controls tone (NeoOS)
+    if (confidence){
+      var cclass = confidence.level === "High" ? "conf-high" : confidence.level === "Low" ? "conf-low" : "conf-medium";
+      document.getElementById("confidence-line").innerHTML =
+        '<span class="badge '+cclass+'">Confidence: '+esc(confidence.level)+'</span> <span>'+esc(confidence.text)+'</span>';
+    }
+
+    // Human sovereignty gate (NeoOS): high-stakes topics reserved for human judgment
+    var gate = document.getElementById("ymyl-gate");
+    if (ymyl && ymyl.length){
+      gate.style.display = "block";
+      document.getElementById("ymyl-gate-text").textContent =
+        " This looks like a high-stakes (“Your Money or Your Life”) topic — signals detected: " +
+        ymyl.slice(0,5).join(", ") + ". Route accuracy and claims to a qualified professional; treat every finding below as advisory only.";
+    } else {
+      gate.style.display = "none";
+    }
 
     var metersEl = document.getElementById("meters");
     metersEl.innerHTML = "";
@@ -1025,17 +1177,23 @@
 
     var order = {critical:0,warning:1,pass:2};
     var sorted = findings.slice().sort(function(a,b2){return order[a.severity]-order[b2.severity];});
-    var listEl = document.getElementById("findings-list");
-    listEl.innerHTML = "";
-    if (!sorted.length){
-      listEl.innerHTML = '<p class="help">No findings.</p>';
-    }
-    sorted.forEach(function(f){
+
+    function tierLabel(t){ return t==="documented"?"Documented":t==="observed"?"Observed pattern":t==="unknown"?"Unknown":"Heuristic"; }
+    function tierClass(t){ return t==="documented"?"tier-documented":t==="observed"?"tier-observed":t==="unknown"?"tier-unknown":"tier-heuristic"; }
+
+    function findingRow(f){
       var row = document.createElement("div");
       row.className = "finding";
-      var tagsHtml = "";
-      if (f.severity !== "pass") {
-        tagsHtml = '<div class="finding-tags"><span class="tag">'+esc(f.impact)+' impact</span><span class="tag">'+esc(f.effort)+'</span></div>';
+      var badges = "";
+      if (f.severity !== "pass"){
+        var cclass = f.confidence === "High" ? "conf-high" : f.confidence === "Low" ? "conf-low" : "conf-medium";
+        badges =
+          '<div class="finding-tags">'+
+          '<span class="badge '+tierClass(f.tier)+'">'+tierLabel(f.tier)+'</span>'+
+          '<span class="badge '+cclass+'">'+esc(f.confidence)+' confidence</span>'+
+          '<span class="badge '+(f.observed?"src-observed":"src-self")+'">'+(f.observed?"observed":"self-reported")+'</span>'+
+          '<span class="tag">'+esc(f.impact)+' impact</span><span class="tag">'+esc(f.effort)+'</span>'+
+          '</div>';
       }
       row.innerHTML =
         '<div class="finding-mark '+f.severity+'"></div>'+
@@ -1043,12 +1201,34 @@
           '<div class="finding-title">'+esc(f.title)+'</div>'+
           (f.why?'<div class="finding-why">'+esc(f.why)+'</div>':'')+
           (f.fix?'<div class="finding-fix">'+esc(f.fix)+'</div>':'')+
-          tagsHtml+
+          badges+
+          (f.review && f.severity!=="pass" ? '<div class="finding-review">'+esc(f.review)+'</div>':'')+
         '</div>';
-      listEl.appendChild(row);
-    });
+      return row;
+    }
 
-    var quick = findings.filter(function(f){return f.severity!=="pass" && f.effort==="Quick";});
+    var primary = sorted.filter(function(f){return !f.softened;});
+    var softened = sorted.filter(function(f){return f.softened;});
+
+    var listEl = document.getElementById("findings-list");
+    listEl.innerHTML = "";
+    if (!primary.length) listEl.innerHTML = '<p class="help">No findings held at full weight.</p>';
+    primary.forEach(function(f){ listEl.appendChild(findingRow(f)); });
+
+    // Critical Review section: softened findings, preserved not deleted
+    var reviewEl = document.getElementById("review-list");
+    reviewEl.innerHTML = "";
+    if (softened.length){
+      document.getElementById("review-note").textContent =
+        softened.length + " finding(s) were low-confidence and low-impact. They are kept here, not deleted — verify before acting.";
+      softened.forEach(function(f){ reviewEl.appendChild(findingRow(f)); });
+    } else {
+      document.getElementById("review-note").textContent =
+        "Nothing was softened — every finding above held up to challenge.";
+    }
+
+    // Execution: high-confidence, non-softened quick actions
+    var quick = primary.filter(function(f){return f.severity!=="pass" && (f.effort==="Quick" || f.impact==="High");});
     var qwEl = document.getElementById("quickwins-list");
     qwEl.innerHTML = "";
     document.getElementById("quickwins-empty").style.display = quick.length? "none":"block";
@@ -1059,23 +1239,29 @@
       qwEl.appendChild(row);
     });
 
-    window.__lastReport = buildReportMarkdown(overall, scores, sorted);
+    window.__lastReport = buildReportMarkdown(overall, scores, sorted, confidence, ymyl);
   }
 
-  function buildReportMarkdown(overall, scores, findings){
+  function buildReportMarkdown(overall, scores, findings, confidence, ymyl){
     var lines = [];
     lines.push("# SEO Report");
     lines.push("");
     lines.push("Overall score: "+overall+"/100 — "+overallLabel(overall));
+    if (confidence) lines.push("Confidence: "+confidence.level+" — "+confidence.text);
+    if (ymyl && ymyl.length) lines.push("High-stakes (YMYL) topic — advisory only; route to a qualified professional. Signals: "+ymyl.slice(0,5).join(", ")+".");
+    lines.push("");
+    lines.push("This tool reports observable signals and labelled heuristics. Rankings, traffic, snippets, and AI citation cannot be guaranteed.");
     lines.push("");
     LAYER_META.forEach(function(l){lines.push("- "+l.label+": "+scores[l.key]+"/100");});
     lines.push("");
     lines.push("## Findings");
     findings.forEach(function(f){
       lines.push("");
-      lines.push("### ["+f.severity.toUpperCase()+"] "+f.title);
+      var suffix = f.severity !== "pass" ? "  ("+f.tier+" · "+f.confidence+" confidence · "+(f.observed?"observed":"self-reported")+(f.softened?" · softened":"")+")" : "";
+      lines.push("### ["+f.severity.toUpperCase()+"] "+f.title+suffix);
       if (f.why) lines.push(f.why);
       if (f.fix) lines.push("Fix: "+f.fix);
+      if (f.review && f.severity !== "pass") lines.push("Review: "+f.review);
     });
     return lines.join("\n");
   }
@@ -1674,6 +1860,57 @@
     } catch(e) {}
   }
   loadState();
+
+  /* ---------------- Learning log (NeoOS Organizational Learning) ---------------- */
+  var LEARN_KEY = "masterSeoLearningLog";
+  function loadLearn(){
+    try { return JSON.parse(localStorage.getItem(LEARN_KEY) || "[]"); } catch(e){ return []; }
+  }
+  function saveLearn(entries){
+    try { localStorage.setItem(LEARN_KEY, JSON.stringify(entries)); } catch(e){}
+  }
+  function renderLearn(){
+    var entries = loadLearn();
+    var el = document.getElementById("learn-list");
+    el.innerHTML = "";
+    if (!entries.length){ el.innerHTML = '<p class="help">No entries yet. One result is not proof — but a record of what you tried compounds.</p>'; return; }
+    entries.forEach(function(e, i){
+      var div = document.createElement("div");
+      div.className = "learn-entry";
+      function field(k,v){ return v ? '<span class="le-field"><span class="le-k">'+esc(k)+'</span> '+esc(v)+'</span>' : ""; }
+      div.innerHTML =
+        '<button class="le-del" data-i="'+i+'" title="Delete" aria-label="Delete entry">×</button>'+
+        '<span class="le-k">'+esc(e.date||"")+'</span>'+
+        field("Hypothesis", e.hypothesis)+field("Change", e.change)+field("Result", e.result)+
+        field("Confounders", e.confounders)+field("Lesson", e.lesson);
+      el.appendChild(div);
+    });
+    Array.prototype.forEach.call(el.querySelectorAll(".le-del"), function(b){
+      b.addEventListener("click", function(){
+        var entries = loadLearn();
+        entries.splice(parseInt(b.getAttribute("data-i"),10), 1);
+        saveLearn(entries); renderLearn();
+      });
+    });
+  }
+  document.getElementById("btn-learn-add").addEventListener("click", function(){
+    var g = function(id){ return document.getElementById(id).value.trim(); };
+    var entry = {
+      date: new Date().toISOString().slice(0,10),
+      hypothesis:g("learn-hypothesis"), change:g("learn-change"), result:g("learn-result"),
+      confounders:g("learn-confounders"), lesson:g("learn-lesson")
+    };
+    if (!entry.hypothesis && !entry.change && !entry.result && !entry.lesson){
+      showToast("Add at least one field before logging."); return;
+    }
+    var entries = loadLearn();
+    entries.unshift(entry);
+    saveLearn(entries);
+    ["learn-hypothesis","learn-change","learn-result","learn-confounders","learn-lesson"].forEach(function(id){document.getElementById(id).value="";});
+    renderLearn();
+    showToast("Logged. One outcome is not universal proof.");
+  });
+  renderLearn();
 })();
 </script>
 </body>
