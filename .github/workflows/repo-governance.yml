@@ -1,0 +1,87 @@
+name: Repo Governance
+
+# Two mitigations from the merge-protection governance review:
+#
+# 1. skills-lint — runs the repository's own validate-skills.sh on every PR
+#    targeting main. Gives branch protection a repo-wide requirable check
+#    (job name: "skills-lint") beyond the Master SEO "verify" check, without
+#    the per-skill matrix job names of validate-skill.yml (dynamic job names
+#    can't be required).
+#
+# 2. protection-drift — a scheduled alarm that fails if main's ruleset
+#    protection disappears or stops requiring the "verify" check. A failing
+#    run emails the repository owner; that failure IS the alert. It reads the
+#    aggregated rules endpoint, which reflects RULESETS only — if you use
+#    classic branch protection instead, adapt or remove this job.
+#    NOTE: this job is expected to fail until the "Protect main" ruleset is
+#    actually created (see the governance report); its first failure is the
+#    reminder to finish that setup.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - "skills/**"
+      - "validate-skills.sh"
+      - ".github/workflows/repo-governance.yml"
+  schedule:
+    - cron: "0 8 * * 1" # Mondays 08:00 UTC — protection drift alarm
+  workflow_dispatch:
+
+concurrency:
+  group: repo-governance-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  skills-lint:
+    if: github.event_name == 'pull_request' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Validate all skills
+        run: bash validate-skills.sh
+
+  protection-drift:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Assert main is protected by an active ruleset requiring 'verify'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          rules=$(curl -sS --fail \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/rules/branches/main")
+          echo "Active rules on main:"
+          echo "$rules" | jq -r '.[].type' | sort | uniq -c
+
+          fail=0
+          for want in pull_request deletion non_fast_forward; do
+            if ! echo "$rules" | jq -e --arg t "$want" 'any(.[]; .type == $t)' >/dev/null; then
+              echo "::error::main is missing the '$want' rule (require PRs / block deletion / block force-push)."
+              fail=1
+            fi
+          done
+          if ! echo "$rules" | jq -e \
+            'any(.[]; .type == "required_status_checks"
+                 and any(.parameters.required_status_checks[]; .context == "verify"))' >/dev/null; then
+            echo "::error::main does not require the 'verify' status check (Master SEO Verification)."
+            fail=1
+          fi
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::Protection drift detected — restore the 'Protect main' ruleset (Settings → Rules → Rulesets). See the governance notes in tools/master-seo/VERIFICATION.md."
+            exit 1
+          fi
+          echo "Protection intact: PRs required, deletions and force-pushes blocked, 'verify' check required."

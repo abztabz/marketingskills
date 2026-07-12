@@ -1,0 +1,15 @@
+# Keeps GitHub Actions versions (actions/checkout, actions/setup-node, …)
+# current via weekly PRs. Note: the playwright@1.56.1 pin inside
+# master-seo-verify.yml is a shell-step install, not a manifest dependency,
+# so Dependabot cannot track it — bump it deliberately in a normal PR and
+# let the "verify" check prove the new version still passes.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      actions:
+        patterns: ["*"]
