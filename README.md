@@ -100,7 +100,7 @@ See each skill's **Related Skills** section for the full dependency map.
 | [sms](skills/sms/) | When the user wants to plan, build, or optimize SMS or MMS marketing — including welcome flows, abandoned cart texts,... |
 | [social](skills/social/) | When the user wants help creating, scheduling, or optimizing social media content for LinkedIn, Twitter/X, Instagram,... |
 | [social-engagement](skills/social-engagement/) | Find relevant questions on Reddit and Quora and draft genuinely helpful, brand-voice answers for human review before... |
-| [super-seo](skills/super-seo/) | When the user wants to create, audit, rewrite, or optimize a specific page or content asset for organic search — an... |
+| [super-seo](skills/super-seo/) | Use when the user wants to create, audit, rewrite, or optimize a specific page or content asset for organic search,... |
 | [video](skills/video/) | When the user wants to create, generate, or produce video content using AI tools or programmatic frameworks. Also use... |
 <!-- SKILLS:END -->
 
