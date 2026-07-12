@@ -242,6 +242,66 @@
   .finding-group-label.warning{background:var(--warn-bg);color:var(--warn);}
   .finding-group-label.pass{background:var(--good-bg);color:var(--good);}
 
+  /* NeoOS: evidence tier + confidence badges */
+  .badge{
+    font-family:var(--mono);font-size:0.6rem;letter-spacing:0.04em;text-transform:uppercase;
+    padding:1px 6px;border-radius:2px;border:1px solid var(--proof-border);
+  }
+  .badge.tier-documented{color:var(--good);border-color:var(--good);}
+  .badge.tier-heuristic{color:var(--warn);border-color:var(--warn);}
+  .badge.tier-observed{color:var(--accent);border-color:var(--accent);}
+  .badge.tier-unknown{color:var(--ink-faint);}
+  .badge.conf-high{color:var(--good);border-color:var(--good);}
+  .badge.conf-medium{color:var(--warn);border-color:var(--warn);}
+  .badge.conf-low{color:var(--ink-faint);}
+  .badge.src-observed{color:var(--ink-soft);}
+  .badge.src-self{color:var(--ink-faint);border-style:dashed;}
+  .finding-review{font-size:0.76rem;color:var(--ink-faint);font-style:italic;margin-top:4px;}
+  .finding-ev{font-size:0.68rem;color:var(--ink-faint);margin-top:4px;}
+  a.badge{text-decoration:none;}
+  a.badge:hover{filter:brightness(1.15);}
+  .badge.dec-escalate{color:var(--critical);border-color:var(--critical);}
+  .badge.dec-soften{color:var(--warn);border-color:var(--warn);border-style:dashed;}
+  .badge.dec-reject{color:var(--ink-faint);text-decoration:line-through;}
+  .badge.dec-verify{color:var(--accent);border-color:var(--accent);border-style:dashed;}
+  .conf-reasons{font-size:0.72rem;color:var(--ink-faint);margin-top:3px;}
+  .hs-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 4px;}
+  .hs-controls .hs-label{font-family:var(--mono);font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);}
+  .privacy-note{color:var(--warn);}
+  .learn-selects{display:flex;gap:10px;}
+  .learn-selects select{width:100%;background:var(--proof);border:1px solid var(--proof-border);border-radius:3px;color:var(--ink);padding:6px 8px;font-size:0.82rem;}
+  #learn-io{display:block;min-height:60px;margin-top:2px;}
+
+  .confidence-line{
+    font-size:0.82rem;color:var(--ink-soft);margin:2px 0 4px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .capability-note{
+    font-size:0.74rem;color:var(--ink-faint);border-left:2px solid var(--proof-border);
+    padding-left:10px;margin:6px 0 14px;
+  }
+  .stage-note{font-size:0.76rem;color:var(--ink-faint);margin:-4px 0 10px;}
+
+  .gate{
+    background:var(--warn-bg);border:1px solid var(--warn);border-radius:4px;
+    padding:10px 14px;margin:6px 0 4px;font-size:0.84rem;color:var(--ink);
+  }
+  .gate strong{color:var(--warn);display:block;margin-bottom:2px;}
+
+  .learn-form{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+  .learn-form input{
+    background:var(--proof);border:1px solid var(--proof-border);border-radius:3px;
+    color:var(--ink);padding:7px 9px;font-size:0.82rem;
+  }
+  .learn-form input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+  .learn-entry{
+    border:1px solid var(--proof-border);border-radius:3px;padding:9px 11px;margin-bottom:6px;
+    font-size:0.8rem;background:var(--proof);
+  }
+  .learn-entry .le-field{display:block;margin-bottom:2px;}
+  .learn-entry .le-k{color:var(--ink-faint);font-family:var(--mono);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.05em;}
+  .learn-entry .le-del{float:right;cursor:pointer;color:var(--ink-faint);border:none;background:none;font-size:0.9rem;}
+
   .quickwin{
     display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--proof-border);
     border-radius:3px;margin-bottom:6px;font-size:0.82rem;background:var(--proof);
@@ -475,6 +535,22 @@
           </div>
         </div>
 
+        <div class="confidence-line" id="confidence-line"></div>
+
+        <div class="gate" id="ymyl-gate" style="display:none;">
+          <strong>Potential high-stakes topic detected.</strong>
+          <span id="ymyl-gate-text"></span>
+        </div>
+        <p class="stage-note" id="hs-dissent" style="display:none;"></p>
+        <div class="hs-controls">
+          <span class="hs-label">High-stakes handling:</span>
+          <button class="chip" id="hs-auto" type="button" aria-pressed="true">Auto (heuristic)</button>
+          <button class="chip" id="hs-yes" type="button" aria-pressed="false">Mark as high-stakes</button>
+          <button class="chip" id="hs-no" type="button" aria-pressed="false">Mark as not high-stakes</button>
+        </div>
+
+        <p class="capability-note">This is a subordinate tool, not an authority. It reports observable signals and labelled heuristics from actual provenance — it cannot guarantee rankings, traffic, snippets, or AI citation.</p>
+
         <div class="meters" id="meters"></div>
 
         <div class="section-title">Search snippet preview</div>
@@ -484,18 +560,53 @@
           <div class="serp-desc" id="serp-desc">Your meta description will appear here.</div>
         </div>
 
-        <div class="section-title">Findings</div>
+        <div class="section-title">Intelligence &amp; Wisdom — retained findings</div>
+        <p class="stage-note">Each finding carries its provenance: evidence tier (Documented badges link to the source), how it was verified, what was observed, and its source type. Heuristics are never presented as rules.</p>
         <div id="findings-list"></div>
 
-        <div class="section-title">Quick wins</div>
+        <div class="section-title" id="review-title">Critical Review — decisions</div>
+        <p class="stage-note" id="review-note"></p>
+        <div id="review-list"></div>
+
+        <div class="section-title">Execution — do these next</div>
         <div id="quickwins-list"></div>
-        <p class="help" id="quickwins-empty" style="display:none;">No sub-5-minute fixes flagged.</p>
+        <p class="help" id="quickwins-empty" style="display:none;">No high-confidence quick actions flagged.</p>
 
         <div class="btn-row" style="margin-top:20px;">
           <button class="btn ghost small" id="btn-copy-report" type="button">Copy report as Markdown</button>
         </div>
         <textarea class="report-out mono" id="report-out" readonly></textarea>
       </div>
+
+      <div class="section-title">Learning notebook <span class="self-badge">browser-local</span></div>
+      <p class="stage-note">When real outcome data appears (rankings moved, traffic shifted, a snippet changed), record it. One result is not proof — the notebook preserves what you tried and what it taught. This is a personal, browser-local notebook, not durable organizational memory: entries live only in this browser's storage.</p>
+      <p class="stage-note privacy-note">Do not store confidential, personal, regulated, or client-sensitive information here.</p>
+      <div class="learn-form">
+        <input type="text" id="learn-page" placeholder="Page / project identifier (e.g. /pour-over-ratio)" />
+        <input type="text" id="learn-hypothesis" placeholder="Hypothesis — what you expected the change to do" />
+        <input type="text" id="learn-change" placeholder="Change made" />
+        <input type="text" id="learn-baseline" placeholder="Baseline metric (e.g. CTR 1.8%, position 8)" />
+        <input type="text" id="learn-window" placeholder="Observation window (e.g. 4 weeks)" />
+        <input type="text" id="learn-result" placeholder="Observed result" />
+        <input type="text" id="learn-confounders" placeholder="Confounding factors (other changes, seasonality…)" />
+        <input type="text" id="learn-lesson" placeholder="Lesson learned" />
+        <div class="learn-selects">
+          <label class="field" style="flex:1;">Confidence in the lesson
+            <select id="learn-confidence"><option>Low</option><option selected>Medium</option><option>High</option></select>
+          </label>
+          <label class="field" style="flex:1;">Status
+            <select id="learn-status"><option>Planned</option><option selected>Observing</option><option>Concluded</option></select>
+          </label>
+        </div>
+        <div class="btn-row">
+          <button class="btn ghost small" id="btn-learn-add" type="button">Add entry</button>
+          <button class="btn ghost small" id="btn-learn-export" type="button">Export JSON</button>
+          <button class="btn ghost small" id="btn-learn-import" type="button">Import JSON</button>
+          <button class="btn ghost small" id="btn-learn-clear" type="button">Clear all</button>
+        </div>
+        <textarea class="report-out mono" id="learn-io" placeholder="Export writes JSON here; paste JSON here then press Import."></textarea>
+      </div>
+      <div id="learn-list"></div>
     </div>
 
     <div id="panel-write" role="tabpanel" class="hidden">
@@ -851,85 +962,342 @@
   }
 
   /* ---------------- findings engine (Analyze mode) ---------------- */
+  /* ---------------- Evidence catalog (provenance for "documented") ---------------- */
+  var SRC = {
+    essentials:   {title:"Google Search Essentials", url:"https://developers.google.com/search/docs/essentials"},
+    https:        {title:"Google: HTTPS as a ranking signal", url:"https://developers.google.com/search/blog/2014/08/https-as-ranking-signal"},
+    mobile:       {title:"Google: mobile-first indexing", url:"https://developers.google.com/search/docs/crawling-indexing/mobile/mobile-sites-mobile-first-indexing"},
+    blockIndex:   {title:"Google: block search indexing (noindex)", url:"https://developers.google.com/search/docs/crawling-indexing/block-indexing"},
+    pageExp:      {title:"Google: page experience & Core Web Vitals", url:"https://developers.google.com/search/docs/appearance/page-experience"},
+    canonical:    {title:"Google: consolidate duplicate URLs", url:"https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls"},
+    titleLink:    {title:"Google: title links", url:"https://developers.google.com/search/docs/appearance/title-link"},
+    snippet:      {title:"Google: meta descriptions & snippets", url:"https://developers.google.com/search/docs/appearance/snippet"},
+    links:        {title:"Google: make links crawlable", url:"https://developers.google.com/search/docs/crawling-indexing/links-crawlable"},
+    images:       {title:"Google Images best practices", url:"https://developers.google.com/search/docs/appearance/google-images"},
+    structured:   {title:"Google: structured data introduction", url:"https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data"},
+    spam:         {title:"Google spam policies", url:"https://developers.google.com/search/docs/essentials/spam-policies"},
+    helpful:      {title:"Google: creating helpful content", url:"https://developers.google.com/search/docs/fundamentals/creating-helpful-content"}
+  };
+
+  /* Source types: page-observed | rendered-page-observed | user-provided-content
+     | self-reported | inferred | not-verified.
+     A static fetch/paste is page-observed but staticOnly (it cannot prove
+     JS-rendered content is absent, mobile behavior, indexability, CWV,
+     site-wide consistency, or trustworthiness). */
+
   function buildFindings(inputs){
-    var F = []; // {layer, severity, deduct, title, why, fix, impact, effort}
-    function add(layer,severity,deduct,title,why,fix,impact,effort){
-      F.push({layer:layer,severity:severity,deduct:deduct,title:title,why:why,fix:fix,impact:impact,effort:effort});
+    var F = [];
+    var page = inputs.pageMeta && inputs.pageMeta.fromPage;      // static page HTML available
+    var contentSrc = page ? "page-observed" : "user-provided-content";
+    function add(layer,severity,deduct,title,why,fix,impact,effort,ev){
+      ev = ev || {};
+      F.push({layer:layer,severity:severity,deduct:deduct,title:title,why:why,fix:fix,impact:impact,effort:effort,
+        ev:{
+          tier: ev.tier || "heuristic",
+          sourceType: ev.sourceType || "not-verified",
+          scope: ev.scope || "page",
+          verificationMethod: ev.verificationMethod || "",
+          observedValue: ev.observedValue || "",
+          staticOnly: !!ev.staticOnly,
+          source: ev.source || null,
+          verifyWith: ev.verifyWith || ""
+        },
+        rejectNearBoundary: ev.rejectNearBoundary || "",
+        falsePositiveProne: ev.falsePositiveProne || ""});
     }
 
-    /* L1 — Findability (self-report) */
-    if (!inputs.https) add("l1","critical",35,"HTTPS not confirmed","Google requires HTTPS; unsecured pages are disadvantaged and browsers flag them as Not Secure.","Get an SSL certificate and 301-redirect HTTP to HTTPS.","High","Moderate");
-    if (!inputs.mobile) add("l1","critical",35,"Mobile-responsiveness not confirmed","Google indexes the mobile version first — a non-responsive page is effectively invisible in results.","Fix responsive layout or test with a mobile-friendly checker.","High","Moderate");
-    if (!inputs.robots) add("l1","critical",35,"Page may be blocked from crawling","If robots.txt or a noindex tag blocks this page, nothing else here matters — Google can't index it.","Check robots.txt and meta robots tags; remove any unintended block.","High","Quick");
-    if (!inputs.cwv) add("l1","warning",15,"Core Web Vitals not confirmed passing","Slow, unstable pages (LCP/INP/CLS) are directly disadvantaged in ranking.","Test in PageSpeed Insights; target LCP<2.5s, INP<200ms, CLS<0.1.","Medium","Moderate");
-    if (inputs.https && inputs.mobile && inputs.robots && inputs.cwv) add("l1","pass",0,"Technical findability looks solid","HTTPS, mobile, crawlability, and Core Web Vitals are all self-confirmed.","","","");
+    /* L1 — Search eligibility (checkbox-driven; page can partially observe) */
+    if (!inputs.https) add("l1","critical",35,"HTTPS not confirmed",
+      "HTTPS is a documented (lightweight) ranking signal and a browser trust baseline.",
+      "Serve the page over https:// with a valid certificate and 301-redirect http://.","High","Moderate",
+      page ? {tier:"documented",source:SRC.https,sourceType:"page-observed",verificationMethod:"URL scheme of fetched page",observedValue:(inputs.pageMeta.url||"").split(":")[0]+"://",scope:"page"}
+           : {tier:"documented",source:SRC.https,sourceType:"self-reported",verifyWith:"load the page and check the padlock / certificate",scope:"page"});
+    if (!inputs.mobile) add("l1","critical",30,"Mobile-friendliness not confirmed",
+      "Google predominantly uses mobile-first indexing; the mobile rendering is what gets indexed.",
+      "Verify responsive layout in a real mobile viewport.","High","Moderate",
+      page ? {tier:"documented",source:SRC.mobile,sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: meta viewport tag absent",observedValue:"no viewport meta in static HTML",verifyWith:"test in a real mobile viewport; static HTML cannot prove mobile behavior",scope:"page"}
+           : {tier:"documented",source:SRC.mobile,sourceType:"self-reported",verifyWith:"test in a real mobile viewport",scope:"page"});
+    if (!inputs.robots) add("l1","critical",35,"Indexability not confirmed",
+      "A robots.txt block or noindex directive prevents the page from appearing in results.",
+      "Check robots.txt and meta robots; remove any unintended block.","High","Quick",
+      {tier:"documented",source:SRC.blockIndex,sourceType:"self-reported",verifyWith:"fetch /robots.txt and inspect meta robots / URL Inspection in Search Console",scope:"page"});
+    if (!inputs.cwv) add("l1","warning",15,"Core Web Vitals not verified",
+      "Page experience can affect ranking; the thresholds are diagnostics, not proof a page cannot rank. This tool cannot measure CWV.",
+      "Measure in PageSpeed Insights / CrUX (LCP, INP, CLS).","Medium","Moderate",
+      {tier:"documented",source:SRC.pageExp,sourceType:"not-verified",scope:"external",verifyWith:"PageSpeed Insights or CrUX field data"});
+    if (inputs.https && inputs.mobile && inputs.robots && inputs.cwv) add("l1","pass",0,"Search eligibility asserted",
+      "HTTPS, mobile, indexability, and CWV are marked OK — note these assertions are only as good as their verification.","","","",
+      {tier:"documented",source:SRC.essentials,sourceType:page?"page-observed":"self-reported",staticOnly:!!page,scope:"page"});
 
-    /* L2 — Duplication (self-report) */
-    if (!inputs.canonical) add("l2","warning",30,"Canonical URL not confirmed","Without a clear canonical, ranking signals split across duplicate or parameter URLs.","Add rel=canonical pointing to the single preferred URL.","Medium","Quick");
-    if (!inputs.nodupe) add("l2","warning",30,"Possible duplicate or near-duplicate content","A near-identical page competing for the same query dilutes both.","Merge into one stronger page, or clearly differentiate search intent.","Medium","Moderate");
-    if (inputs.canonical && inputs.nodupe) add("l2","pass",0,"One URL, one idea","Canonicalization is confirmed and no competing duplicate is flagged.","","","");
+    /* L2 — Duplication & canonical */
+    if (!inputs.canonical) add("l2","warning",25,"Canonical signal not confirmed",
+      "Without a clear canonical, ranking signals can split across duplicate or parameter URLs. Canonicals are strong hints, not directives.",
+      "Add rel=canonical pointing at the preferred URL.","Medium","Quick",
+      page ? {tier:"documented",source:SRC.canonical,sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: link rel=canonical absent",observedValue:"no canonical in static HTML",verifyWith:"inspect rendered DOM; a JS-injected canonical would not appear in a static fetch",scope:"page"}
+           : {tier:"documented",source:SRC.canonical,sourceType:"self-reported",verifyWith:"view page source or URL Inspection",scope:"page"});
+    if (!inputs.nodupe) add("l2","warning",25,"Possible duplicate content (site-wide, unverified)",
+      "Near-identical pages competing for one query can dilute each other. A single page cannot show whether duplicates exist elsewhere.",
+      "Check indexed variants (site: search, Search Console page indexing) before acting.","Medium","Moderate",
+      {tier:"heuristic",source:SRC.canonical,sourceType:"not-verified",scope:"site-wide",verifyWith:"site: search / Search Console page indexing report"});
+    if (inputs.canonical && inputs.nodupe) add("l2","pass",0,"Canonical signals asserted consistent",
+      "Canonical set and no competing duplicate flagged — site-wide consistency is not provable from one page.","","","",
+      {tier:"documented",source:SRC.canonical,sourceType:page?"page-observed":"self-reported",staticOnly:!!page,scope:"page"});
 
-    /* L3 — Extraction surface (computed) */
+    /* L3 — Presentation & extraction surface (computed from provided fields / page) */
     var titleLen = inputs.title.length;
-    if (!inputs.title) add("l3","critical",30,"Title tag is missing","Without a <title>, Google writes one for you — usually worse than what you'd choose.","Write a unique, accurate title, 50-60 characters.","High","Quick");
-    else if (titleLen < 30 || titleLen > 60) add("l3","warning",12,"Title length is off ("+titleLen+" chars)","Titles outside ~50-60 characters get truncated or feel thin in results.","Trim or expand to the 50-60 character range, topic first.","Medium","Quick");
-    else add("l3","pass",0,"Title length is on target ("+titleLen+" chars)","","","","");
+    if (!inputs.title) add("l3","critical",30,"Title tag is missing",
+      "Titles are the primary title-link source; without one, Google generates a title link for you.",
+      "Write a unique, accurate title that front-loads the topic.","High","Quick",
+      {tier:"documented",source:SRC.titleLink,sourceType:contentSrc,staticOnly:page,verificationMethod:"field / static HTML inspection",observedValue:"title empty",scope:"page"});
+    else if (titleLen < 30 || titleLen > 60){
+      var nearT = (titleLen >= 25 && titleLen <= 29) || (titleLen >= 61 && titleLen <= 68);
+      add("l3","warning",12,"Title length outside heuristic range ("+titleLen+" chars)",
+        "~50-60 characters is a practical display heuristic, not a documented rule; Google may rewrite title links regardless.",
+        "Consider trimming/expanding toward the heuristic range, topic first.","Medium","Quick",
+        {tier:"heuristic",sourceType:contentSrc,staticOnly:page,verificationMethod:"character count",observedValue:titleLen+" chars",
+         rejectNearBoundary: nearT ? "Within a few characters of a soft heuristic boundary — not reliably actionable; Google may rewrite the title link anyway." : "",
+         verifyWith:"SERP pixel-width preview"});
+    }
+    else add("l3","pass",0,"Title length within heuristic range ("+titleLen+" chars)","","","","",
+      {tier:"heuristic",sourceType:contentSrc,verificationMethod:"character count",observedValue:titleLen+" chars"});
 
     var metaLen = inputs.meta.length;
-    if (!inputs.meta) add("l3","warning",10,"Meta description is empty","Google will auto-generate one from page content, usually less compelling than a written pitch.","Write a 150-160 character description that matches search intent.","Medium","Quick");
-    else if (metaLen < 120 || metaLen > 165) add("l3","warning",8,"Meta description length is off ("+metaLen+" chars)","Outside ~150-160 characters, descriptions get cut off or waste space.","Tighten or expand to 150-160 characters.","Low","Quick");
-    else add("l3","pass",0,"Meta description length is on target ("+metaLen+" chars)","","","","");
+    if (!inputs.meta) add("l3","warning",10,"Meta description is empty",
+      "Google recommends descriptions; without one it generates a snippet from page content (and may anyway).",
+      "Write a truthful pitch that matches the intent.","Medium","Quick",
+      {tier:"documented",source:SRC.snippet,sourceType:contentSrc,staticOnly:page,verificationMethod:"field / static HTML inspection",observedValue:"meta description empty",scope:"page"});
+    else if (metaLen < 120 || metaLen > 165){
+      var nearM = (metaLen >= 108 && metaLen <= 119) || (metaLen >= 166 && metaLen <= 182);
+      add("l3","warning",8,"Meta description length outside heuristic range ("+metaLen+" chars)",
+        "~150-160 characters is a starting-point heuristic; Google may generate a different snippet and the description is not a ranking factor.",
+        "Consider tightening/expanding toward the heuristic range.","Low","Quick",
+        {tier:"heuristic",sourceType:contentSrc,staticOnly:page,verificationMethod:"character count",observedValue:metaLen+" chars",
+         rejectNearBoundary: nearM ? "Near a soft heuristic boundary and Google may replace the snippet — not reliably actionable." : ""});
+    }
+    else add("l3","pass",0,"Meta description within heuristic range ("+metaLen+" chars)","","","","",
+      {tier:"heuristic",sourceType:contentSrc,verificationMethod:"character count",observedValue:metaLen+" chars"});
 
-    if (!inputs.h1) add("l3","critical",25,"No H1 / on-page headline set","The H1 is the strongest on-page structural signal of what the content is about.","Add a clear H1 stating the page's core promise.","High","Quick");
+    if (!inputs.h1) add("l3","critical",25,"No H1 / on-page headline set",
+      "A clear primary heading helps readers and parsers identify the page's core topic (single-H1 is practice, not a documented rule).",
+      "Add a clear H1 stating the page's core promise.","High","Quick",
+      {tier:"heuristic",sourceType:contentSrc,staticOnly:page,verificationMethod:"field / static HTML inspection",observedValue:"H1 empty",scope:"page"});
 
     var h = inputs.analysis.headings;
-    if (inputs.analysis.wordCount > 60 && h.h2 < 2) add("l3","warning",12,"No scannable heading structure (fewer than 2 H2 sections)","Readers and AI extraction both rely on headings to navigate and summarize content.","Break the body into H2 sections, one idea each.","Medium","Moderate");
-    if (h.h1 > 0) add("l3","warning",10,"Body copy contains its own H1 line","A page should have exactly one H1 — use the dedicated H1 field, not a '# ' line in the body.","Remove the '# ' line from body copy; keep the H1 field as the single source.","Low","Quick");
+    if (inputs.analysis.wordCount > 60 && h.h2 < 2) add("l3","warning",12,"Little heading structure (fewer than 2 H2 sections)",
+      "Headings help readers scan and can help machines parse — they do not guarantee extraction or citation.",
+      "Break the body into H2 sections, one idea each.","Medium","Moderate",
+      {tier:"heuristic",sourceType:contentSrc,verificationMethod:"heading count in provided text",observedValue:h.h2+" H2s / "+inputs.analysis.wordCount+" words",scope:"content"});
+    if (h.h1 > 0) add("l3","warning",10,"Body copy contains its own H1 line",
+      "Keeping one H1 avoids diluting the primary topical signal.",
+      "Remove the '# ' line from body copy; keep the H1 field as the single source.","Low","Quick",
+      {tier:"heuristic",sourceType:contentSrc,verificationMethod:"'# ' line scan",observedValue:h.h1+" H1 line(s) in body",scope:"content"});
 
-    if (inputs.analysis.genericAnchors.length) add("l3","warning",10,inputs.analysis.genericAnchors.length+" link(s) use generic anchor text","Anchors like 'click here' tell readers and Google nothing about the destination.","Rewrite anchors to describe what's on the other end.","Low","Quick");
-    if (inputs.analysis.images.length && inputs.analysis.badAlt.length) add("l3","warning",8,inputs.analysis.badAlt.length+" image(s) missing descriptive alt text","Alt text is how images are understood by screen readers and image search alike.","Write alt text that describes the image for someone who can't see it.","Low","Quick");
+    if (inputs.analysis.genericAnchors.length) add("l3","warning",10,inputs.analysis.genericAnchors.length+" link(s) use generic anchor text",
+      "Google documents descriptive anchor text; 'click here' tells readers and crawlers nothing.",
+      "Rewrite anchors to describe what's on the other end.","Low","Quick",
+      {tier:"documented",source:SRC.links,sourceType:contentSrc,verificationMethod:"anchor-text scan",observedValue:inputs.analysis.genericAnchors.slice(0,3).map(function(l){return '"'+l.text+'"';}).join(", "),scope:"content"});
+    if (inputs.analysis.images.length && inputs.analysis.badAlt.length) add("l3","warning",8,inputs.analysis.badAlt.length+" image(s) missing descriptive alt text",
+      "Google documents descriptive alt text; it also serves screen-reader users.",
+      "Write alt text that describes the image for someone who can't see it.","Low","Quick",
+      {tier:"documented",source:SRC.images,sourceType:contentSrc,verificationMethod:"alt-attribute scan",observedValue:inputs.analysis.badAlt.length+" of "+inputs.analysis.images.length+" images",scope:"content"});
 
-    /* Page-derived findings (only when analysis came from a fetched/pasted page) */
-    if (inputs.pageMeta && inputs.pageMeta.fromPage){
+    /* Page-derived (static HTML) findings */
+    if (page){
       var pm = inputs.pageMeta;
-      if (pm.noindex) add("l1","critical",40,"Page carries a noindex directive","A meta robots noindex tells Google to drop this page from the index entirely.","Remove the noindex tag if this page should rank.","High","Quick");
-      if (pm.multipleH1) add("l3","warning",10,"Multiple H1 headings found on the page","More than one H1 dilutes the page's single strongest topical signal.","Keep one H1; demote the others to H2.","Low","Quick");
-      if (pm.jsonLdCount === 0) add("l3","pass",0,"No structured data found — that's fine","Schema markup is only needed if you want specific rich results; it is not a ranking requirement.","","","");
-      else add("l3","pass",0,pm.jsonLdCount+" structured data block(s) found","Verify the markup matches visible content exactly — mismatches are treated as spam.","","","");
+      if (pm.noindex) add("l1","critical",40,"Page carries a noindex directive",
+        "A meta robots noindex asks Google to drop this page from the index.",
+        "Remove the noindex tag if this page should rank.","High","Quick",
+        {tier:"documented",source:SRC.blockIndex,sourceType:"page-observed",verificationMethod:"static HTML: meta robots",observedValue:"noindex present",scope:"page"});
+      if (pm.multipleH1) add("l3","warning",10,"Multiple H1 headings in static HTML",
+        "More than one H1 can dilute the primary topical signal (practice, not a documented rule).",
+        "Keep one H1; demote the others to H2.","Low","Quick",
+        {tier:"heuristic",sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: h1 count",observedValue:"multiple h1 elements",scope:"page"});
+      if (pm.jsonLdCount === 0) add("l3","pass",0,"No structured data in static HTML",
+        "None found in the static fetch — JS-injected markup would not appear here. Structured data is for rich results, not a ranking requirement.","","","",
+        {tier:"documented",source:SRC.structured,sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: script[type=application/ld+json]",observedValue:"0 blocks in static HTML"});
+      else add("l3","pass",0,pm.jsonLdCount+" structured data block(s) found",
+        "Verify the markup matches visible content exactly — mismatches are treated as spam.","","","",
+        {tier:"documented",source:SRC.structured,sourceType:"page-observed",verificationMethod:"static HTML: script[type=application/ld+json]",observedValue:pm.jsonLdCount+" block(s)"});
     }
 
-    /* L4 — Content quality (computed) */
+    /* L4 — Content quality (computed on the provided text) */
     var a = inputs.analysis;
     if (a.wordCount < 40) {
-      add("l4","critical",50,"Body copy is too thin to evaluate ("+a.wordCount+" words)","There isn't enough content here to judge intent completeness or quality.","Add real substance — this isn't about hitting a word count, it's about finishing the reader's task.","High","Moderate");
+      add("l4","critical",50,"Body copy is too thin to evaluate ("+a.wordCount+" words)",
+        "There isn't enough content to judge completeness or quality (the 40-word floor is this tool's own threshold).",
+        "Add real substance — the goal is finishing the reader's task, not hitting a word count.","High","Moderate",
+        {tier:"heuristic",source:SRC.helpful,sourceType:contentSrc,verificationMethod:"word count",observedValue:a.wordCount+" words",scope:"content"});
     } else {
       if (inputs.keyword) {
-        if (a.kwDensity !== null && a.kwDensity > 3) add("l4","critical",30,"Keyword stuffing detected ("+a.kwDensity.toFixed(1)+"% density)","Repeating the exact phrase past ~3% density reads as manipulation, not natural writing.","Remove repeated instances; let synonyms and natural phrasing carry the topic.","High","Moderate");
-        else if (a.kwCount === 0) add("l4","warning",12,"Target keyword never appears in body copy","If the topic word never appears, neither readers nor Google can confirm relevance.","Work the keyword or a natural variant into the content, especially the opening.","Medium","Quick");
-        if (a.kwCount > 0 && a.kwInFirst100 === false) add("l4","warning",8,"Target keyword doesn't appear in the first 100 words","Leading with the direct answer helps both featured snippets and AI extraction.","Move the topic/keyword into the opening sentence or two.","Medium","Quick");
+        if (a.kwDensity !== null && a.kwDensity > 3) add("l4","critical",30,"Keyword stuffing pattern ("+a.kwDensity.toFixed(1)+"% density)",
+          "Repeating a phrase this densely matches Google's documented spam policy on keyword stuffing.",
+          "Remove repeated instances; let natural phrasing carry the topic.","High","Moderate",
+          {tier:"documented",source:SRC.spam,sourceType:contentSrc,verificationMethod:"exact-phrase density count",observedValue:a.kwDensity.toFixed(1)+"% of "+a.wordCount+" words",scope:"content"});
+        else if (a.kwCount === 0) add("l4","warning",12,"Target keyword never appears in body copy",
+          "If the topic term never appears, relevance is harder to establish (practical heuristic, not a rule).",
+          "Work the keyword or a natural variant into the content.","Medium","Quick",
+          {tier:"heuristic",sourceType:contentSrc,verificationMethod:"exact-phrase search",observedValue:"0 occurrences",scope:"content"});
+        if (a.kwCount > 0 && a.kwInFirst100 === false) add("l4","warning",8,"Topic doesn't appear in the first 100 words",
+          "Leading with the direct answer can help snippets and readers — it is a practical heuristic, not a guarantee.",
+          "Move the topic into the opening sentences.","Medium","Quick",
+          {tier:"heuristic",sourceType:contentSrc,verificationMethod:"first-100-words scan",observedValue:"absent from opening",scope:"content"});
       }
-      if (a.buzzHits.length) add("l4","warning",10,a.buzzHits.length+" vague marketing buzzword(s) found","Words like '"+a.buzzHits.slice(0,3).join("', '")+"' read as filler, not substance.","Replace with specific, concrete language.","Medium","Quick");
-      if (a.hedgeCount > Math.max(1,Math.round(a.wordCount/100))) add("l4","warning",8,a.hedgeCount+" hedge word(s) weaken confident claims","'Very / really / basically / almost' soften claims without adding information.","Cut the hedge and say the thing directly.","Low","Quick");
-      if (a.passiveRatio > 15) add("l4","warning",10,Math.round(a.passiveRatio)+"% of sentences show possible passive voice","Passive constructions distance the actor from the action and read as less direct.","Rewrite key sentences active: 'we tested' not 'was tested'.","Low","Moderate");
-      if (a.flesch < 30) add("l4","warning",10,"Text reads as difficult (readability "+Math.round(a.flesch)+"/100)","Dense, hard-to-parse sentences lose readers and complicate AI extraction.","Shorten sentences and prefer common words.","Medium","Moderate");
-      if (a.avgSentenceLen > 28) add("l4","warning",6,"Average sentence length is high ("+Math.round(a.avgSentenceLen)+" words)","Long sentences are harder to scan on a page people are skimming.","Split long sentences; aim for variety, not uniformity.","Low","Moderate");
+      if (a.buzzHits.length) add("l4","warning",10,a.buzzHits.length+" vague marketing buzzword(s) found",
+        "Words like '"+a.buzzHits.slice(0,3).join("', '")+"' read as filler, not substance.",
+        "Replace with specific, concrete language.","Medium","Quick",
+        {tier:"observed",sourceType:contentSrc,verificationMethod:"buzzword list match",observedValue:a.buzzHits.slice(0,5).join(", "),scope:"content"});
+      if (a.hedgeCount > Math.max(1,Math.round(a.wordCount/100))) add("l4","warning",8,a.hedgeCount+" hedge word(s) weaken claims",
+        "'Very / really / basically' soften claims without adding information.",
+        "Cut the hedge or replace it with the specific fact.","Low","Quick",
+        {tier:"observed",sourceType:contentSrc,verificationMethod:"hedge-word list match",observedValue:a.hedgeCount+" matches",scope:"content"});
+      if (a.passiveRatio > 15) add("l4","warning",10,Math.round(a.passiveRatio)+"% of sentences show possible passive voice",
+        "Passive constructions can read as less direct — the detector is a regex approximation.",
+        "Rewrite key sentences active: 'we tested' not 'was tested'.","Low","Moderate",
+        {tier:"observed",sourceType:contentSrc,verificationMethod:"regex approximation",observedValue:Math.round(a.passiveRatio)+"% flagged",scope:"content",
+         falsePositiveProne:"Regex-based passive detection produces false positives — spot-check before rewriting."});
+      if (a.flesch < 30) add("l4","warning",10,"Text reads as difficult (readability "+Math.round(a.flesch)+"/100)",
+        "Dense sentences lose skimming readers (Flesch is an approximation for general audiences).",
+        "Shorten sentences and prefer common words.","Medium","Moderate",
+        {tier:"observed",sourceType:contentSrc,verificationMethod:"Flesch reading ease",observedValue:Math.round(a.flesch)+"/100",scope:"content"});
+      if (a.avgSentenceLen > 28){
+        var nearS = a.avgSentenceLen <= 31;
+        add("l4","warning",6,"Average sentence length is high ("+Math.round(a.avgSentenceLen)+" words)",
+          "Long sentences are harder to scan (threshold is this tool's heuristic).",
+          "Split long sentences; aim for variety.","Low","Moderate",
+          {tier:"heuristic",sourceType:contentSrc,verificationMethod:"mean words per sentence",observedValue:Math.round(a.avgSentenceLen)+" words",scope:"content",
+           rejectNearBoundary: nearS ? "Just above a soft internal threshold — not reliably actionable on its own." : ""});
+      }
       if (!a.buzzHits.length && a.passiveRatio<=15 && a.flesch>=30 && a.avgSentenceLen<=28 && (!inputs.keyword || (a.kwDensity!==null && a.kwDensity<=3 && a.kwCount>0))) {
-        add("l4","pass",0,"Content quality checks look solid","No stuffing, thin content, buzzwords, or readability red flags found.","","","");
+        add("l4","pass",0,"Content quality checks look solid",
+          "No stuffing, thin content, buzzwords, or readability red flags found in the provided text.","","","",
+          {tier:"observed",sourceType:contentSrc,verificationMethod:"text analysis"});
       }
     }
 
-    /* L5 — Trust (self-report) */
-    if (!inputs.author) add("l5","warning",22,"No named author or reviewer shown","Trustworthiness is the dominant E-E-A-T signal, especially for AI citation.","Add a byline with real credentials or demonstrated experience.","High","Moderate");
-    if (!inputs.date) add("l5","warning",22,"No visible publish or updated date","Dateless content reads as unmaintained to both readers and AI retrieval.","Show a publish date; update it when content is meaningfully revised.","Medium","Quick");
-    if (!inputs.sources) add("l5","warning",22,"Claims aren't cited to sources","Unsupported claims are the fastest way to lose trust — and rankings.","Link factual claims to primary sources or include real data.","Medium","Moderate");
-    if (!inputs.experience) add("l5","warning",22,"No first-hand experience signals","The 'Experience' in E-E-A-T comes from real examples, not descriptions of capability.","Add real examples, testing notes, or case-specific detail.","Medium","Moderate");
-    if (inputs.author && inputs.date && inputs.sources && inputs.experience) add("l5","pass",0,"Strong E-E-A-T signals present","Author, date, sources, and first-hand experience are all confirmed.","","","");
+    /* L5 — Trust signals. A detected byline is not proof of expertise;
+       absence in static HTML is not proof of absence. */
+    if (!inputs.author) add("l5","warning",22,"No named author or reviewer confirmed",
+      "A real byline supports the trust assessment in Google's helpful-content guidance — it helps readers judge credibility; it does not by itself prove expertise or improve ranking.",
+      "Add a genuine byline with verifiable credentials or demonstrated experience.","High","Moderate",
+      page ? {tier:"heuristic",source:SRC.helpful,sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: byline/meta author scan",observedValue:"no byline detected in static HTML",verifyWith:"check the rendered page; bylines are often injected client-side",scope:"content"}
+           : {tier:"heuristic",source:SRC.helpful,sourceType:"self-reported",verifyWith:"confirm on the live page",scope:"content"});
+    if (!inputs.date) add("l5","warning",22,"No visible publish or updated date confirmed",
+      "Visible dates help readers judge freshness where it matters; never refresh a date without a real update.",
+      "Show a publish date; update it only when content meaningfully changes.","Medium","Quick",
+      page ? {tier:"heuristic",source:SRC.helpful,sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: time/date meta scan",observedValue:"no date markers in static HTML",verifyWith:"check the rendered page",scope:"content"}
+           : {tier:"heuristic",source:SRC.helpful,sourceType:"self-reported",verifyWith:"confirm on the live page",scope:"content"});
+    if (!inputs.sources) add("l5","warning",22,"Claims not confirmed as cited",
+      "Sourcing specific and quantitative claims helps readers verify them and supports the trust assessment.",
+      "Link factual claims to primary sources or include real data.","Medium","Moderate",
+      page ? {tier:"heuristic",source:SRC.helpful,sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: external-link count",observedValue:"fewer than 2 external links detected",verifyWith:"review claims against sources manually",scope:"content"}
+           : {tier:"heuristic",source:SRC.helpful,sourceType:"self-reported",verifyWith:"review claims against sources manually",scope:"content"});
+    if (!inputs.experience) add("l5","warning",22,"First-hand experience not confirmed",
+      "Genuine first-hand evidence (real examples, tests, data) supports the Experience dimension — this tool cannot detect it automatically.",
+      "Add real examples, testing notes, or case-specific detail — never simulated experience.","Medium","Moderate",
+      {tier:"heuristic",source:SRC.helpful,sourceType:"not-verified",verifyWith:"author confirms genuine first-hand basis",scope:"content"});
+    if (inputs.author && inputs.date && inputs.sources && inputs.experience) add("l5","pass",0,"Trust signals asserted present",
+      "Author, date, sources, and first-hand experience are marked present — presence supports trust; it does not prove expertise.","","","",
+      {tier:"heuristic",source:SRC.helpful,sourceType:page?"page-observed":"self-reported",staticOnly:!!page,scope:"content"});
 
     return F;
   }
 
+  /* ---------------- High-stakes (YMYL) heuristic + manual override ---------------- */
+  var YMYL_TERMS = ["health","medical","medicine","symptom","diagnos","disease","treatment",
+    "drug","dosage","vaccine","therapy","mental health","nutrition","supplement","pregnan",
+    "finance","financial","invest","loan","mortgage","tax","insurance","retirement","credit",
+    "debt","crypto","legal","lawyer","attorney","lawsuit","custody","visa","immigration",
+    "safety","emergency","poison","suicide","self-harm"];
+
+  var hsMode = "auto"; // "auto" | "yes" | "no" — manual override state
+
+  function detectYMYL(inputs){
+    var hay = ((inputs.keyword||"")+" "+(inputs.title||"")+" "+(inputs.h1||"")+" "+
+      (inputs.bodyText||"").slice(0,2000)).toLowerCase();
+    return YMYL_TERMS.filter(function(t){return hay.indexOf(t)!==-1;});
+  }
+
+  function highStakesState(inputs){
+    var signals = detectYMYL(inputs);
+    var auto = signals.length > 0;
+    var effective = hsMode === "auto" ? auto : (hsMode === "yes");
+    return {effective:effective, mode:hsMode, auto:auto, signals:signals};
+  }
+
+  /* ---------------- Critical Review Office (decision stage) ----------------
+     Confidence derives from evidence provenance, never from display text.
+     Every non-pass finding gets a decision: retain | soften | escalate |
+     reject | needs-verification. Nothing is silently deleted. */
+
+  function deriveConfidence(f){
+    var ev = f.ev;
+    if (ev.sourceType === "not-verified" || ev.sourceType === "inferred") return "Low";
+    if (ev.sourceType === "self-reported") return "Low";
+    if (ev.scope === "site-wide" || ev.scope === "external") return "Low";
+    if (ev.staticOnly) return "Medium";
+    if (ev.tier === "documented") return "High";
+    return "Medium"; // heuristic/observed on a solid observation
+  }
+
+  function reviewFindings(findings, inputs, hs){
+    findings.forEach(function(f){
+      if (f.severity === "pass"){ f.confidence = "—"; f.decision = "retain"; f.reviewReason = ""; return; }
+      f.confidence = deriveConfidence(f);
+      var d = "retain", reason = "";
+      if (f.rejectNearBoundary){
+        d = "reject"; reason = f.rejectNearBoundary;
+      } else if (f.ev.sourceType === "not-verified"){
+        d = "needs-verification";
+        reason = "This tool cannot verify it" + (f.ev.verifyWith ? " — verify via " + f.ev.verifyWith : "") + ".";
+      } else if (f.ev.sourceType === "self-reported"){
+        d = f.impact === "High" ? "needs-verification" : "soften";
+        reason = "Rests on an unchecked self-report box, not an independent observation" + (f.ev.verifyWith ? " — verify via " + f.ev.verifyWith : "") + ".";
+      } else if (f.falsePositiveProne){
+        d = "soften"; reason = f.falsePositiveProne;
+      } else if (f.severity === "critical" && f.confidence === "High"){
+        d = "escalate"; reason = "Directly observed and tied to documented guidance — act on this first.";
+      } else if (f.confidence === "Low" && f.impact !== "High"){
+        d = "soften"; reason = "Low-confidence and low-impact — verify before spending effort.";
+      } else if (f.ev.staticOnly && f.confidence === "Medium"){
+        reason = "Observed in static HTML only — rendered output could differ" + (f.ev.verifyWith ? "; verify via " + f.ev.verifyWith : "") + ".";
+      }
+      f.decision = d;
+      f.reviewReason = reason;
+      // High-stakes: prescriptive content/trust recommendations become advisory
+      f.humanReview = !!(hs && hs.effective && (f.layer === "l4" || f.layer === "l5"));
+    });
+    return findings;
+  }
+
+  function overallConfidence(findings, inputs, hs){
+    var open = findings.filter(function(f){return f.severity!=="pass" && f.decision!=="reject";});
+    if (!open.length) return {level:"—", text:"No open issues to weigh.", reasons:[]};
+    var score = {High:3, Medium:2, Low:1};
+    var tot=0, wsum=0;
+    open.forEach(function(f){
+      var w = f.impact==="High"?3:f.impact==="Medium"?2:1;
+      tot += w * (score[f.confidence]||1);
+      wsum += w;
+    });
+    var avg = tot / wsum;
+    var reasons = [];
+    var unv = open.filter(function(f){return f.ev.sourceType==="not-verified"||f.ev.sourceType==="self-reported";}).length;
+    if (unv) reasons.push(unv+" finding(s) not independently verified");
+    var page = inputs.pageMeta && inputs.pageMeta.fromPage;
+    reasons.push(page ? "page inspected via static HTML only — rendered output not checked"
+                      : "no page fetched — analysis is based on provided fields and text");
+    var stat = open.filter(function(f){return f.ev.staticOnly;}).length;
+    if (stat) reasons.push(stat+" observation(s) could change after JavaScript rendering");
+    if (hs && hs.effective) reasons.push("high-stakes mode active — prescriptive recommendations are advisory");
+    var level = avg >= 2.5 ? "High" : avg >= 1.7 ? "Medium" : "Low";
+    var text = level==="High" ? "Most findings are direct observations tied to documented guidance."
+             : level==="Medium" ? "Findings are mostly observed, with real gaps that need verification."
+             : "Key findings rest on unverified inputs — verify before acting.";
+    return {level:level, text:text, reasons:reasons};
+  }
+
   function layerScore(findings, layer){
-    var deduct = findings.filter(function(f){return f.layer===layer && f.severity!=="pass";})
+    var deduct = findings.filter(function(f){return f.layer===layer && f.severity!=="pass" && f.decision!=="reject";})
       .reduce(function(s,f){return s+f.deduct;},0);
     return clamp(100-deduct,0,100);
   }
@@ -980,21 +1348,25 @@
       author:document.getElementById("chk-author").checked,
       date:document.getElementById("chk-date").checked,
       sources:document.getElementById("chk-sources").checked,
-      experience:document.getElementById("chk-experience").checked
+      experience:document.getElementById("chk-experience").checked,
+      bodyText: stripMarkdown(body)
     };
 
+    var hs = highStakesState(inputs);
     var findings = buildFindings(inputs);
+    reviewFindings(findings, inputs, hs);            // Critical Review Office (decisions)
+    var confidence = overallConfidence(findings, inputs, hs);
     var scores = {};
     LAYER_META.forEach(function(l){scores[l.key]=layerScore(findings,l.key);});
     var overall = Math.round(
       scores.l1*WEIGHTS.l1 + scores.l2*WEIGHTS.l2 + scores.l3*WEIGHTS.l3 + scores.l4*WEIGHTS.l4 + scores.l5*WEIGHTS.l5
     );
 
-    renderResults(overall, scores, findings, {title:title,meta:meta,slug:slug||"example.com/your-page"});
+    renderResults(overall, scores, findings, {title:title,meta:meta,slug:slug||"example.com/your-page"}, confidence, hs);
     saveState();
   }
 
-  function renderResults(overall, scores, findings, serp){
+  function renderResults(overall, scores, findings, serp, confidence, hs){
     document.getElementById("analyze-empty").style.display="none";
     var results = document.getElementById("analyze-results");
     results.style.display="block";
@@ -1003,6 +1375,43 @@
     document.getElementById("overall-score-num").textContent = overall;
     document.getElementById("overall-score-num").style.color = scoreColorVar(band);
     document.getElementById("overall-score-label").textContent = overallLabel(overall);
+
+    // Confidence controls tone (NeoOS) — with an inspectable "why"
+    if (confidence){
+      var cclass = confidence.level === "High" ? "conf-high" : confidence.level === "Low" ? "conf-low" : "conf-medium";
+      var reasonsHtml = (confidence.reasons && confidence.reasons.length)
+        ? '<div class="conf-reasons">Why: '+confidence.reasons.map(esc).join(" · ")+'</div>' : "";
+      document.getElementById("confidence-line").innerHTML =
+        '<div><span class="badge '+cclass+'">Confidence: '+esc(confidence.level)+'</span> <span>'+esc(confidence.text)+'</span></div>'+reasonsHtml;
+    }
+
+    // Potential high-stakes topic: heuristic detection + manual override
+    var gate = document.getElementById("ymyl-gate");
+    var gateText = document.getElementById("ymyl-gate-text");
+    if (hs.effective){
+      gate.style.display = "block";
+      if (hs.mode === "yes"){
+        gateText.textContent = " Marked high-stakes by you. Prescriptive content and trust recommendations below are advisory; factual claims need stronger evidence and qualified human review may be needed.";
+      } else {
+        gateText.textContent = " Heuristic keyword match (signals: " + hs.signals.slice(0,5).join(", ") +
+          ") — this detection can be wrong in both directions. If correct, route accuracy and claims to a qualified professional; recommendations below are advisory. You can override this below.";
+      }
+    } else {
+      gate.style.display = "none";
+    }
+    // Preserve dissent: auto-match overridden to "not high-stakes"
+    var dissent = document.getElementById("hs-dissent");
+    if (hs.auto && hs.mode === "no"){
+      dissent.style.display = "block";
+      dissent.textContent = "Note: the keyword heuristic matched (" + hs.signals.slice(0,3).join(", ") + ") but you marked this not high-stakes. That call is preserved here, not hidden.";
+    } else {
+      dissent.style.display = "none";
+    }
+    // Override control state
+    ["hs-auto","hs-yes","hs-no"].forEach(function(id){
+      var btn = document.getElementById(id);
+      if (btn) btn.setAttribute("aria-pressed", (id==="hs-auto"&&hs.mode==="auto")||(id==="hs-yes"&&hs.mode==="yes")||(id==="hs-no"&&hs.mode==="no") ? "true":"false");
+    });
 
     var metersEl = document.getElementById("meters");
     metersEl.innerHTML = "";
@@ -1025,17 +1434,46 @@
 
     var order = {critical:0,warning:1,pass:2};
     var sorted = findings.slice().sort(function(a,b2){return order[a.severity]-order[b2.severity];});
-    var listEl = document.getElementById("findings-list");
-    listEl.innerHTML = "";
-    if (!sorted.length){
-      listEl.innerHTML = '<p class="help">No findings.</p>';
+
+    function tierLabel(t){ return t==="documented"?"Documented":t==="observed"?"Observed pattern":t==="unknown"?"Unknown":"Heuristic"; }
+    function tierClass(t){ return t==="documented"?"tier-documented":t==="observed"?"tier-observed":t==="unknown"?"tier-unknown":"tier-heuristic"; }
+    function srcLabel(ev){
+      var m = {"page-observed": ev.staticOnly ? "page-observed (static)" : "page-observed",
+               "rendered-page-observed":"rendered page","user-provided-content":"user content",
+               "self-reported":"self-reported","inferred":"inferred","not-verified":"not verified"};
+      return m[ev.sourceType] || ev.sourceType;
     }
-    sorted.forEach(function(f){
+    function srcClass(ev){
+      return (ev.sourceType==="page-observed"||ev.sourceType==="rendered-page-observed"||ev.sourceType==="user-provided-content") ? "src-observed" : "src-self";
+    }
+    function decisionBadge(f){
+      var map = {escalate:"dec-escalate", soften:"dec-soften", reject:"dec-reject", "needs-verification":"dec-verify"};
+      if (!map[f.decision]) return "";
+      return '<span class="badge '+map[f.decision]+'">'+esc(f.decision)+'</span>';
+    }
+
+    function findingRow(f, showDecision){
       var row = document.createElement("div");
       row.className = "finding";
-      var tagsHtml = "";
-      if (f.severity !== "pass") {
-        tagsHtml = '<div class="finding-tags"><span class="tag">'+esc(f.impact)+' impact</span><span class="tag">'+esc(f.effort)+'</span></div>';
+      var badges = "", evLine = "";
+      if (f.severity !== "pass"){
+        var cclass = f.confidence === "High" ? "conf-high" : f.confidence === "Low" ? "conf-low" : "conf-medium";
+        var tierBadge = f.ev.source && f.ev.source.url
+          ? '<a class="badge '+tierClass(f.ev.tier)+'" href="'+esc(f.ev.source.url)+'" target="_blank" rel="noopener" title="'+esc(f.ev.source.title)+'">'+tierLabel(f.ev.tier)+' ↗</a>'
+          : '<span class="badge '+tierClass(f.ev.tier)+'">'+tierLabel(f.ev.tier)+'</span>';
+        badges =
+          '<div class="finding-tags">'+
+          (showDecision ? decisionBadge(f) : (f.decision==="escalate" ? decisionBadge(f) : ""))+
+          tierBadge+
+          '<span class="badge '+cclass+'">'+esc(f.confidence)+' confidence</span>'+
+          '<span class="badge '+srcClass(f.ev)+'">'+esc(srcLabel(f.ev))+'</span>'+
+          '<span class="tag">'+esc(f.impact)+' impact</span><span class="tag">'+esc(f.effort)+'</span>'+
+          (f.humanReview ? '<span class="badge dec-verify">human review</span>' : '')+
+          '</div>';
+        var evBits = [];
+        if (f.ev.verificationMethod) evBits.push("verified by: "+f.ev.verificationMethod);
+        if (f.ev.observedValue) evBits.push("observed: "+f.ev.observedValue);
+        if (evBits.length) evLine = '<div class="finding-ev mono">'+esc(evBits.join("  ·  "))+'</div>';
       }
       row.innerHTML =
         '<div class="finding-mark '+f.severity+'"></div>'+
@@ -1043,40 +1481,119 @@
           '<div class="finding-title">'+esc(f.title)+'</div>'+
           (f.why?'<div class="finding-why">'+esc(f.why)+'</div>':'')+
           (f.fix?'<div class="finding-fix">'+esc(f.fix)+'</div>':'')+
-          tagsHtml+
+          badges+
+          evLine+
+          (f.reviewReason && f.severity!=="pass" ? '<div class="finding-review">'+esc(f.reviewReason)+'</div>':'')+
         '</div>';
-      listEl.appendChild(row);
-    });
+      return row;
+    }
 
-    var quick = findings.filter(function(f){return f.severity!=="pass" && f.effort==="Quick";});
+    var primary  = sorted.filter(function(f){return f.decision==="retain"||f.decision==="escalate";});
+    var reviewed = sorted.filter(function(f){return f.decision==="soften"||f.decision==="needs-verification"||f.decision==="reject";});
+
+    var listEl = document.getElementById("findings-list");
+    listEl.innerHTML = "";
+    if (!primary.length) listEl.innerHTML = '<p class="help">No findings held at full weight.</p>';
+    primary.forEach(function(f){ listEl.appendChild(findingRow(f, false)); });
+
+    // Critical Review: decisions on challenged findings — preserved, never deleted
+    var reviewEl = document.getElementById("review-list");
+    reviewEl.innerHTML = "";
+    if (reviewed.length){
+      var counts = {};
+      reviewed.forEach(function(f){ counts[f.decision]=(counts[f.decision]||0)+1; });
+      var parts = Object.keys(counts).map(function(k){return counts[k]+" "+k;});
+      document.getElementById("review-note").textContent =
+        parts.join(" · ") + ". Challenged findings are kept here with the decision and its reason — nothing is silently deleted.";
+      var decOrder = {"needs-verification":0, soften:1, reject:2};
+      reviewed.slice().sort(function(a,b3){return (decOrder[a.decision]||9)-(decOrder[b3.decision]||9);})
+        .forEach(function(f){ reviewEl.appendChild(findingRow(f, true)); });
+    } else {
+      document.getElementById("review-note").textContent =
+        "Every finding held up to challenge — nothing was softened, rejected, or sent for verification.";
+    }
+
+    // Execution: escalated first, then retained quick/high-impact actions
+    var exec = primary.filter(function(f){return f.severity!=="pass" && (f.decision==="escalate" || f.effort==="Quick" || f.impact==="High");})
+      .sort(function(a,b4){return (a.decision==="escalate"?0:1)-(b4.decision==="escalate"?0:1);});
     var qwEl = document.getElementById("quickwins-list");
     qwEl.innerHTML = "";
-    document.getElementById("quickwins-empty").style.display = quick.length? "none":"block";
-    quick.forEach(function(f){
+    document.getElementById("quickwins-empty").style.display = exec.length? "none":"block";
+    exec.forEach(function(f){
       var row = document.createElement("div");
       row.className = "quickwin";
-      row.innerHTML = '<span>'+esc(f.title)+'</span><span class="qw-fix">'+esc(f.fix)+'</span>';
+      row.innerHTML = '<span>'+(f.decision==="escalate"?'<span class="badge dec-escalate">escalated</span> ':'')+esc(f.title)+
+        (f.humanReview?' <span class="badge dec-verify">advisory — human review</span>':'')+
+        '</span><span class="qw-fix">'+esc(f.fix)+'</span>';
       qwEl.appendChild(row);
     });
 
-    window.__lastReport = buildReportMarkdown(overall, scores, sorted);
+    window.__lastReport = buildReportMarkdown(overall, scores, sorted, confidence, hs);
   }
 
-  function buildReportMarkdown(overall, scores, findings){
+  var LAYER_LABEL = {l1:"Search eligibility", l2:"Duplication/canonical", l3:"Presentation", l4:"Content quality", l5:"Trust"};
+
+  function buildReportMarkdown(overall, scores, findings, confidence, hs){
     var lines = [];
     lines.push("# SEO Report");
     lines.push("");
     lines.push("Overall score: "+overall+"/100 — "+overallLabel(overall));
+    if (confidence){
+      lines.push("Overall confidence: "+confidence.level+" — "+confidence.text);
+      if (confidence.reasons && confidence.reasons.length) lines.push("Confidence basis: "+confidence.reasons.join("; ")+".");
+    }
+    if (hs){
+      lines.push("High-stakes status: "+(hs.effective?"ACTIVE":"inactive")+
+        " ("+(hs.mode==="auto" ? "automatic heuristic"+(hs.auto?" — keyword signals: "+hs.signals.slice(0,5).join(", ") : " — no keyword match") : "manually set to "+(hs.mode==="yes"?"high-stakes":"not high-stakes"))+")");
+      if (hs.effective) lines.push("High-stakes mode: recommendations are advisory; factual/prescriptive claims need stronger evidence and may require qualified human review.");
+      if (hs.auto && hs.mode==="no") lines.push("Dissent preserved: the keyword heuristic matched but was manually overridden to not high-stakes.");
+    }
+    lines.push("");
+    lines.push("This tool is a subordinate capability reporting observable signals and labelled heuristics from actual provenance. Rankings, traffic, snippets, and AI citation cannot be guaranteed.");
     lines.push("");
     LAYER_META.forEach(function(l){lines.push("- "+l.label+": "+scores[l.key]+"/100");});
-    lines.push("");
-    lines.push("## Findings");
-    findings.forEach(function(f){
+
+    function findingBlock(f){
       lines.push("");
       lines.push("### ["+f.severity.toUpperCase()+"] "+f.title);
+      var meta = [];
+      meta.push("layer: "+(LAYER_LABEL[f.layer]||f.layer));
+      meta.push("evidence tier: "+f.ev.tier);
+      meta.push("source type: "+f.ev.sourceType+(f.ev.staticOnly?" (static HTML only)":""));
+      meta.push("confidence: "+f.confidence);
+      if (f.ev.verificationMethod) meta.push("verification: "+f.ev.verificationMethod);
+      if (f.ev.observedValue) meta.push("observed: "+f.ev.observedValue);
+      meta.push("review decision: "+f.decision);
+      if (f.humanReview) meta.push("human review: required (high-stakes)");
+      lines.push("- "+meta.join("\n- "));
       if (f.why) lines.push(f.why);
-      if (f.fix) lines.push("Fix: "+f.fix);
-    });
+      if (f.fix) lines.push("Recommendation: "+f.fix);
+      if (f.reviewReason) lines.push("Review note: "+f.reviewReason);
+      if (f.ev.source) lines.push("Evidence source: "+f.ev.source.title+" — "+f.ev.source.url);
+    }
+
+    var exec = findings.filter(function(f){return f.severity!=="pass" && (f.decision==="retain"||f.decision==="escalate");});
+    var verify = findings.filter(function(f){return f.decision==="needs-verification";});
+    var softRej = findings.filter(function(f){return f.decision==="soften"||f.decision==="reject";});
+
+    lines.push("");
+    lines.push("## Execution recommendations");
+    if (!exec.length) lines.push("None held at full weight.");
+    exec.forEach(findingBlock);
+
+    lines.push("");
+    lines.push("## Unverified areas (needs verification)");
+    if (!verify.length) lines.push("None.");
+    verify.forEach(findingBlock);
+
+    lines.push("");
+    lines.push("## Softened or rejected by Critical Review (preserved, not deleted)");
+    if (!softRej.length) lines.push("None.");
+    softRej.forEach(findingBlock);
+
+    lines.push("");
+    lines.push("---");
+    lines.push("Learning notebook: browser-local notes only — not durable organizational memory. Do not store confidential, personal, regulated, or client-sensitive information in it.");
     return lines.join("\n");
   }
 
@@ -1674,6 +2191,113 @@
     } catch(e) {}
   }
   loadState();
+
+  /* ---------------- High-stakes override wiring ---------------- */
+  function setHsMode(mode){
+    hsMode = mode;
+    try { localStorage.setItem("masterSeoHsMode", mode); } catch(e){}
+    // Re-run only if results are already showing
+    if (document.getElementById("analyze-results").style.display !== "none") runAnalysis();
+  }
+  document.getElementById("hs-auto").addEventListener("click", function(){ setHsMode("auto"); });
+  document.getElementById("hs-yes").addEventListener("click", function(){ setHsMode("yes"); });
+  document.getElementById("hs-no").addEventListener("click", function(){ setHsMode("no"); });
+  try { var savedHs = localStorage.getItem("masterSeoHsMode"); if (savedHs==="yes"||savedHs==="no"||savedHs==="auto") hsMode = savedHs; } catch(e){}
+
+  /* ---------------- Learning notebook (browser-local; NOT durable org memory) ----------------
+     Schema v2: {schemaVersion:2, entries:[{ts,page,hypothesis,change,baseline,window,
+     result,confounders,lesson,confidence,status}]}. v1 (bare array) is migrated on load. */
+  var LEARN_KEY = "masterSeoLearningLog";
+  var LEARN_SCHEMA = 2;
+  function loadLearn(){
+    try {
+      var raw = JSON.parse(localStorage.getItem(LEARN_KEY) || "null");
+      if (!raw) return [];
+      if (Array.isArray(raw)) return raw; // v1 migration: bare array of entries
+      if (raw.entries && Array.isArray(raw.entries)) return raw.entries;
+      return [];
+    } catch(e){ return []; }
+  }
+  function saveLearn(entries){
+    try { localStorage.setItem(LEARN_KEY, JSON.stringify({schemaVersion:LEARN_SCHEMA, entries:entries})); } catch(e){}
+  }
+  function renderLearn(){
+    var entries = loadLearn();
+    var el = document.getElementById("learn-list");
+    el.innerHTML = "";
+    if (!entries.length){ el.innerHTML = '<p class="help">No entries yet. One result is not proof — but a record of what you tried compounds.</p>'; return; }
+    entries.forEach(function(e, i){
+      var div = document.createElement("div");
+      div.className = "learn-entry";
+      function field(k,v){ return v ? '<span class="le-field"><span class="le-k">'+esc(k)+'</span> '+esc(v)+'</span>' : ""; }
+      var stamp = e.ts || e.date || "";
+      var head = [stamp, e.page, e.status, e.confidence ? "confidence: "+e.confidence : ""].filter(Boolean).join("  ·  ");
+      div.innerHTML =
+        '<button class="le-del" data-i="'+i+'" title="Delete" aria-label="Delete entry">×</button>'+
+        '<span class="le-k">'+esc(head)+'</span>'+
+        field("Hypothesis", e.hypothesis)+field("Change", e.change)+
+        field("Baseline", e.baseline)+field("Window", e.window)+
+        field("Result", e.result)+field("Confounders", e.confounders)+field("Lesson", e.lesson);
+      el.appendChild(div);
+    });
+    Array.prototype.forEach.call(el.querySelectorAll(".le-del"), function(b){
+      b.addEventListener("click", function(){
+        var entries = loadLearn();
+        entries.splice(parseInt(b.getAttribute("data-i"),10), 1);
+        saveLearn(entries); renderLearn();
+      });
+    });
+  }
+  document.getElementById("btn-learn-add").addEventListener("click", function(){
+    var g = function(id){ return document.getElementById(id).value.trim(); };
+    var entry = {
+      ts: new Date().toISOString(),
+      page:g("learn-page"), hypothesis:g("learn-hypothesis"), change:g("learn-change"),
+      baseline:g("learn-baseline"), window:g("learn-window"),
+      result:g("learn-result"), confounders:g("learn-confounders"), lesson:g("learn-lesson"),
+      confidence:document.getElementById("learn-confidence").value,
+      status:document.getElementById("learn-status").value
+    };
+    if (!entry.hypothesis && !entry.change && !entry.result && !entry.lesson){
+      showToast("Add at least one field before logging."); return;
+    }
+    var entries = loadLearn();
+    entries.unshift(entry);
+    saveLearn(entries);
+    ["learn-page","learn-hypothesis","learn-change","learn-baseline","learn-window","learn-result","learn-confounders","learn-lesson"].forEach(function(id){document.getElementById(id).value="";});
+    renderLearn();
+    showToast("Logged. One outcome is not universal proof.");
+  });
+  document.getElementById("btn-learn-export").addEventListener("click", function(){
+    var payload = JSON.stringify({schemaVersion:LEARN_SCHEMA, exportedAt:new Date().toISOString(), entries:loadLearn()}, null, 2);
+    var io = document.getElementById("learn-io");
+    io.value = payload;
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(payload).then(function(){showToast("Notebook JSON copied and shown below.");},
+        function(){showToast("Notebook JSON shown below — copy it manually.");});
+    } else { showToast("Notebook JSON shown below — copy it manually."); }
+  });
+  document.getElementById("btn-learn-import").addEventListener("click", function(){
+    var raw = document.getElementById("learn-io").value.trim();
+    if (!raw){ showToast("Paste exported JSON into the box first."); return; }
+    try {
+      var parsed = JSON.parse(raw);
+      var incoming = Array.isArray(parsed) ? parsed : (parsed.entries || []);
+      if (!Array.isArray(incoming) || !incoming.length){ showToast("No entries found in that JSON."); return; }
+      var entries = incoming.concat(loadLearn());
+      saveLearn(entries);
+      renderLearn();
+      showToast("Imported "+incoming.length+" entr"+(incoming.length===1?"y":"ies")+".");
+    } catch(e){ showToast("That isn't valid JSON."); }
+  });
+  document.getElementById("btn-learn-clear").addEventListener("click", function(){
+    if (!loadLearn().length){ showToast("Notebook is already empty."); return; }
+    if (!window.confirm("Clear all learning notebook entries? Export first if you want to keep them.")) return;
+    saveLearn([]);
+    renderLearn();
+    showToast("Notebook cleared.");
+  });
+  renderLearn();
 })();
 </script>
 </body>
