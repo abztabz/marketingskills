@@ -1,0 +1,58 @@
+name: Master SEO Verification
+
+# Runs the committed browser verification suite for the Master SEO tool
+# (tools/master-seo/verify.mjs) whenever the tool or this workflow changes.
+# The suite protects the tool's NeoOS evidence & governance behavior:
+# evidence provenance/tiers/source types, confidence explanations,
+# Critical Review decisions, high-stakes detection + overrides, learning
+# notebook persistence & export/import, Markdown report contents, both
+# themes, Write-flow regression, and zero console errors.
+
+# pull_request intentionally has NO path filter: the 'verify' job is meant to
+# be a required status check, and a path-filtered required check deadlocks any
+# PR that doesn't touch the filtered paths ("Expected — waiting for status").
+# The suite costs ~50s. Pushes to main keep the filter to avoid redundant runs.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - "tools/master-seo/**"
+      - ".github/workflows/master-seo-verify.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: master-seo-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    # ubuntu-latest (not ubuntu-slim like the lint workflows): Playwright's
+    # --with-deps needs the full image's apt packages for headless Chromium.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # The repository intentionally has no package.json; Playwright is
+      # pinned here (workflow-scoped, --no-save) so the dependency model
+      # stays unchanged while the run stays reproducible.
+      - name: Install pinned Playwright
+        run: npm install --no-save playwright@1.56.1
+
+      - name: Install Chromium (with system dependencies)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Master SEO verification suite
+        run: node tools/master-seo/verify.mjs
