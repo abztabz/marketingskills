@@ -103,6 +103,21 @@ const run = async () => {
   check("CWV is not-verified", /not verified/.test(cwvRow), cwvRow.slice(0, 80));
   check("CWV decision is needs-verification", /needs-verification/.test(cwvRow), cwvRow.slice(0, 80));
 
+  // AI crawler access finding, grounded in the ai-seo skill's AI Bot Access Check
+  const aiBotsRow = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll("#findings-list .finding, #review-list .finding")];
+    const r = rows.find(x => x.textContent.includes("AI crawlers not confirmed allowed"));
+    return r ? r.textContent : "";
+  });
+  check("AI crawler access finding present", /AI crawlers not confirmed allowed/.test(aiBotsRow), aiBotsRow.slice(0, 80));
+  const aiBotsSource = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll("#findings-list .finding, #review-list .finding")];
+    const r = rows.find(x => x.textContent.includes("AI crawlers not confirmed allowed"));
+    const a = r && r.querySelector("a.badge");
+    return a ? a.getAttribute("href") : null;
+  });
+  check("AI crawler finding links to the ai-seo skill file", /ai-seo\/SKILL\.md/.test(aiBotsSource || ""), String(aiBotsSource));
+
   // (11) soften decision present (passive-voice FP-prone or self-reported medium)
   const reviewText = await page.textContent("#review-list");
   check("soften decision present in review", /soften/.test(reviewText));

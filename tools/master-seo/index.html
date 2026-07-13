@@ -446,6 +446,7 @@
         <label class="check-row"><input type="checkbox" id="chk-cwv" /> Core Web Vitals passing (LCP/INP/CLS)</label>
         <label class="check-row"><input type="checkbox" id="chk-canonical" /> Canonical URL set correctly</label>
         <label class="check-row"><input type="checkbox" id="chk-nodupe" /> No near-duplicate page competing for this query</label>
+        <label class="check-row"><input type="checkbox" id="chk-aibots" /> AI crawlers allowed (GPTBot, ClaudeBot, PerplexityBot, Google-Extended)</label>
       </fieldset>
 
       <fieldset>
@@ -976,7 +977,11 @@
     images:       {title:"Google Images best practices", url:"https://developers.google.com/search/docs/appearance/google-images"},
     structured:   {title:"Google: structured data introduction", url:"https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data"},
     spam:         {title:"Google spam policies", url:"https://developers.google.com/search/docs/essentials/spam-policies"},
-    helpful:      {title:"Google: creating helpful content", url:"https://developers.google.com/search/docs/fundamentals/creating-helpful-content"}
+    helpful:      {title:"Google: creating helpful content", url:"https://developers.google.com/search/docs/fundamentals/creating-helpful-content"},
+    aiSeoBots:    {title:"ai-seo skill: AI Bot Access Check", url:"../../skills/ai-seo/SKILL.md"},
+    aiSeoStruct:  {title:"ai-seo skill: Structure pillar (extractability)", url:"../../skills/ai-seo/SKILL.md"},
+    aiSeoAuth:    {title:"ai-seo skill: Authority pillar (citations & statistics)", url:"../../skills/ai-seo/SKILL.md"},
+    schemaTypes:  {title:"schema skill: common schema types", url:"../../skills/schema/SKILL.md"}
   };
 
   /* Source types: page-observed | rendered-page-observed | user-provided-content
@@ -1025,8 +1030,12 @@
       "Page experience can affect ranking; the thresholds are diagnostics, not proof a page cannot rank. This tool cannot measure CWV.",
       "Measure in PageSpeed Insights / CrUX (LCP, INP, CLS).","Medium","Moderate",
       {tier:"documented",source:SRC.pageExp,sourceType:"not-verified",scope:"external",verifyWith:"PageSpeed Insights or CrUX field data"});
-    if (inputs.https && inputs.mobile && inputs.robots && inputs.cwv) add("l1","pass",0,"Search eligibility asserted",
-      "HTTPS, mobile, indexability, and CWV are marked OK — note these assertions are only as good as their verification.","","","",
+    if (!inputs.aibots) add("l1","warning",15,"AI crawlers not confirmed allowed",
+      "GPTBot, ClaudeBot, PerplexityBot, and Google-Extended each need an explicit robots.txt allow; a block on any one of them means that AI engine cannot cite this page, even if the page ranks normally in classic search.",
+      "Check robots.txt for Disallow rules targeting these bots; allow the search-and-cite bots even if you block training-only crawlers like CCBot.","Medium","Quick",
+      {tier:"documented",source:SRC.aiSeoBots,sourceType:"self-reported",verifyWith:"fetch /robots.txt and check for GPTBot / ChatGPT-User / PerplexityBot / ClaudeBot / anthropic-ai / Google-Extended Disallow rules",scope:"page"});
+    if (inputs.https && inputs.mobile && inputs.robots && inputs.cwv && inputs.aibots) add("l1","pass",0,"Search eligibility asserted",
+      "HTTPS, mobile, indexability, CWV, and AI crawler access are marked OK — note these assertions are only as good as their verification.","","","",
       {tier:"documented",source:SRC.essentials,sourceType:page?"page-observed":"self-reported",staticOnly:!!page,scope:"page"});
 
     /* L2 — Duplication & canonical */
@@ -1113,7 +1122,7 @@
         "Keep one H1; demote the others to H2.","Low","Quick",
         {tier:"heuristic",sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: h1 count",observedValue:"multiple h1 elements",scope:"page"});
       if (pm.jsonLdCount === 0) add("l3","pass",0,"No structured data in static HTML",
-        "None found in the static fetch — JS-injected markup would not appear here. Structured data is for rich results, not a ranking requirement.","","","",
+        "None found in the static fetch — JS-injected markup would not appear here. Structured data is for rich results, not a ranking requirement; on non-Google AI engines, pages with proper schema (FAQPage, Article, Product) see 30-40% higher AI visibility, per the schema skill's common types.","","","",
         {tier:"documented",source:SRC.structured,sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: script[type=application/ld+json]",observedValue:"0 blocks in static HTML"});
       else add("l3","pass",0,pm.jsonLdCount+" structured data block(s) found",
         "Verify the markup matches visible content exactly — mismatches are treated as spam.","","","",
@@ -1138,9 +1147,9 @@
           "Work the keyword or a natural variant into the content.","Medium","Quick",
           {tier:"heuristic",sourceType:contentSrc,verificationMethod:"exact-phrase search",observedValue:"0 occurrences",scope:"content"});
         if (a.kwCount > 0 && a.kwInFirst100 === false) add("l4","warning",8,"Topic doesn't appear in the first 100 words",
-          "Leading with the direct answer can help snippets and readers — it is a practical heuristic, not a guarantee.",
+          "Leading with the direct answer can help snippets and readers — it is a practical heuristic, not a guarantee. It also matters for AI citation: the ai-seo skill notes AI systems extract passages, not pages, so a buried answer is easy to skip over.",
           "Move the topic into the opening sentences.","Medium","Quick",
-          {tier:"heuristic",sourceType:contentSrc,verificationMethod:"first-100-words scan",observedValue:"absent from opening",scope:"content"});
+          {tier:"heuristic",source:SRC.aiSeoStruct,sourceType:contentSrc,verificationMethod:"first-100-words scan",observedValue:"absent from opening",scope:"content"});
       }
       if (a.buzzHits.length) add("l4","warning",10,a.buzzHits.length+" vague marketing buzzword(s) found",
         "Words like '"+a.buzzHits.slice(0,3).join("', '")+"' read as filler, not substance.",
@@ -1187,10 +1196,10 @@
       page ? {tier:"heuristic",source:SRC.helpful,sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: time/date meta scan",observedValue:"no date markers in static HTML",verifyWith:"check the rendered page",scope:"content"}
            : {tier:"heuristic",source:SRC.helpful,sourceType:"self-reported",verifyWith:"confirm on the live page",scope:"content"});
     if (!inputs.sources) add("l5","warning",22,"Claims not confirmed as cited",
-      "Sourcing specific and quantitative claims helps readers verify them and supports the trust assessment.",
+      "Sourcing specific and quantitative claims helps readers verify them and supports the trust assessment. It's also the single highest-leverage AI-citation lever the ai-seo skill documents: cited sources and statistics correlate with a 37-40% visibility boost in third-party GEO research.",
       "Link factual claims to primary sources or include real data.","Medium","Moderate",
-      page ? {tier:"heuristic",source:SRC.helpful,sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: external-link count",observedValue:"fewer than 2 external links detected",verifyWith:"review claims against sources manually",scope:"content"}
-           : {tier:"heuristic",source:SRC.helpful,sourceType:"self-reported",verifyWith:"review claims against sources manually",scope:"content"});
+      page ? {tier:"heuristic",source:SRC.aiSeoAuth,sourceType:"page-observed",staticOnly:true,verificationMethod:"static HTML: external-link count",observedValue:"fewer than 2 external links detected",verifyWith:"review claims against sources manually",scope:"content"}
+           : {tier:"heuristic",source:SRC.aiSeoAuth,sourceType:"self-reported",verifyWith:"review claims against sources manually",scope:"content"});
     if (!inputs.experience) add("l5","warning",22,"First-hand experience not confirmed",
       "Genuine first-hand evidence (real examples, tests, data) supports the Experience dimension — this tool cannot detect it automatically.",
       "Add real examples, testing notes, or case-specific detail — never simulated experience.","Medium","Moderate",
@@ -1345,6 +1354,7 @@
       cwv:document.getElementById("chk-cwv").checked,
       canonical:document.getElementById("chk-canonical").checked,
       nodupe:document.getElementById("chk-nodupe").checked,
+      aibots:document.getElementById("chk-aibots").checked,
       author:document.getElementById("chk-author").checked,
       date:document.getElementById("chk-date").checked,
       sources:document.getElementById("chk-sources").checked,
@@ -2062,7 +2072,7 @@
   document.getElementById("btn-analyze").addEventListener("click", runAnalysis);
   document.getElementById("btn-reset-analyze").addEventListener("click", function(){
     ["a-url","a-html","a-title","a-meta","a-h1","a-slug","a-keyword","a-body"].forEach(function(id){document.getElementById(id).value="";});
-    ["chk-https","chk-mobile","chk-robots","chk-cwv","chk-canonical","chk-nodupe","chk-author","chk-date","chk-sources","chk-experience"].forEach(function(id){document.getElementById(id).checked=false;});
+    ["chk-https","chk-mobile","chk-robots","chk-cwv","chk-canonical","chk-nodupe","chk-aibots","chk-author","chk-date","chk-sources","chk-experience"].forEach(function(id){document.getElementById(id).checked=false;});
     lastPageMeta = null;
     setFetchStatus("", false);
     document.getElementById("analyze-results").style.display="none";
