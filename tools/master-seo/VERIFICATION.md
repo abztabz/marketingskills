@@ -84,13 +84,25 @@ failure.
 | 17/18 | Light and dark themes render differently |
 | 19 | Zero console/page errors across the whole run |
 | 20 | Write flow regression (full draft still generates) |
+| 21 | AI crawler access finding (GPTBot/ClaudeBot/PerplexityBot/Google-Extended) links back to the `ai-seo` skill file |
+
+## Skills grounding
+
+Several findings cite the repository's own SEO skills (`skills/ai-seo`,
+`skills/schema`) as their documented source, using a relative link
+(`../../skills/<name>/SKILL.md`) instead of a Google URL — this resolves
+correctly both when the tool is opened from disk and when it's served from
+GitHub Pages. Specifically: the AI crawler access check (new), the
+first-100-words finding, the "claims not cited" finding, and the structured
+data pass message. This keeps the standalone tool's guidance consistent with
+the `super-seo` agent, which is grounded in the same skills.
 
 ## Recorded run
 
-2026-07-12, Linux, Chromium via Playwright 1.56:
+2026-07-13, Linux, Chromium via Playwright 1.56:
 
 ```
-==== 38 passed, 0 failed ====
+==== 40 passed, 0 failed ====
 ```
 
 ## Known limitations (by design, stated in the UI)
